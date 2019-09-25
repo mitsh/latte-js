@@ -1,5 +1,5 @@
 {
-  "name": "latte-js",
+  "name": "latte-engine",
   "title": "LatteJS",
   "description": "LatteJS is javascript templating engine based on PHP Smarty Template Engine.",
   "main": "dist/latte.js",
