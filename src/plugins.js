@@ -387,7 +387,7 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
 
       length -= Math.min(length, etc.length)
       if (middle) {
-        // one of floor()'s should be replaced with ceil() but it so in Smarty
+        // one of floor()'s should be replaced with ceil() but it so in Latte
         return s.slice(0, Math.floor(length / 2)) + etc + s.slice(s.length - Math.floor(length / 2))
       }
 

@@ -579,7 +579,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             props.index_next = i + step
             props.iteration = props.rownum = count + 1
             props.total = count
-            // ? - because it is so in Smarty
+            // ? - because it is so in Latte
             props.loop = count
 
             var tmp = this.process(node.subTree, data)
@@ -590,7 +590,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             data.smarty.continue = false
           }
           props.total = count
-          // ? - because it is so in Smarty
+          // ? - because it is so in Latte
           props.loop = count
 
           data.smarty.break = false

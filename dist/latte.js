@@ -4,7 +4,7 @@
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-09-25T09:44Z
+ * Date: 2019-09-25T10:11Z
  */
 (function (factory) {
   'use strict'
@@ -192,7 +192,7 @@
             var buildIn = this.buildInFunctions[name]
             var params = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr)
             if (buildIn.type === 'block') {
-              // Remove new line after block open tag (like in Smarty)
+              // Remove new line after block open tag (like in Latte)
               tpl = tpl.replace(/^\n/, '')
               closeTag = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
               var functionTree = buildIn.parse.call(this, params, tpl.slice(0, closeTag.index))
@@ -1285,7 +1285,6 @@
         type: 'block',
         parseParams: function (paramStr) {
           var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i)
-          // Smarty 3.x syntax => Smarty 2.x syntax
           if (res) {
             paramStr = 'from=' + res[1] + ' item=' + (res[4] || res[2])
             if (res[4]) {
@@ -2038,7 +2037,7 @@
             props.index_next = i + step
             props.iteration = props.rownum = count + 1
             props.total = count
-            // ? - because it is so in Smarty
+            // ? - because it is so in Latte
             props.loop = count
 
             var tmp = this.process(node.subTree, data)
@@ -2049,7 +2048,7 @@
             data.smarty.continue = false
           }
           props.total = count
-          // ? - because it is so in Smarty
+          // ? - because it is so in Latte
           props.loop = count
 
           data.smarty.break = false
@@ -2372,8 +2371,8 @@ var version = '4.0.0'
    Latte object.
   */
   var Latte = function (template, options) {
-    // Smarty object which has version, delimiters, config, current directory
-    // and all blocks like PHP Smarty.
+    // Latte object which has version, delimiters, config, current directory
+    // and all blocks like Nette's Latte.
     this.smarty = {
 
       // Blocks in the current smarty object.
@@ -2388,7 +2387,7 @@ var version = '4.0.0'
       // Used to store state of continue
       'continue': false,
 
-      // Current counter information. Smarty like feature.
+      // Current counter information. Latte like feature.
       counter: {},
 
       // Use by {cycle} custom function to store array and cycle info.
@@ -2409,7 +2408,7 @@ var version = '4.0.0'
       // Current configuration.
       config: {},
 
-      // Current directory, underscored name as PHP Smarty does it.
+      // Current directory, underscored name as Latte does it.
       current_dir: '/',
 
       // Current template.
@@ -4064,7 +4063,7 @@ var version = '4.0.0'
 
       length -= Math.min(length, etc.length)
       if (middle) {
-        // one of floor()'s should be replaced with ceil() but it so in Smarty
+        // one of floor()'s should be replaced with ceil() but it so in Latte
         return s.slice(0, Math.floor(length / 2)) + etc + s.slice(s.length - Math.floor(length / 2))
       }
 

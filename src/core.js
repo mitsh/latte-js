@@ -11,8 +11,8 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (L
    Latte object.
   */
   var Latte = function (template, options) {
-    // Smarty object which has version, delimiters, config, current directory
-    // and all blocks like PHP Smarty.
+    // Latte object which has version, delimiters, config, current directory
+    // and all blocks like Nette's Latte.
     this.smarty = {
 
       // Blocks in the current smarty object.
@@ -27,7 +27,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (L
       // Used to store state of continue
       'continue': false,
 
-      // Current counter information. Smarty like feature.
+      // Current counter information. Latte like feature.
       counter: {},
 
       // Use by {cycle} custom function to store array and cycle info.
@@ -48,7 +48,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (L
       // Current configuration.
       config: {},
 
-      // Current directory, underscored name as PHP Smarty does it.
+      // Current directory, underscored name as Latte does it.
       current_dir: '/',
 
       // Current template.

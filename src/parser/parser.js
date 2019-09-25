@@ -127,7 +127,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
             var buildIn = this.buildInFunctions[name]
             var params = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr)
             if (buildIn.type === 'block') {
-              // Remove new line after block open tag (like in Smarty)
+              // Remove new line after block open tag (like in Latte)
               tpl = tpl.replace(/^\n/, '')
               closeTag = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
               var functionTree = buildIn.parse.call(this, params, tpl.slice(0, closeTag.index))
@@ -1220,7 +1220,6 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         type: 'block',
         parseParams: function (paramStr) {
           var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i)
-          // Smarty 3.x syntax => Smarty 2.x syntax
           if (res) {
             paramStr = 'from=' + res[1] + ' item=' + (res[4] || res[2])
             if (res[4]) {
