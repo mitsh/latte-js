@@ -1,4 +1,4 @@
-define(['Latte', 'text!./templates/functions.tpl', 'text!./output/functions.tpl'], function (Latte, smartyTpl, outputTpl) {
+define(['Latte', 'text!./templates/functions.latte', 'text!./output/functions.latte'], function (Latte, smartyTpl, outputTpl) {
   describe('Test Functions', function () {
     Latte.prototype.registerPlugin(
       'function',

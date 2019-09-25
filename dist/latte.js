@@ -4,7 +4,7 @@
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-09-25T09:09Z
+ * Date: 2019-09-25T09:44Z
  */
 (function (factory) {
   'use strict'

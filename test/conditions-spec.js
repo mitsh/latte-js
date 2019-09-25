@@ -1,4 +1,4 @@
-define(['Latte', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (Latte, smartyTpl, outputTpl) {
+define(['Latte', 'text!./templates/if.latte', 'text!./output/if.latte'], function (Latte, smartyTpl, outputTpl) {
   describe('Test Conditions', function () {
     Latte.prototype.registerPlugin(
       'function',

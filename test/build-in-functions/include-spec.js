@@ -6,12 +6,12 @@ define(['Latte'], function (Latte) {
 
     it('test simple include', function () {
       Latte.prototype.getTemplate = function (name) {
-        if (name === 'child.tpl') {
+        if (name === 'child.latte') {
           return 'child'
         }
       }
       tpl = 'parent:'
-      tpl += '{include file="child.tpl"}'
+      tpl += '{include file="child.latte"}'
 
       output = 'parent:child'
       t = new Latte(tpl)
@@ -20,12 +20,12 @@ define(['Latte'], function (Latte) {
 
     it('test include with data', function () {
       Latte.prototype.getTemplate = function (name) {
-        if (name === 'child2.tpl') {
+        if (name === 'child2.latte') {
           return 'child{$p}-{$t}'
         }
       }
       tpl = 'parent{$p}:'
-      tpl += '{include file="child2.tpl" p="po" t=$p}'
+      tpl += '{include file="child2.latte" p="po" t=$p}'
 
       output = 'parentyo:childpo-yo'
       t = new Latte(tpl)
@@ -33,16 +33,16 @@ define(['Latte'], function (Latte) {
     })
 
     it('test include cache', function () {
-      // Old child.tpl had 'child' text. in test 1
-      // Now we modified child.tpl. But new value won't be fetched
+      // Old child.latte had 'child' text. in test 1
+      // Now we modified child.latte. But new value won't be fetched
       // as old is cached and we wont use nocache.
       Latte.prototype.getTemplate = function (name) {
-        if (name === 'child.tpl') {
+        if (name === 'child.latte') {
           return 'new child'
         }
       }
       tpl = 'parent:'
-      tpl += '{include "child.tpl"}'
+      tpl += '{include "child.latte"}'
       // Output should come from old value.
       output = 'parent:child'
       t = new Latte(tpl)
@@ -50,16 +50,16 @@ define(['Latte'], function (Latte) {
     })
 
     it('test include nocache', function () {
-      // Old child.tpl had 'child' text. in test 1
-      // Now we modified child.tpl. But new value will be fetched
+      // Old child.latte had 'child' text. in test 1
+      // Now we modified child.latte. But new value will be fetched
       // as we will use now nocache.
       Latte.prototype.getTemplate = function (name) {
-        if (name === 'child.tpl') {
+        if (name === 'child.latte') {
           return 'new child'
         }
       }
       tpl = 'parent:'
-      tpl += '{include "child.tpl" nocache}'
+      tpl += '{include "child.latte" nocache}'
       // Output should come from old value.
       output = 'parent:new child'
       t = new Latte(tpl)

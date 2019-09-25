@@ -17,8 +17,8 @@ module.exports = function (config) {
     files: [
       'test/test-main.js',
       {pattern: 'node_modules/requirejs-text/*.js', included: false},
-      {pattern: 'test/templates/*.tpl', included: false},
-      {pattern: 'test/output/*.tpl', included: false},
+      {pattern: 'test/templates/*.latte', included: false},
+      {pattern: 'test/output/*.latte', included: false},
       {pattern: 'src/**/*.js', included: false},
       {pattern: 'test/**/*spec.js', included: false}
     ],

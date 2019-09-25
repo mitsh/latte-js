@@ -6,7 +6,7 @@ var fs = require('fs'),
     path = require('path'),
     Latte = require('Latte');
 
-var tpl = fs.readFileSync(path.normalize(__dirname+'/hello.tpl'), {encoding: 'utf-8'});
+var tpl = fs.readFileSync(path.normalize(__dirname+'/hello.latte'), {encoding: 'utf-8'});
 
 var compiledTemplate = new Latte(tpl);
 

@@ -1,4 +1,4 @@
-define(['Latte', 'text!./templates/var.tpl', 'text!./output/var.tpl'], function (Latte, smartyTpl, outputTpl) {
+define(['Latte', 'text!./templates/var.latte', 'text!./output/var.latte'], function (Latte, smartyTpl, outputTpl) {
   Latte.prototype.registerPlugin(
     'function',
     'sayHello',
