@@ -1,7 +1,7 @@
-define(['./core', './util/phpjs'], function (jSmart, phpJs) {
+define(['./core', './util/phpjs'], function (Latte, phpJs) {
   // All built in but custom functions
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'counter',
     function (params, data) {
@@ -43,7 +43,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'cycle',
     function (params, data) {
@@ -95,7 +95,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'eval',
     function (params, data) {
@@ -108,7 +108,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'debug',
     function (params, data) {
@@ -125,10 +125,10 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         return ''
       }
       if (env === 'browser') {
-        if (window.jsmartDebug) {
-          window.jsmartDebug.close()
+        if (window.latteJsDebug) {
+          window.latteJsDebug.close()
         }
-        window.jsmartDebug = window.open('', '', 'width=680, height=600,resizable,scrollbars=yes')
+        window.latteJsDebug = window.open('', '', 'width=680, height=600,resizable,scrollbars=yes')
         var includedTemplates = ''
         var assignedVars = ''
         var i = 0
@@ -140,7 +140,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         }
         i = 0
         for (var name in data.assignedVars) {
-          assignedVars += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>[' + name + ']</td><td>' + jSmart.prototype.printR(data.assignedVars[name]) + '</td></tr>'
+          assignedVars += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>[' + name + ']</td><td>' + Latte.prototype.printR(data.assignedVars[name]) + '</td></tr>'
         }
         if (assignedVars !== '') {
           assignedVars = '<h2>assigned template variables</h2><table>' + assignedVars + '<table>'
@@ -148,7 +148,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         var html = '<!DOCTYPE html>' +
         '<html>' +
           '<head>' +
-            '<title>jSmart Debug Console</title>' +
+            '<title>LatteJS Debug Console</title>' +
             '<style type=\'text/css\'>' +
               'table {width: 100%;}' +
               'td {vertical-align:top;}' +
@@ -157,12 +157,12 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
             '</style>' +
           '</head>' +
           '<body>' +
-            '<h1>jSmart Debug Console</h1><br><pre>' +
+            '<h1>LatteJS Debug Console</h1><br><pre>' +
             includedTemplates +
             assignedVars +
           '</pre></body>' +
         '</html>'
-        window.jsmartDebug.document.write(html)
+        window.latteJsDebug.document.write(html)
       } else {
         // env is node.
         // we stringify because tools show updated version of object in console.
@@ -175,11 +175,11 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'fetch',
     function (params, data) {
-      var s = jSmart.prototype.getFile(params.__get('file', null, 0))
+      var s = Latte.prototype.getFile(params.__get('file', null, 0))
       if ('assign' in params) {
         this.assignVar(params.assign, s, data)
         return ''
@@ -188,7 +188,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'html_checkboxes',
     function (params, data) {
@@ -246,7 +246,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'html_image',
     function (params, data) {
@@ -272,7 +272,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'html_options',
     function (params, data) {
@@ -317,7 +317,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'html_radios',
     function (params, data) {
@@ -326,7 +326,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'html_select_date',
     function (params, data) {
@@ -380,7 +380,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'html_table',
     function (params, data) {
@@ -461,7 +461,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'mailto',
     function (params, data) {
@@ -522,7 +522,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     'math',
     function (params, data) {
@@ -580,7 +580,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'block',
     'textformat',
     function (params, content, data, repeat) {
@@ -630,5 +630,5 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  return jSmart
+  return Latte
 })

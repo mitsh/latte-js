@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: count_sentences', function () {
     var tpl
     var output
@@ -7,14 +7,14 @@ define(['jSmart'], function (jSmart) {
     it('test count_sentences', function () {
       tpl = '{$words|count_sentences}'
       output = 3
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Hello World! And do you love it? If so tell us.'})).toBe(output)
     })
 
     it('test count_sentences with line breaks', function () {
       tpl = '{$words|count_sentences}'
       output = 3
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Hello World!\nempty sentence\nAnd do you love it?\nIf so tell us.'})).toBe(output)
     })
   })

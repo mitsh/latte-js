@@ -1,8 +1,8 @@
 
-define(['text!t/subtemplate.html', 'jSmart'], function (tpl, Jsmart) {
+define(['text!t/subtemplate.html', 'Latte'], function (tpl, Latte) {
 
-    jSmart.prototype.addDefaultModifier(['escape']);
+    Latte.prototype.addDefaultModifier(['escape']);
 
-    var t = new Jsmart(tpl);
-    document.getElementById('output').innerHTML = t.fetch({'name': 'Umakant'});
+    var t = new Latte(tpl);
+    document.getElementById('output').innerHTML = t.fetch({'name': 'Chex'});
 });

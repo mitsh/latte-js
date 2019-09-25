@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test custom function:: html_select_date', function () {
     var tpl
     var output
@@ -25,7 +25,7 @@ define(['jSmart'], function (jSmart) {
       output += '<select name="Date_Year">\n'
       output += '<option value="' + d.getFullYear() + '" selected="selected">' + d.getFullYear() + '</option>\n'
       output += '</select>\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -49,7 +49,7 @@ define(['jSmart'], function (jSmart) {
         output += '<option value="' + i + '"' + selected + '>' + i + '</option>\n'
       }
       output += '</select>\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: cat', function () {
     var tpl
     var output
@@ -7,7 +7,7 @@ define(['jSmart'], function (jSmart) {
     it('test cat', function () {
       tpl = '{$words|cat: " world"}'
       output = 'Hello world'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Hello'})).toBe(output)
     })
   })

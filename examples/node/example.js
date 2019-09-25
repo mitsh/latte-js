@@ -1,13 +1,13 @@
 /**
- * Example show jSmart can be used in Node.js
+ * Example show LatteJS can be used in Node.js
  */
 
 var fs = require('fs'),
     path = require('path'),
-    jSmart = require('jSmart');
+    Latte = require('Latte');
 
 var tpl = fs.readFileSync(path.normalize(__dirname+'/hello.tpl'), {encoding: 'utf-8'});
 
-var compiledTemplate = new jSmart(tpl);
+var compiledTemplate = new Latte(tpl);
 
-console.log(compiledTemplate.fetch({name: "Umakant Patil"}));
+console.log(compiledTemplate.fetch({name: "Chex Lemeneux"}));

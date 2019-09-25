@@ -1,16 +1,16 @@
-define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (jSmartParser, jSmartProcessor, objectMerge) {
+define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (LatteParser, LatteProcessor, objectMerge) {
   var version = '@VERSION'
 
   /*
-   Define jsmart constructor. jSmart object just stores,
+   Define LatteJS constructor. Latte object just stores,
    tree, $smarty block and some intialization methods.
-   We keep jSmart object light weight as one page or program
-   might contain to many jSmart objects.
-   Keep parser and processor outside of jSmart objects, help
+   We keep Latte object light weight as one page or program
+   might contain to many Latte objects.
+   Keep parser and processor outside of Latte objects, help
    us not to store, same parser and processor methods in all
-   jSmart object.
+   Latte object.
   */
-  var jSmart = function (template, options) {
+  var Latte = function (template, options) {
     // Smarty object which has version, delimiters, config, current directory
     // and all blocks like PHP Smarty.
     this.smarty = {
@@ -51,7 +51,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       // Current directory, underscored name as PHP Smarty does it.
       current_dir: '/',
 
-      // Currrent template.
+      // Current template.
       template: '',
 
       // Left delimiter.
@@ -60,7 +60,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       // Right delimiter.
       rdelim: '}',
 
-      // Current version of jSmart.
+      // Current version of LatteJS.
       version: version
     }
 
@@ -82,9 +82,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     this.parse(template, options)
   }
 
-  // Add more properties to jSmart core.
-  jSmart.prototype = {
-    constructor: jSmart,
+  // Add more properties to Latte core.
+  Latte.prototype = {
+    constructor: Latte,
 
     // Current tree structure.
     tree: [],
@@ -108,6 +108,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // Filters which are applied after processing whole template are in 'post'.
     filters: {
       'variable': [],
+      'params': [],
       'post': []
     },
 
@@ -115,6 +116,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     filtersGlobal: {
       'pre': [],
       'variable': [],
+      'params': [],
       'post': []
     },
 
@@ -132,7 +134,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     // {function} tags.
     runTimePlugins: {},
 
-    // Initialize, jSmart, set settings and parse the template.
+    // Initialize, Latte, set settings and parse the template.
     parse: function (template, options) {
       var parsedTemplate
       if (!options) {
@@ -141,9 +143,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (options.rdelim) {
         // If delimiters are passed locally take them.
         this.smarty.rdelim = options.rdelim
-      } else if (jSmart.prototype.right_delimiter) {
+      } else if (Latte.prototype.right_delimiter) {
         // Backward compatible. Old way to set via prototype.
-        this.smarty.rdelim = jSmart.prototype.right_delimiter
+        this.smarty.rdelim = Latte.prototype.right_delimiter
       } else {
         // Otherwise default delimiters
         this.smarty.rdelim = '}'
@@ -151,9 +153,9 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (options.ldelim) {
         // If delimiters are passed locally take them.
         this.smarty.ldelim = options.ldelim
-      } else if (jSmart.prototype.left_delimiter) {
+      } else if (Latte.prototype.left_delimiter) {
         // Backward compatible. Old way to set via prototype.
-        this.smarty.ldelim = jSmart.prototype.left_delimiter
+        this.smarty.ldelim = Latte.prototype.left_delimiter
       } else {
         // Otherwise default delimiters
         this.smarty.ldelim = '{'
@@ -161,25 +163,25 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       if (options.autoLiteral !== undefined) {
         // If autoLiteral is passed locally, take it.
         this.autoLiteral = options.autoLiteral
-      } else if (jSmart.prototype.auto_literal !== undefined) {
+      } else if (Latte.prototype.auto_literal !== undefined) {
         // Backward compatible. Old way to set via prototype.
-        this.autoLiteral = jSmart.prototype.auto_literal
+        this.autoLiteral = Latte.prototype.auto_literal
       }
 
       if (options.debugging !== undefined) {
         // If debugging is passed locally, take it.
         this.debugging = options.debugging
-      } else if (jSmart.prototype.debugging !== undefined) {
+      } else if (Latte.prototype.debugging !== undefined) {
         // Backward compatible. Old way to set via prototype.
-        this.debugging = jSmart.prototype.debugging
+        this.debugging = Latte.prototype.debugging
       }
 
       if (options.escapeHtml !== undefined) {
         // If escapeHtml is passed locally, take it.
         this.escapeHtml = options.escapeHtml
-      } else if (jSmart.prototype.escape_html !== undefined) {
+      } else if (Latte.prototype.escape_html !== undefined) {
         // Backward compatible. Old way to set via prototype.
-        this.escapeHtml = jSmart.prototype.escape_html
+        this.escapeHtml = Latte.prototype.escape_html
       }
 
       // Is template string or at least defined?!
@@ -187,16 +189,16 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
 
       // Generate the tree. We pass delimiters and many config values
       // which are needed by parser to parse like delimiters.
-      jSmartParser.clear()
-      jSmartParser.rdelim = this.smarty.rdelim
-      jSmartParser.ldelim = this.smarty.ldelim
-      jSmartParser.getTemplate = this.getTemplate
-      jSmartParser.getConfig = this.getConfig
-      jSmartParser.autoLiteral = this.autoLiteral
-      jSmartParser.plugins = this.plugins
-      jSmartParser.preFilters = this.filtersGlobal.pre
+      LatteParser.clear()
+      LatteParser.rdelim = this.smarty.rdelim
+      LatteParser.ldelim = this.smarty.ldelim
+      LatteParser.getTemplate = this.getTemplate
+      LatteParser.getConfig = this.getConfig
+      LatteParser.autoLiteral = this.autoLiteral
+      LatteParser.plugins = this.plugins
+      LatteParser.preFilters = this.filtersGlobal.pre
       // Above parser config are set, lets parse.
-      parsedTemplate = jSmartParser.getParsed(template)
+      parsedTemplate = LatteParser.getParsed(template)
       this.tree = parsedTemplate.tree
       this.runTimePlugins = parsedTemplate.runTimePlugins
       this.blocks = parsedTemplate.blocks
@@ -217,38 +219,45 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
 
       // Take default global modifiers, add with local default modifiers.
       // Merge them and keep them cached.
-      this.globalAndDefaultModifiers = jSmart.prototype.defaultModifiersGlobal.concat(this.defaultModifiers)
+      this.globalAndDefaultModifiers = Latte.prototype.defaultModifiersGlobal.concat(this.defaultModifiers)
 
       // Take default global filters, add with local default filters.
       // Merge them and keep them cached.
-      this.globalAndDefaultFilters = jSmart.prototype.filtersGlobal.variable.concat(this.filters.variable)
+      this.globalAndDefaultFilters = Latte.prototype.filtersGlobal.variable.concat(this.filters.variable)
 
-      jSmartProcessor.clear()
-      jSmartProcessor.plugins = this.plugins
-      jSmartProcessor.modifiers = this.modifiers
-      jSmartProcessor.defaultModifiers = this.defaultModifiers
-      jSmartProcessor.escapeHtml = this.escapeHtml
-      jSmartProcessor.variableFilters = this.globalAndDefaultFilters
-      jSmartProcessor.runTimePlugins = this.runTimePlugins
-      jSmartProcessor.blocks = this.blocks
-      jSmartProcessor.outerBlocks = this.outerBlocks
-      jSmartProcessor.debugging = this.debugging
+      LatteProcessor.clear()
+      LatteProcessor.plugins = this.plugins
+      LatteProcessor.modifiers = this.modifiers
+      LatteProcessor.defaultModifiers = this.defaultModifiers
+      LatteProcessor.escapeHtml = this.escapeHtml
+      LatteProcessor.variableFilters = this.globalAndDefaultFilters
+      LatteProcessor.runTimePlugins = this.runTimePlugins
+      LatteProcessor.blocks = this.blocks
+      LatteProcessor.outerBlocks = this.outerBlocks
+      LatteProcessor.debugging = this.debugging
 
       // Capture the output by processing the template.
-      outputData = jSmartProcessor.getProcessed(this.tree, data, this.smarty)
+      outputData = LatteProcessor.getProcessed(this.tree, data, this.smarty)
 
       // Merge back smarty data returned by process to original object.
       objectMerge(this.smarty, outputData.smarty)
       // Apply post filters to output and return the template data.
-      return this.applyFilters(jSmart.prototype.filtersGlobal.post.concat(this.filters.post), outputData.output)
+      return this.applyFilters(Latte.prototype.filtersGlobal.post.concat(this.filters.post), outputData.output)
     },
 
     // Apply the filters to template.
-    applyFilters: function (filters, tpl) {
-      for (var i = 0; i < filters.length; ++i) {
-        tpl = filters[i](tpl)
+    applyFilters: function (filters, val) {
+      var args = []
+
+      for (var j = 1; j < arguments.length; j++) {
+        args[j - 1] = arguments[j]
       }
-      return tpl
+
+      for (var i = 0; i < filters.length; ++i) {
+        val = filters[i].apply(this, args)
+      }
+
+      return val
     },
 
     // Print the object.
@@ -301,7 +310,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
 
     // Register a filter.
     registerFilter: function (type, callback) {
-      (this.tree ? this.filters : jSmart.prototype.filtersGlobal)[((type === 'output') ? 'post' : type)].push(callback)
+      (this.tree && this.tree.length > 0 ? this.filters : Latte.prototype.filtersGlobal)[((type === 'output') ? 'post' : type)].push(callback)
     },
 
     addDefaultModifier: function (modifiers) {
@@ -310,7 +319,7 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
       }
 
       for (var i = 0; i < modifiers.length; ++i) {
-        var data = jSmartParser.parseModifiers('|' + modifiers[i], [0])
+        var data = LatteParser.parseModifiers('|' + modifiers[i], [0])
         if (this.tree) {
           this.defaultModifiers.push(data.tree[0])
         } else {
@@ -336,5 +345,10 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (j
     }
   }
 
-  return jSmart
+  LatteProcessor.runFilters = function (actualParams, data, params) {
+    var filters = Latte.prototype.filtersGlobal.params.concat(Latte.prototype.filters.params)
+    return Latte.prototype.applyFilters(filters, actualParams, data, params)
+  }
+
+  return Latte
 })

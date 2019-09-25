@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: foreach', function () {
     var tpl
     var output
@@ -10,7 +10,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$person}\\n'
       tpl += '{/foreach}'
       output = 'Uma\\nPallavi\\nLokesh\\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
@@ -20,7 +20,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$person@index} => {$person}\\n'
       tpl += '{/foreach}'
       output = '0 => Uma\\n1 => Pallavi\\n2 => Lokesh\\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
@@ -30,14 +30,14 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$key} => {$person}\\n'
       tpl += '{/foreach}'
       output = '0 => Uma\\n1 => Pallavi\\n2 => Lokesh\\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
 
       tpl = '{foreach $people as $person}'
       tpl += '{$person@key} => {$person}\\n'
       tpl += '{/foreach}'
       output = '0 => Uma\\n1 => Pallavi\\n2 => Lokesh\\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
@@ -46,7 +46,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$person@iteration} => {$person}\\n'
       tpl += '{/foreach}'
       output = '1 => Uma\\n2 => Pallavi\\n3 => Lokesh\\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
@@ -56,7 +56,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$person}:'
       tpl += '{/foreach}'
       output = 'List of names =>Uma:Pallavi:Lokesh:'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
 
       tpl = '{foreach $people as $person}'
@@ -64,7 +64,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{if !$person@last}:{/if}'
       tpl += '{/foreach}'
       output = 'Uma:Pallavi:Lokesh'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
@@ -75,7 +75,7 @@ define(['jSmart'], function (jSmart) {
       output = 'Uma is 3 from last\\n'
       output += 'Pallavi is 2 from last\\n'
       output += 'Lokesh is 1 from last\\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
     })
 
@@ -86,7 +86,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{if $person@show}it had data{/if}'
       output = 'Uma:Pallavi:Lokesh:'
       output += 'it had data'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
 
       tpl = '{foreach $people as $person}'
@@ -94,7 +94,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/foreach}'
       tpl += '{if !$person@show}it had no data{/if}'
       output = 'it had no data'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: []})).toBe(output)
     })
 
@@ -120,7 +120,7 @@ define(['jSmart'], function (jSmart) {
       output += 'email: ktest@test.com\\n'
       output += '----------------\\n'
 
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({people: [
         {name: 'Uma', email: 'test@test.com'},
         {name: 'Pallavi', email: 'ptest@test.com'},
@@ -135,7 +135,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$value}-'
       tpl += '{/foreach}'
       output = '1-2- '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -146,7 +146,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$value}-'
       tpl += '{/foreach}'
       output = '1-2- 4-5-'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -157,7 +157,7 @@ define(['jSmart'], function (jSmart) {
       tpl += 'dont print'
       tpl += '{/foreach}'
       output = '1-2-3-4-5-'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [1, 2, 3, 4, 5]})).toBe(output)
 
       tpl = '{foreach $data as $value}'
@@ -166,7 +166,7 @@ define(['jSmart'], function (jSmart) {
       tpl += 'print this'
       tpl += '{/foreach}'
       output = 'print this'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: []})).toBe(output)
     })
 
@@ -175,7 +175,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$mykey}-{$value}:'
       tpl += '{/foreach}'
       output = '0-1:1-2:2-3:3-4:4-5:'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [1, 2, 3, 4, 5]})).toBe(output)
     })
   })

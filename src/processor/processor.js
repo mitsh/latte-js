@@ -1,6 +1,6 @@
 define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties', '../util/objectmerge', '../util/trimallquotes'], function (findInArray, isEmptyObject, countProperties, objectMerge, trimAllQuotes) {
   // Processor object. Plain object which just does processing.
-  var jSmartProcessor = {
+  var LatteProcessor = {
 
     // Variable set temporary for processing.
     tplModifiers: [],
@@ -9,11 +9,11 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
     runTimePlugins: {},
 
     // Plugins function to use for processing.
-    // They are added later from jSmart, so we need a copy here.
+    // They are added later from LatteJS, so we need a copy here.
     plugins: {},
 
     // Modifiers function to use for processing.
-    // They are added later from jSmart, so we need a copy here.
+    // They are added later from LatteJS, so we need a copy here.
     modifiers: {},
 
     // Variable modifiers default to be applied.
@@ -203,7 +203,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
         return defVal
       }
-      return actualParams
+      return this.runFilters(actualParams, data, params)
     },
 
     getVarValue: function (node, data, value) {
@@ -265,11 +265,18 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters, tpl) {
-      for (var i = 0; i < filters.length; ++i) {
-        tpl = filters[i](tpl)
+    applyFilters: function (filters, val) {
+      var args = []
+
+      for (var j = 1; j < arguments.length; j++) {
+        args[j - 1] = arguments[j]
       }
-      return tpl
+
+      for (var i = 0; i < filters.length; ++i) {
+        val = filters[i].apply(this, args)
+      }
+
+      return val
     },
 
     assignVar: function (name, value, data) {
@@ -895,5 +902,5 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
     }
   }
 
-  return jSmartProcessor
+  return LatteProcessor
 })

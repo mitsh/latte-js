@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: capture', function () {
     var tpl
     var output
@@ -11,7 +11,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/capture}'
       tpl += '{$smarty.capture.simple}'
       output = 'captured it'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
 
       // Simple short hand
@@ -20,7 +20,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/capture}'
       tpl += '{$smarty.capture.withData}'
       output = 'yo, my name is Pallavi.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({myName: 'Pallavi'})).toBe(output)
     })
 
@@ -31,7 +31,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/capture}'
       tpl += '{$simple}'
       output = 'captured it'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -42,7 +42,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/capture}'
       tpl += '{$smarty.capture.default}'
       output = 'captured it for default'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -55,7 +55,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/capture}'
       tpl += '{$smarty.capture.t2} {$smarty.capture.t3}'
       output = 't2 t3 '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -68,7 +68,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$smarty.capture.t1}'
       tpl += '{/foreach}'
       output = '1 2 3 '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({ items: [1, 2, 3] })).toBe(output)
     })
   })

@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: literal', function () {
     var tpl
     var output
@@ -8,14 +8,14 @@ define(['jSmart'], function (jSmart) {
       // Simple
       tpl = '{literal} <script> function x () { var y; } function c() {alert(1)}</script> {/literal}'
       output = ' <script> function x () { var y; } function c() {alert(1)}</script> '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
     it('test custom delimiter literal', function () {
       tpl = '{{literal}} <script> function x () { var y; }</script> {{/literal}}'
       output = ' <script> function x () { var y; }</script> '
-      t = new jSmart(tpl, {ldelim: '{{', rdelim: '}}'})
+      t = new Latte(tpl, {ldelim: '{{', rdelim: '}}'})
       expect(t.fetch()).toBe(output)
     })
   })

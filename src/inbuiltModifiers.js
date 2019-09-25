@@ -1,5 +1,5 @@
-define(['./core'], function (jSmart) {
-  jSmart.prototype.registerPlugin(
+define(['./core'], function (Latte) {
+  Latte.prototype.registerPlugin(
     'function',
     '__quoted',
     function (params, data) {
@@ -8,7 +8,7 @@ define(['./core'], function (jSmart) {
   )
 
   // Register __array which gets called for all arrays.
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     '__array',
     function (params, data) {
@@ -23,7 +23,7 @@ define(['./core'], function (jSmart) {
   )
 
   // Register __func which gets called for all modifiers and function calls.
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'function',
     '__func',
     function (params, data) {
@@ -43,8 +43,8 @@ define(['./core'], function (jSmart) {
           // When function doesn't has arguments.
           return fname[params.name].apply(fname)
         }
-      } else if (jSmart.prototype.modifiers.hasOwnProperty(params.name)) {
-        fname = jSmart.prototype.modifiers[params.name]
+      } else if (Latte.prototype.modifiers.hasOwnProperty(params.name)) {
+        fname = Latte.prototype.modifiers[params.name]
         return fname.apply(fname, paramData)
       } else {
         fname = params.name
@@ -70,5 +70,5 @@ define(['./core'], function (jSmart) {
     }
   )
 
-  return jSmart
+  return Latte
 })

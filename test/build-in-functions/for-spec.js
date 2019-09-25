@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: for', function () {
     it('test simple for', function () {
       var tpl
@@ -10,7 +10,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$foo}'
       tpl += '{/for}'
       output = '123'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -23,7 +23,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$foo}'
       tpl += '{/for}'
       output = '456'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({to: 10})).toBe(output)
     })
 
@@ -38,7 +38,7 @@ define(['jSmart'], function (jSmart) {
       tpl += 'no iteration'
       tpl += '{/for}'
       output = 'no iteration'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({from: 10, to: 5})).toBe(output)
     })
 
@@ -54,7 +54,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/for}'
       tpl += '{/for}'
       output = '112223334445'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({from: 10, to: 5})).toBe(output)
     })
   })

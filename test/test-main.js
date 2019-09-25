@@ -18,11 +18,12 @@ require.config({
 
   paths: {
     text: 'node_modules/requirejs-text/text',
-    'jSmart': 'src/jsmart',
+    'Latte': 'src/latte',
     'core': 'src/core',
     'plugins': 'src/plugins',
     'inbuiltModifiers': 'src/inbuiltModifiers',
     'customFunctions': 'src/customFunctions',
+    'addonFunctions': 'src/addonFunctions',
     'parser/parser': 'src/parser/parser',
     'processor/processor': 'src/processor/processor',
     'util/objectmerge': 'src/util/objectmerge',

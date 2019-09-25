@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: count', function () {
     var tpl
     var output
@@ -7,28 +7,28 @@ define(['jSmart'], function (jSmart) {
     it('test count', function () {
       tpl = '{$data|count}'
       output = 3
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [0, 1, 2]})).toBe(output)
     })
 
     it('test count empty', function () {
       tpl = '{$data|count}'
       output = 0
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: []})).toBe(output)
     })
 
     it('test count object', function () {
       tpl = '{$data|count}'
       output = 3
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: {x: 1, y: 2, z: 3}})).toBe(output)
     })
 
     it('test count empty object', function () {
       tpl = '{$data|count}'
       output = 0
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: {}})).toBe(output)
     })
   })

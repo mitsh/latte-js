@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: ldelim rdelim', function () {
     var tpl
     var output
@@ -8,27 +8,27 @@ define(['jSmart'], function (jSmart) {
       // Simple
       tpl = '{ldelim}function{rdelim} prints left and right delimiters'
       output = '{function} prints left and right delimiters'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
     it('test delimiter local', function () {
       tpl = '{{ldelim}}function{{rdelim}} prints {test} left and right delimiters'
       output = '{{function}} prints {test} left and right delimiters'
-      t = new jSmart(tpl, {ldelim: '{{', rdelim: '}}'})
+      t = new Latte(tpl, {ldelim: '{{', rdelim: '}}'})
       expect(t.fetch()).toBe(output)
     })
 
     it('test delimiter global and backword compatible', function () {
-      jSmart.prototype.left_delimiter = '{{{'
-      jSmart.prototype.right_delimiter = '}}}'
+      Latte.prototype.left_delimiter = '{{{'
+      Latte.prototype.right_delimiter = '}}}'
       tpl = '{{{ldelim}}}function{{{rdelim}}} prints {test} left and right delimiters'
       output = '{{{function}}} prints {test} left and right delimiters'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
       // Reset global by removing them
-      jSmart.prototype.left_delimiter = null
-      jSmart.prototype.right_delimiter = null
+      Latte.prototype.left_delimiter = null
+      Latte.prototype.right_delimiter = null
     })
   })
 })

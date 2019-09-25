@@ -1,11 +1,13 @@
 {
-  "name": "jsmart",
-  "title": "jSmart",
-  "description": "jSmart is javascript templating engine based on PHP Smarty Template Engine.",
-  "main": "dist/jsmart.js",
-  "version": "3.1.0",
-  "url": "https://github.com/umakantp/jsmart/",
+  "name": "latte-js",
+  "title": "LatteJS",
+  "description": "LatteJS is javascript templating engine based on PHP Smarty Template Engine.",
+  "main": "dist/latte.js",
+  "version": "4.0.0",
+  "url": "https://github.com/pfaciana/latte-js/",
   "keywords": [
+    "latte-js",
+    "LatteJS",
     "jsmart",
     "smarty",
     "javascript",
@@ -13,8 +15,12 @@
     "templates",
     "engine"
   ],
-  "author": "Umakant Patil <me@umakantpatil.com>",
+  "author": "Phil Faciana <phil@renderdev.com>",
   "contributors": [
+    {
+      "name": "Phil Faciana",
+      "email": "phil@renderdev.com"
+    },
     {
       "name": "Umakant Patil",
       "email": "me@umakantpatil.com"
@@ -27,12 +33,14 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "es5-util": "^1",
     "eslint-config-standard": "^10.2.1",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
     "grunt": "^1.0.1",
+    "grunt-browserify": "^5",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^3.1.0",
     "grunt-eslint": "^20.1.0",
@@ -44,20 +52,18 @@
     "karma-requirejs": "^1.1.0",
     "karma-spec-reporter": "0.0.31",
     "load-grunt-tasks": "^3.5.2",
+    "locutus": "^2",
     "requirejs": "^2.3.5",
     "requirejs-text": "^2.0.15"
-  },
-  "bugs": {
-    "url": "https://github.com/umakantp/jsmart/issues"
   },
   "scripts": {
     "build": "npm install && grunt",
     "test": "grunt karma",
     "precommit": "grunt lint && grunt karma",
-    "doc": "https://github.com/umakantp/jsmart/wiki"
+    "doc": "https://github.com/pfaciana/latte-js/wiki"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/umakantp/jsmart.git"
+    "url": "https://github.com/pfaciana/latte-js.git"
   }
 }

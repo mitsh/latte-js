@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: strip', function () {
     var tpl
     var output
@@ -13,7 +13,7 @@ define(['jSmart'], function (jSmart) {
       tpl += 'hope so'
       tpl += '{/strip}'
       output = 'all white spaces andnew lines shall be removed.hope so'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

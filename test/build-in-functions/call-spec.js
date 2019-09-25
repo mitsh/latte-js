@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: call', function () {
     it('test simple call', function () {
       var tpl
@@ -11,7 +11,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/function}'
       tpl += "{call name='simple'}"
       output = 'function outputs this'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
 
       // Simple short hand
@@ -20,7 +20,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/function}'
       tpl += "{call 'withData' myName=$myName}"
       output = 'yo, my name is Pallavi.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({myName: 'Pallavi'})).toBe(output)
     })
 
@@ -36,7 +36,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/function}'
       tpl += "{call name='menu'}"
       output = 'Current level is: 0\\n Current level is: 2\\n '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

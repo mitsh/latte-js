@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test custom function:: cycle', function () {
     var tpl
     var output
@@ -11,7 +11,7 @@ define(['jSmart'], function (jSmart) {
       output = '<div class="odd"> 1 </div>'
       output += '<div class="even"> 2 </div>'
       output += '<div class="odd"> 3 </div>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [1, 2, 3]})).toBe(output)
     })
 
@@ -22,7 +22,7 @@ define(['jSmart'], function (jSmart) {
       output = '<div class="odd"> 1 </div>'
       output += '<div class="even"> 2 </div>'
       output += '<div class="odd"> 3 </div>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [1, 2, 3]})).toBe(output)
     })
 
@@ -33,7 +33,7 @@ define(['jSmart'], function (jSmart) {
       output = '<div class="odd"> 1 </div>'
       output += '<div class="even"> 2 </div>'
       output += '<div class="odd"> 3 </div>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [1, 2, 3]})).toBe(output)
     })
 
@@ -45,7 +45,7 @@ define(['jSmart'], function (jSmart) {
       output = '<div class="odd"> 1 </div>'
       output += '<div class="even"> 2 </div>'
       output += '<div class="odd"> 3 </div>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({data: [1, 2, 3]})).toBe(output)
     })
   })

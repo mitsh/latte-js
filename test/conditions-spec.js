@@ -1,6 +1,6 @@
-define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (jSmart, smartyTpl, outputTpl) {
+define(['Latte', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (Latte, smartyTpl, outputTpl) {
   describe('Test Conditions', function () {
-    jSmart.prototype.registerPlugin(
+    Latte.prototype.registerPlugin(
       'function',
       'isEmptyStr',
       function (params, data) {
@@ -8,7 +8,7 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (
       }
     )
 
-    jSmart.prototype.registerPlugin(
+    Latte.prototype.registerPlugin(
       'function',
       'sayHello',
       function (params, data) {
@@ -41,7 +41,7 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (
 
       var output = 'it works|yo works|and it works'
 
-      var t = new jSmart(tpl)
+      var t = new Latte(tpl)
 
       expect(t.fetch({x: true, y: 0})).toBe(output)
     })
@@ -63,7 +63,7 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (
 
       var output = 'insideX-insideElseOfY-insideTrue-'
 
-      var t = new jSmart(tpl)
+      var t = new Latte(tpl)
 
       expect(t.fetch({x: true, y: 0})).toBe(output)
 
@@ -96,14 +96,14 @@ define(['jSmart', 'text!./templates/if.tpl', 'text!./output/if.tpl'], function (
 
       output = 'insideWhat-insideY-insideMakeit-insideBlank-insideFinal-'
 
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
 
       expect(t.fetch({x: false, y: 'yo', z: {a: {b: true}}})).toBe(output)
     })
 
     it('test complex template', function () {
       // Insert complex statements in the template and test them.
-      var t = new jSmart(smartyTpl)
+      var t = new Latte(smartyTpl)
       expect(t.fetch(getData())).toBe(outputTpl)
     })
   })

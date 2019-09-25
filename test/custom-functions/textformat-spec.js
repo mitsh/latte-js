@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test custom function:: textformat', function () {
     var tpl
     var output
@@ -19,7 +19,7 @@ define(['jSmart'], function (jSmart) {
       output += 'foo. This is foo.\n'
       output += 'This is foo. This is\n'
       output += 'foo.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

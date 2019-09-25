@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: while', function () {
     var tpl
     var output
@@ -10,7 +10,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{$fooTest--}'
       tpl += '{/while}{$fooTest}'
       output = '543210'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({fooTest: 5})).toBe(output)
     })
 
@@ -22,7 +22,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{break}'
       tpl += '{/while}{$fooTest}'
       output = '554'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({fooTest: 5})).toBe(output)
     })
   })

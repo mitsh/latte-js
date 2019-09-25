@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: setfilter', function () {
     var tpl
     var output
@@ -8,7 +8,7 @@ define(['jSmart'], function (jSmart) {
       // Simple
       tpl = '{setfilter upper} {$var1} {/setfilter}'
       output = ' HELLO WORLD '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({
         var1: 'Hello World'
       })).toBe(output)
@@ -18,7 +18,7 @@ define(['jSmart'], function (jSmart) {
       // Simple
       tpl = '{setfilter upper} {$var1} {setfilter lower} {$var2} {/setfilter} {$var3} {/setfilter}'
       output = ' HELLO WORLD  hello world  HELLO WORLD '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({
         var1: 'Hello World',
         var2: 'Hello World',

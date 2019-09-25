@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: replace', function () {
     var tpl
     var output
@@ -7,7 +7,7 @@ define(['jSmart'], function (jSmart) {
     it('test replace', function () {
       tpl = '{$articleTitle|replace:"Infertility":"Intelligence"}'
       output = 'Intelligence unlikely to be passed on, experts say.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({articleTitle: 'Infertility unlikely to be passed on, experts say.'})).toBe(output)
     })
   })

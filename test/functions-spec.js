@@ -1,6 +1,6 @@
-define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl'], function (jSmart, smartyTpl, outputTpl) {
+define(['Latte', 'text!./templates/functions.tpl', 'text!./output/functions.tpl'], function (Latte, smartyTpl, outputTpl) {
   describe('Test Functions', function () {
-    jSmart.prototype.registerPlugin(
+    Latte.prototype.registerPlugin(
       'function',
       'isEmptyStr',
       function (params, data) {
@@ -8,7 +8,7 @@ define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl
       }
     )
 
-    jSmart.prototype.registerPlugin(
+    Latte.prototype.registerPlugin(
       'function',
       'sayHello',
       function (params, data) {
@@ -33,7 +33,7 @@ define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl
       tpl += '\n'
       tpl += '{sayHello to="whole World"}'
 
-      var t = new jSmart(tpl)
+      var t = new Latte(tpl)
       expect(t.fetch()).toBe('Hello whole World!')
     })
 
@@ -46,7 +46,7 @@ define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl
       tpl += ' and '
       tpl += "{helloAgain('world')}"
 
-      var t = new jSmart(tpl)
+      var t = new Latte(tpl)
       expect(t.fetch({
         helloAgain: function (name) {
           return window.hello(name) + ' again'
@@ -56,7 +56,7 @@ define(['jSmart', 'text!./templates/functions.tpl', 'text!./output/functions.tpl
 
     it('test complex template', function () {
       // Insert complex statements in the template and test them.
-      var t = new jSmart(smartyTpl)
+      var t = new Latte(smartyTpl)
       expect(t.fetch(getData())).toBe(outputTpl)
     })
   })

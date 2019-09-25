@@ -1,7 +1,7 @@
-define(['./core', './util/phpjs'], function (jSmart, phpJs) {
+define(['./core', './util/phpjs'], function (Latte, phpJs) {
   'use strict'
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'capitalize',
     function (s, upDigits, lcRest) {
@@ -32,7 +32,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'cat',
     function (s, value) {
@@ -41,7 +41,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'count',
     function (a) {
@@ -64,7 +64,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'count_characters',
     function (s, includeWhitespaces) {
@@ -73,7 +73,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'count_paragraphs',
     function (s) {
@@ -85,7 +85,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'count_sentences',
     function (s) {
@@ -99,7 +99,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'count_words',
     function (s) {
@@ -113,7 +113,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'date_format',
     function (s, fmt, defaultDate) {
@@ -121,7 +121,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'debug_print_var',
     function (s) {
@@ -139,14 +139,14 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
         return ''
       }
       if (env === 'browser') {
-        return jSmart.prototype.printR(s)
+        return Latte.prototype.printR(s)
       } else {
         console.log(s)
       }
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'defaultValue',
     function (s, value) {
@@ -155,7 +155,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'escape',
     function (s, escType, charSet, doubleEncode) {
@@ -229,7 +229,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'from_charset',
     function (s) {
@@ -238,7 +238,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'indent',
     function (s, repeat, indentWith) {
@@ -256,7 +256,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'lower',
     function (s) {
@@ -264,7 +264,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'nl2br',
     function (s) {
@@ -274,7 +274,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
 
   // only modifiers (flags) 'i' and 'm' are supported
   // backslashes should be escaped e.g. \\s
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'regex_replace',
     function (s, re, replaceWith) {
@@ -283,7 +283,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'replace',
     function (s, search, replaceWith) {
@@ -304,7 +304,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'spacify',
     function (s, space) {
@@ -315,7 +315,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'string_format',
     function (s, fmt) {
@@ -323,7 +323,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'strip',
     function (s, replaceWith) {
@@ -332,7 +332,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'strip_tags',
     function (s, addSpaceOrTagsToExclude, tagsToExclude) {
@@ -364,7 +364,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'to_charset',
     function (s) {
@@ -373,7 +373,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'truncate',
     function (s, length, etc, breakWords, middle) {
@@ -399,7 +399,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'unescape',
     function (s, escType, charSet) {
@@ -425,7 +425,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'upper',
     function (s) {
@@ -433,7 +433,7 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  jSmart.prototype.registerPlugin(
+  Latte.prototype.registerPlugin(
     'modifier',
     'wordwrap',
     function (s, width, wrapWith, breakWords) {
@@ -463,5 +463,5 @@ define(['./core', './util/phpjs'], function (jSmart, phpJs) {
     }
   )
 
-  return jSmart
+  return Latte
 })

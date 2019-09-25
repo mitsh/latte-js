@@ -1,6 +1,6 @@
 define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '../util/findinarray'], function (objectMerge, trimAllQuotes, evalString, findInArray) {
   // Parser object. Plain object which just does parsing.
-  var jSmartParser = {
+  var LatteParser = {
 
     // Cached templates.
     files: {},
@@ -18,7 +18,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     runTimePlugins: {},
 
     // Plugins function to use for parsing.
-    // They are added later from jSmart, so we need a copy here.
+    // They are added later from LatteJS, so we need a copy here.
     plugins: {},
 
     // Listing down all pre filters, before processing a template.
@@ -56,7 +56,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       template = template.replace(/\r\n/g, '\n')
       // Apply global pre filters to the template. These are global filters,
       // so we take it from global object, rather than taking it as args to
-      // "new jSmart()" object.
+      // "new Latte()" object.
       template = this.applyFilters(this.preFilters, template)
 
       // Parse the template and get the output.
@@ -673,11 +673,18 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters, tpl) {
-      for (var i = 0; i < filters.length; ++i) {
-        tpl = filters[i](tpl)
+    applyFilters: function (filters, val) {
+      var args = []
+
+      for (var j = 1; j < arguments.length; j++) {
+        args[j - 1] = arguments[j]
       }
-      return tpl
+
+      for (var i = 0; i < filters.length; ++i) {
+        val = filters[i].apply(this, args)
+      }
+
+      return val
     },
 
     // Tokens to indentify data inside template.
@@ -1258,7 +1265,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           var tree = this.parse(content)
           // We have a tree, now we need to add it to runtime plugins list.
           // Let us store it as local plugin and end of parsing
-          // we pass it to original jSmart object.
+          // we pass it to original Latte object.
           this.runTimePlugins[trimAllQuotes(params.name ? params.name : params[0])] = {
             tree: tree,
             defaultParams: params
@@ -1359,5 +1366,5 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     }
   }
 
-  return jSmartParser
+  return LatteParser
 })

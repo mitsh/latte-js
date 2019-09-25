@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: wordwrap', function () {
     var tpl
     var output
@@ -9,21 +9,21 @@ define(['jSmart'], function (jSmart) {
       output = 'Blind woman gets new kidney\n'
       output += 'from dad she hasn\'t seen in\n'
       output += 'years.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Blind woman gets new kidney from dad she hasn\'t seen in years.'})).toBe(output)
 
       tpl = '{$words|wordwrap:30:"<br />\\n"}'
       output = 'Blind woman gets new kidney<br />\n'
       output += 'from dad she hasn\'t seen in<br />\n'
       output += 'years.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Blind woman gets new kidney from dad she hasn\'t seen in years.'})).toBe(output)
 
       tpl = '{$words|wordwrap:26:"<br />\\n":true}'
       output = 'Blind woman gets new kidn<br />\n'
       output += 'ey from dad she hasn\'t se<br />\n'
       output += 'en in years.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Blind woman gets new kidney from dad she hasn\'t seen in years.'})).toBe(output)
     })
   })

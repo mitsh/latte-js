@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: nocache', function () {
     var tpl
     var output
@@ -10,7 +10,7 @@ define(['jSmart'], function (jSmart) {
       // Simple
       tpl = '{nocache} test {/nocache}'
       output = ' test '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

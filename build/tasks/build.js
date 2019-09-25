@@ -1,5 +1,5 @@
 /**
- * Special concat/build task to handle various jSmart build requirements
+ * Special concat/build task to handle various LatteJS build requirements
  * Concats AMD modules, removes their definitions,
  * and includes/excludes specified modules
  *
@@ -29,7 +29,7 @@ module.exports = function(grunt) {
       config = {
         baseUrl: "src",
 
-        name: "jsmart",
+        name: "latte",
 
         // Allow strict mode
         useStrict: true,
@@ -48,7 +48,7 @@ module.exports = function(grunt) {
 
         wrap: {
           start: wrapper[ 0 ],
-          end: wrapper[ 1 ]
+          end: wrapper[ 1 ] + ';' + read( "addonFunctions.js" )
         },
 
         rawText: {},

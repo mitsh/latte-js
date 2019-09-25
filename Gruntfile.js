@@ -2,18 +2,24 @@ module.exports = function (grunt) {
   'use strict'
 
   if (!grunt.option('filename')) {
-    grunt.option('filename', 'jsmart.js')
+    grunt.option('filename', 'latte.js')
   }
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    browserify: {
+      js: {
+        src: ['src/filters/**/*.js', 'src/tags/**/*.js'],
+        dest: 'src/addonFunctions.js'
+      }
+    },
     build: {
       all: {
         dest: "dist/<%= grunt.option('filename') %>"
       }
     },
     eslint: {
-      src: ['src/**/*.js', 'Gruntfile.js', 'karma.conf.js', 'test/**/*.js', 'build/*.js']
+      src: ['src/**/*.js', '!src/filters/**/*.js', '!src/tags/**/*.js', '!src/utils/**/*.js', '!src/addonFunctions.js', 'Gruntfile.js', 'karma.conf.js', 'test/**/*.js', 'build/*.js']
     },
     karma: {
       unit: {
@@ -27,13 +33,9 @@ module.exports = function (grunt) {
           sourceMap: false,
           report: 'min',
           banner: '/*!\n' +
-          ' * jSmart JavaScript template engine (v<%= pkg.version %>)\n' +
-          ' * https://github.com/umakantp/jsmart\n' +
-          ' * https://opensource.org/licenses/MIT\n' +
-          ' *\n' +
-          ' * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>\n' +
-          ' *                      Max Miroshnikov <miroshnikov at gmail dot com>\n' +
-          ' */\n'
+            ' * LatteJS template engine (v<%= pkg.version %>)\n' +
+            ' * https://opensource.org/licenses/MIT\n' +
+            ' */\n'
         },
         files: {
           "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>": ["dist/<%= grunt.option('filename') %>"]
@@ -45,11 +47,11 @@ module.exports = function (grunt) {
         files: [
           {
             src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
-            dest: 'examples/simple/<%= pkg.name %>.min.js'
+            dest: "examples/simple/<%= grunt.option('filename').replace('.js', '.min.js') %>"
           },
           {
             src: "dist/<%= grunt.option('filename').replace('.js', '.min.js') %>",
-            dest: 'examples/requirejs/js/<%= pkg.name %>.min.js'
+            dest: "examples/requirejs/js/<%= grunt.option('filename').replace('.js', '.min.js') %>"
           }
         ]
       }
@@ -59,14 +61,15 @@ module.exports = function (grunt) {
   // Load grunt tasks from NPM packages
   require('load-grunt-tasks')(grunt)
 
-  // Integrate jSmart specific tasks
+  // Integrate LatteJS specific tasks
   grunt.loadTasks('build/tasks')
 
   // Register tasks from karma, uglify and copy.
   grunt.loadNpmTasks('grunt-karma')
   grunt.loadNpmTasks('grunt-contrib-uglify')
   grunt.loadNpmTasks('grunt-contrib-copy')
+  grunt.loadNpmTasks('grunt-browserify')
 
   // Order goes as test, compile, compress and distribute.
-  grunt.registerTask('default', ['eslint', 'karma', 'build', 'uglify', 'copy'])
+  grunt.registerTask('default', ['eslint', 'browserify', 'karma', 'build', 'uglify', 'copy'])
 }

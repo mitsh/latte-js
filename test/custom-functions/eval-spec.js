@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test custom function:: eval', function () {
     var tpl
     var output
@@ -7,7 +7,7 @@ define(['jSmart'], function (jSmart) {
     it('test simple eval', function () {
       tpl = '{eval var="hello {$world}"}'
       output = 'hello man'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({world: 'man'})).toBe(output)
     })
   })

@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: block', function () {
     var output
     var t
@@ -16,12 +16,12 @@ define(['jSmart'], function (jSmart) {
       child += 'New title'
       child += '{/block}'
 
-      jSmart.prototype.getTemplate = function () {
+      Latte.prototype.getTemplate = function () {
         return parent
       }
 
       output = '<b>wow New title</b>'
-      t = new jSmart(child)
+      t = new Latte(child)
       expect(t.fetch()).toBe(output)
     })
 
@@ -36,12 +36,12 @@ define(['jSmart'], function (jSmart) {
       child += 'complete'
       child += '{/block}  see if it ignores this.. should be'
 
-      jSmart.prototype.getTemplate = function () {
+      Latte.prototype.getTemplate = function () {
         return parent
       }
 
       output = '<b>wow title is complete</b>'
-      t = new jSmart(child)
+      t = new Latte(child)
       expect(t.fetch()).toBe(output)
     })
 
@@ -56,12 +56,12 @@ define(['jSmart'], function (jSmart) {
       child += 'yo '
       child += '{/block}  see if it ignores this.. should be'
 
-      jSmart.prototype.getTemplate = function () {
+      Latte.prototype.getTemplate = function () {
         return parent
       }
 
       output = '<b>wow yo is title</b>'
-      t = new jSmart(child)
+      t = new Latte(child)
       expect(t.fetch()).toBe(output)
     })
 
@@ -76,12 +76,12 @@ define(['jSmart'], function (jSmart) {
       child += 'new title'
       child += '{/block}  see if it ignores this.. should be'
 
-      jSmart.prototype.getTemplate = function () {
+      Latte.prototype.getTemplate = function () {
         return parent
       }
 
       output = '<b>wow  ** new title ** </b>'
-      t = new jSmart(child)
+      t = new Latte(child)
       expect(t.fetch()).toBe(output)
     })
 
@@ -96,15 +96,15 @@ define(['jSmart'], function (jSmart) {
       child += '** {$smarty.block.parent} **'
       child += '{/block}  see if it ignores this.. should be'
 
-      jSmart.prototype.getTemplate = function () {
+      Latte.prototype.getTemplate = function () {
         return parent
       }
 
       output = '<b>wow **  Default title  **</b>'
-      t = new jSmart(child)
+      t = new Latte(child)
       expect(t.fetch()).toBe(output)
     })
 
-    jSmart.prototype.getTemplate = null
+    Latte.prototype.getTemplate = null
   })
 })

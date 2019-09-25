@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test custom function:: html_radios', function () {
     var tpl
     var output
@@ -9,7 +9,7 @@ define(['jSmart'], function (jSmart) {
       output = '<label><input type="radio" name="id" value="1000" />Arnavi</label>\n'
       output += '<label><input type="radio" name="id" value="2000" />Tanishka</label>\n'
       output += '<label><input type="radio" name="id" value="3000" />Swastika</label>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({
         ids: [1000, 2000, 3000],
         names: ['Arnavi', 'Tanishka', 'Swastika']
@@ -21,7 +21,7 @@ define(['jSmart'], function (jSmart) {
       output = '<label><input type="radio" name="id" value="1000" />Arnavi</label><br>\n'
       output += '<label><input type="radio" name="id" value="2000" />Tanishka</label><br>\n'
       output += '<label><input type="radio" name="id" value="3000" />Swastika</label><br>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({
         list: {1000: 'Arnavi', 2000: 'Tanishka', 3000: 'Swastika'}
       })).toBe(output)
@@ -32,7 +32,7 @@ define(['jSmart'], function (jSmart) {
       output = '<input type="radio" name="id" value="1000" />Arnavi<br>\n'
       output += '<input type="radio" name="id" value="2000" checked="checked" />Tanishka<br>\n'
       output += '<input type="radio" name="id" value="3000" />Swastika<br>'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({
         list: {1000: 'Arnavi', 2000: 'Tanishka', 3000: 'Swastika'},
         selected: 2000

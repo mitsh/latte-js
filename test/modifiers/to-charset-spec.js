@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: to_charset', function () {
     var tpl
     var output
@@ -9,7 +9,7 @@ define(['jSmart'], function (jSmart) {
       // we do not support this.
       tpl = '{$articleTitle|to_charset}'
       output = 'Dealers Will Hear Car Talk at Noon.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({articleTitle: 'Dealers Will Hear Car Talk at Noon.'})).toBe(output)
     })
   })

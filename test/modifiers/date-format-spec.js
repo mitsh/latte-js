@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: date_format', function () {
     var tpl
     var output
@@ -15,7 +15,7 @@ define(['jSmart'], function (jSmart) {
       }
       output = month + ' ' + da + ', ' + d.getFullYear()
 
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -32,7 +32,7 @@ define(['jSmart'], function (jSmart) {
       }
       output = m + '/' + da + '/' + ((d.getFullYear() + '').substr(2))
 
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -42,7 +42,7 @@ define(['jSmart'], function (jSmart) {
       d.setTime(1473695667000)
       output = allMonths[(d.getMonth())] + ' ' + d.getDate() + ', ' + d.getFullYear()
 
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({yesterday: Math.floor((d.getTime() / 1000))})).toBe(output)
     })
   })

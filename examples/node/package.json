@@ -1,10 +1,10 @@
 {
-  "name": "jsmart-example",
-  "title": "jSmart-Example",
-  "description": "Demo jsmart example.",
+  "name": "latte-js-example",
+  "title": "LatteJS-Example",
+  "description": "Demo LatteJS example.",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "jsmart": "3.0.2"
+    "latte-js": "^4"
   }
 }

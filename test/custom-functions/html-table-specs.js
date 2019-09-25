@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test custom function:: html_table', function () {
     var tpl
     var output
@@ -11,7 +11,7 @@ define(['jSmart'], function (jSmart) {
       output += '<tr><td>4</td><td>5</td><td>6</td></tr>\n'
       output += '<tr><td>7</td><td>8</td><td>9</td></tr>\n'
       output += '</tbody>\n</table>\n'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({
         data: [1, 2, 3, 4, 5, 6, 7, 8, 9]
       })).toBe(output)

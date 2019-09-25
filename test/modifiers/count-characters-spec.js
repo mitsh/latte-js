@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test modifier:: count_characters', function () {
     var tpl
     var output
@@ -7,14 +7,14 @@ define(['jSmart'], function (jSmart) {
     it('test count_characters', function () {
       tpl = '{$words|count_characters}'
       output = 19
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Hello World with space  '})).toBe(output)
     })
 
     it('test count_characters', function () {
       tpl = '{$words|count_characters:true}'
       output = 24
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch({words: 'Hello World with space  '})).toBe(output)
     })
   })

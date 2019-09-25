@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: assign', function () {
     it('test simple assign', function () {
       var tpl
@@ -6,17 +6,17 @@ define(['jSmart'], function (jSmart) {
       var t
 
       // Single value
-      tpl = "{assign var='name' value='Umakant'}"
+      tpl = "{assign var='name' value='Chex'}"
       tpl += 'My name is {$name}.'
-      output = 'My name is Umakant.'
-      t = new jSmart(tpl)
+      output = 'My name is Chex.'
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
 
       // Single value short hand
       tpl = "{assign 'human' 'girl'}"
       tpl += 'You are a good {$human}.'
       output = 'You are a good girl.'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

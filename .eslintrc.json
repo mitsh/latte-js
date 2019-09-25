@@ -8,9 +8,9 @@
     "browser": true
   },
   "globals": {
-    "jSmart": true
+    "Latte": true
   },
   "rules": {
-    "new-cap": ["error", { "newIsCapExceptions": ["jSmart"] }]
+    "new-cap": ["error", { "newIsCapExceptions": ["Latte"] }]
   }
 }

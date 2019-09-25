@@ -1,4 +1,4 @@
-define(['jSmart'], function (jSmart) {
+define(['Latte'], function (Latte) {
   describe('Test build-in function:: function', function () {
     var tpl
     var output
@@ -11,7 +11,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/function}'
       tpl += '{simple}'
       output = 'it is a simple function'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -21,7 +21,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/function}'
       tpl += '{simple data="data"}'
       output = 'it is a data function'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -33,7 +33,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{simple data="data"}'
       output = 'it is a default function'
       output += 'it is a data function'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -45,7 +45,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{menu}'
       output = 'current level is 0.'
       output += ' current level is 2. '
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
 
@@ -55,7 +55,7 @@ define(['jSmart'], function (jSmart) {
       tpl += '{/function}'
       tpl += '{simple data="data"}'
       output = 'it is a data function'
-      t = new jSmart(tpl)
+      t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
     })
   })

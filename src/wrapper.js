@@ -1,9 +1,7 @@
 /*!
- * jSmart JavaScript template engine (v@VERSION)
- * https://github.com/umakantp/jsmart
+ * LatteJS template engine (v@VERSION)
+ * https://github.com/pfaciana/latte-js
  *
- * Copyright 2011-2017, Umakant Patil <me at umakantpatil dot com>
- *                      Max Miroshnikov <miroshnikov at gmail dot com>
  * https://opensource.org/licenses/MIT
  *
  * Date: @DATE
@@ -12,17 +10,17 @@
   'use strict'
 
   if (typeof module === 'object' && module && typeof module.exports === 'object') {
-    // Node.js like environment. Export jSmart
+    // Node.js like environment. Export Latte
     module.exports = factory()
   } else {
     if (typeof window === 'object' && window.document) {
       // Assign to browser window if window is present.
-      window.jSmart = factory()
+      window.Latte = factory()
     }
 
     if (typeof define === 'function' && define.amd) {
       // Require js is present? Lets define module.
-      define('jSmart', [], factory)
+      define('Latte', [], factory)
     }
   }
 
@@ -33,9 +31,9 @@
   // @CODE
 
   String.prototype.fetch = function (data) { // eslint-disable-line no-extend-native
-    var template = new jSmart(this)
+    var template = new Latte(this)
     return template.fetch(data)
   }
 
-  return jSmart
+  return Latte
 })
