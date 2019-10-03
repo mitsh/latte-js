@@ -339,7 +339,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       var data = {value: '', tree: []}
       var lookUpData
       var value = ''
-      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|first|last|show|total)/gi, '$1__$2')}]
+      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|counter|odd|even|first|last|empty|show|total)/gi, '$1__$2')}]
       var rootName = token
 
       if (!token) {
@@ -673,7 +673,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters, val) {
+    applyFilters: function (filters) {
       var args = []
 
       for (var j = 1; j < arguments.length; j++) {
@@ -681,10 +681,10 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       }
 
       for (var i = 0; i < filters.length; ++i) {
-        val = filters[i].apply(this, args)
+        args[0] = filters[i].apply(this, args)
       }
 
-      return val
+      return args[0]
     },
 
     // Tokens to indentify data inside template.
@@ -1209,6 +1209,122 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           return [{
             type: 'build-in',
             name: 'if',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifempty': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifempty\\s+[^}]+', '/ifempty', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifempty(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifempty',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifnotempty': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifnotempty\\s+[^}]+', '/ifnotempty', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifnotempty(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifnotempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifnotempty',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifset': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifset\\s+[^}]+', '/ifset', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifset(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifset',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifnotset': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifnotset\\s+[^}]+', '/ifnotset', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifnotset(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifnotset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifnotset',
             params: params,
             subTreeIf: subTreeIf,
             subTreeElse: subTreeElse

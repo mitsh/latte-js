@@ -32,6 +32,52 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
     // If user wants to debug.
     debugging: false,
 
+    isEmptyStrict: function (value) {
+      if (typeof value === 'object') {
+        for (var key in value) {
+          if (value.hasOwnProperty(key) || typeof value[key] !== 'function') {
+            return false
+          }
+        }
+        return true
+      }
+
+      return [undefined, false, 0, '0', ''].indexOf(value) > -1
+    },
+
+    isEmptyLoose: function (value) {
+      if (this.isEmptyStrict(value)) {
+        return true
+      }
+
+      return ['undefined', 'null', 'false'].indexOf(String(value)) > -1
+    },
+
+    isNotEmptyLoose: function (value) {
+      return !this.isEmptyLoose(value)
+    },
+
+    isSetLoose: function (value) {
+      return ['undefined', 'null'].indexOf(String(value)) === -1
+    },
+
+    isNotSetLoose: function (value) {
+      return !this.isSetLoose(value)
+    },
+
+    isSetTag: function (value) {
+      return ['undefined', 'null'].indexOf(String(value)) === -1 && value !== ''
+    },
+
+    isNotSetTag: function (value) {
+      return !this.isSetTag(value)
+    },
+
+    startsWith: function (s, search, rawPos) {
+      var pos = rawPos > 0 ? rawPos | 0 : 0
+      return s.substring(pos, pos + search.length) === search
+    },
+
     clear: function () {
       // Clean up config, specific for this processing.
       this.runTimePlugins = {}
@@ -273,10 +319,10 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
       }
 
       for (var i = 0; i < filters.length; ++i) {
-        val = filters[i].apply(this, args)
+        args[0] = filters[i].apply(this, args)
       }
 
-      return val
+      return args[0]
     },
 
     assignVar: function (name, value, data) {
@@ -672,6 +718,50 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         }
       },
 
+      'ifempty': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isEmptyLoose(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
+      'ifnotempty': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isNotEmptyLoose(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
+      'ifset': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isSetTag(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
+      'ifnotset': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isNotSetTag(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
       nocache: {
         process: function (node, data) {
           return this.process(node.subTree, data)
@@ -682,7 +772,9 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var a = params.from
-          if (typeof a === 'undefined') {
+          data[params.item + '__empty'] = data['iterator__empty'] = this.isEmptyLoose(a)
+          data[params.item + '__show'] = data['iterator__show'] = this.isNotEmptyLoose(a)
+          if (typeof a === 'undefined' || a === '') {
             a = []
           }
           if (typeof a !== 'object') {
@@ -691,7 +783,7 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
           var total = countProperties(a)
 
-          data[params.item + '__total'] = total
+          data[params.item + '__total'] = data['iterator__total'] = total
           if ('name' in params) {
             data.smarty.foreach[params.name] = {}
             data.smarty.foreach[params.name].total = total
@@ -715,6 +807,9 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
             data[params.item] = a[key]
             data[params.item + '__index'] = parseInt(i, 10)
             data[params.item + '__iteration'] = parseInt(i + 1, 10)
+            data[params.item + '__counter'] = data[params.item + '__iteration']
+            data[params.item + '__odd'] = parseInt(i + 1, 10) % 2 === 1
+            data[params.item + '__even'] = parseInt(i + 1, 10) % 2 === 0
             data[params.item + '__first'] = (i === 0)
             data[params.item + '__last'] = (i === total - 1)
 
@@ -727,6 +822,12 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
 
             ++i
 
+            for (var datakey in data) {
+              if (data.hasOwnProperty(datakey) && this.startsWith(datakey, params.item + '__')) {
+                data[datakey.replace(params.item, 'iterator')] = data[datakey]
+              }
+            }
+
             var tmp2 = this.process(node.subTree, data)
             if (typeof tmp2 !== 'undefined') {
               data = tmp2.data
@@ -736,7 +837,6 @@ define(['../util/findinarray', '../util/isemptyobject', '../util/countproperties
           }
           data.smarty.break = false
 
-          data[params.item + '__show'] = (i > 0)
           if (params.name) {
             data.smarty.foreach[params.name].show = (i > 0) ? 1 : ''
           }

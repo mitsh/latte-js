@@ -254,10 +254,10 @@ define(['parser/parser', 'processor/processor', 'util/objectmerge'], function (L
       }
 
       for (var i = 0; i < filters.length; ++i) {
-        val = filters[i].apply(this, args)
+        args[0] = filters[i].apply(this, args)
       }
 
-      return val
+      return args[0]
     },
 
     // Print the object.
