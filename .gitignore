@@ -3,3 +3,4 @@ test/smarty
 test/templates_c/*
 node_modules
 cache
+package-lock.json
