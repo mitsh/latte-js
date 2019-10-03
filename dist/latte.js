@@ -1,10 +1,10 @@
 /*!
- * LatteJS template engine (v4.0.0)
+ * LatteJS template engine (v4.1.0)
  * https://github.com/pfaciana/latte-js
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-09-25T10:11Z
+ * Date: 2019-10-03T10:01Z
  */
 (function (factory) {
   'use strict'
@@ -404,7 +404,7 @@
       var data = {value: '', tree: []}
       var lookUpData
       var value = ''
-      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|first|last|show|total)/gi, '$1__$2')}]
+      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|counter|odd|even|first|last|empty|show|total)/gi, '$1__$2')}]
       var rootName = token
 
       if (!token) {
@@ -738,7 +738,7 @@
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters, val) {
+    applyFilters: function (filters) {
       var args = []
 
       for (var j = 1; j < arguments.length; j++) {
@@ -746,10 +746,10 @@
       }
 
       for (var i = 0; i < filters.length; ++i) {
-        val = filters[i].apply(this, args)
+        args[0] = filters[i].apply(this, args)
       }
 
-      return val
+      return args[0]
     },
 
     // Tokens to indentify data inside template.
@@ -1281,6 +1281,122 @@
         }
       },
 
+      'ifempty': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifempty\\s+[^}]+', '/ifempty', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifempty(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifempty',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifnotempty': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifnotempty\\s+[^}]+', '/ifnotempty', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifnotempty(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifnotempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifnotempty',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifset': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifset\\s+[^}]+', '/ifset', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifset(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifset',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
+      'ifnotset': {
+        type: 'block',
+        parse: function (params, content) {
+          var subTreeIf = []
+          var subTreeElse = []
+          var findElse = this.findElseTag('ifnotset\\s+[^}]+', '/ifnotset', 'else[^}]*', content)
+
+          if (findElse) {
+            subTreeIf = this.parse(content.slice(0, findElse.index))
+            content = content.slice(findElse.index + findElse[0].length)
+            var findElseIf = findElse[1].match(/^else\s*ifnotset(.*)/)
+            if (findElseIf) {
+              subTreeElse = this.buildInFunctions['ifnotset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
+            } else {
+              subTreeElse = this.parse(content.replace(/^\n/, ''))
+            }
+          } else {
+            subTreeIf = this.parse(content)
+          }
+          return [{
+            type: 'build-in',
+            name: 'ifnotset',
+            params: params,
+            subTreeIf: subTreeIf,
+            subTreeElse: subTreeElse
+          }]
+        }
+      },
+
       'foreach': {
         type: 'block',
         parseParams: function (paramStr) {
@@ -1489,6 +1605,52 @@
 
     // If user wants to debug.
     debugging: false,
+
+    isEmptyStrict: function (value) {
+      if (typeof value === 'object') {
+        for (var key in value) {
+          if (value.hasOwnProperty(key) || typeof value[key] !== 'function') {
+            return false
+          }
+        }
+        return true
+      }
+
+      return [undefined, false, 0, '0', ''].indexOf(value) > -1
+    },
+
+    isEmptyLoose: function (value) {
+      if (this.isEmptyStrict(value)) {
+        return true
+      }
+
+      return ['undefined', 'null', 'false'].indexOf(String(value)) > -1
+    },
+
+    isNotEmptyLoose: function (value) {
+      return !this.isEmptyLoose(value)
+    },
+
+    isSetLoose: function (value) {
+      return ['undefined', 'null'].indexOf(String(value)) === -1
+    },
+
+    isNotSetLoose: function (value) {
+      return !this.isSetLoose(value)
+    },
+
+    isSetTag: function (value) {
+      return ['undefined', 'null'].indexOf(String(value)) === -1 && value !== ''
+    },
+
+    isNotSetTag: function (value) {
+      return !this.isSetTag(value)
+    },
+
+    startsWith: function (s, search, rawPos) {
+      var pos = rawPos > 0 ? rawPos | 0 : 0
+      return s.substring(pos, pos + search.length) === search
+    },
 
     clear: function () {
       // Clean up config, specific for this processing.
@@ -1731,10 +1893,10 @@
       }
 
       for (var i = 0; i < filters.length; ++i) {
-        val = filters[i].apply(this, args)
+        args[0] = filters[i].apply(this, args)
       }
 
-      return val
+      return args[0]
     },
 
     assignVar: function (name, value, data) {
@@ -2130,6 +2292,50 @@
         }
       },
 
+      'ifempty': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isEmptyLoose(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
+      'ifnotempty': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isNotEmptyLoose(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
+      'ifset': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isSetTag(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
+      'ifnotset': {
+        process: function (node, data) {
+          var value = this.getActualParamValues(node.params, data)[0]
+          if (this.isNotSetTag(value)) {
+            return this.process(node.subTreeIf, data)
+          } else {
+            return this.process(node.subTreeElse, data)
+          }
+        }
+      },
+
       nocache: {
         process: function (node, data) {
           return this.process(node.subTree, data)
@@ -2140,7 +2346,9 @@
         process: function (node, data) {
           var params = this.getActualParamValues(node.params, data)
           var a = params.from
-          if (typeof a === 'undefined') {
+          data[params.item + '__empty'] = data['iterator__empty'] = this.isEmptyLoose(a)
+          data[params.item + '__show'] = data['iterator__show'] = this.isNotEmptyLoose(a)
+          if (typeof a === 'undefined' || a === '') {
             a = []
           }
           if (typeof a !== 'object') {
@@ -2149,7 +2357,7 @@
 
           var total = countProperties(a)
 
-          data[params.item + '__total'] = total
+          data[params.item + '__total'] = data['iterator__total'] = total
           if ('name' in params) {
             data.smarty.foreach[params.name] = {}
             data.smarty.foreach[params.name].total = total
@@ -2173,6 +2381,9 @@
             data[params.item] = a[key]
             data[params.item + '__index'] = parseInt(i, 10)
             data[params.item + '__iteration'] = parseInt(i + 1, 10)
+            data[params.item + '__counter'] = data[params.item + '__iteration']
+            data[params.item + '__odd'] = parseInt(i + 1, 10) % 2 === 1
+            data[params.item + '__even'] = parseInt(i + 1, 10) % 2 === 0
             data[params.item + '__first'] = (i === 0)
             data[params.item + '__last'] = (i === total - 1)
 
@@ -2185,6 +2396,12 @@
 
             ++i
 
+            for (var datakey in data) {
+              if (data.hasOwnProperty(datakey) && this.startsWith(datakey, params.item + '__')) {
+                data[datakey.replace(params.item, 'iterator')] = data[datakey]
+              }
+            }
+
             var tmp2 = this.process(node.subTree, data)
             if (typeof tmp2 !== 'undefined') {
               data = tmp2.data
@@ -2194,7 +2411,6 @@
           }
           data.smarty.break = false
 
-          data[params.item + '__show'] = (i > 0)
           if (params.name) {
             data.smarty.foreach[params.name].show = (i > 0) ? 1 : ''
           }
@@ -2359,7 +2575,7 @@
       }
     }
   }
-var version = '4.0.0'
+var version = '4.1.0'
 
   /*
    Define LatteJS constructor. Latte object just stores,
@@ -2614,10 +2830,10 @@ var version = '4.0.0'
       }
 
       for (var i = 0; i < filters.length; ++i) {
-        val = filters[i].apply(this, args)
+        args[0] = filters[i].apply(this, args)
       }
 
-      return val
+      return args[0]
     },
 
     // Print the object.
@@ -4868,6 +5084,35 @@ function findReplace(string, find, replace) {
 
 module.exports = findReplace;
 },{}],2:[function(require,module,exports){
+function getUID(length, characters) {
+	var charactersLength, result = '';
+
+	length = length != null ? length : 7;
+	characters = characters != null ? characters : 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	charactersLength = characters.length;
+
+	for (var i = 0; i < length; i++) {
+		result += characters.charAt(Math.floor(Math.random() * charactersLength));
+	}
+
+	return result;
+}
+
+function getiUID(length) {
+	return getUID(length, 'abcdefghijklmnopqrstuvwxyz0123456789');
+}
+
+function getUID16(length) {
+	return getUID(length, '0123456789abcdef')
+}
+
+module.exports = getUID;
+
+module.exports.getiUID = getiUID;
+
+module.exports.getUID16 = getUID16;
+
+},{}],3:[function(require,module,exports){
 function hasKeys(object, path) {
 	var keys = path.split('.');
 
@@ -4882,7 +5127,7 @@ function hasKeys(object, path) {
 }
 
 module.exports = hasKeys;
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 function isArrayLikeObject(value) {
 	function isLength(length) {
 		return typeof length == 'number' && length > -1;
@@ -4892,7 +5137,7 @@ function isArrayLikeObject(value) {
 }
 
 module.exports = isArrayLikeObject;
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var isEmptyStrict = require('./isEmptyStrict');
 
 function isEmptyLoose(value) {
@@ -4904,7 +5149,7 @@ function isEmptyLoose(value) {
 }
 
 module.exports = isEmptyLoose;
-},{"./isEmptyStrict":5}],5:[function(require,module,exports){
+},{"./isEmptyStrict":6}],6:[function(require,module,exports){
 function isEmptyStrict(value) {
 	if (typeof value === 'object') {
 		for (var key in value) {
@@ -4919,7 +5164,7 @@ function isEmptyStrict(value) {
 }
 
 module.exports = isEmptyStrict;
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var isEmptyLoose = require('./isEmptyLoose');
 
 function isNotEmptyLoose(value) {
@@ -4927,7 +5172,7 @@ function isNotEmptyLoose(value) {
 }
 
 module.exports = isNotEmptyLoose;
-},{"./isEmptyLoose":4}],7:[function(require,module,exports){
+},{"./isEmptyLoose":5}],8:[function(require,module,exports){
 var isSetLoose = require('./isSetLoose');
 
 function isNotSetLoose(value) {
@@ -4935,7 +5180,7 @@ function isNotSetLoose(value) {
 }
 
 module.exports = isNotSetLoose;
-},{"./isSetLoose":10}],8:[function(require,module,exports){
+},{"./isSetLoose":11}],9:[function(require,module,exports){
 var isSetTag = require('./isSetTag');
 
 function isNotSetTag(value) {
@@ -4943,25 +5188,25 @@ function isNotSetTag(value) {
 }
 
 module.exports = isNotSetTag;
-},{"./isSetTag":11}],9:[function(require,module,exports){
+},{"./isSetTag":12}],10:[function(require,module,exports){
 function isObjectLike(value) {
 	return typeof value == 'object' && value !== null;
 }
 
 module.exports = isObjectLike;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 function isSetLoose(value) {
 	return ['undefined', 'null'].indexOf(String(value)) === -1;
 }
 
 module.exports = isSetLoose;
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function isSetTag(value) {
 	return ['undefined', 'null'].indexOf(String(value)) === -1 && value !== '';
 }
 
 module.exports = isSetTag;
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 function round(value, precision) {
 	precision |= 0;
 
@@ -4974,7 +5219,7 @@ function round(value, precision) {
 }
 
 module.exports = round;
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var toString = require('./toString');
 
 function substr(string, start, length, validatePositions) {
@@ -5000,7 +5245,7 @@ function substr(string, start, length, validatePositions) {
 }
 
 module.exports = substr;
-},{"./toString":18}],14:[function(require,module,exports){
+},{"./toString":19}],15:[function(require,module,exports){
 function toArray(value, delimiter) {
 	if (typeof value === 'undefined' || value === null) {
 		return [];
@@ -5024,7 +5269,7 @@ function toArray(value, delimiter) {
 }
 
 module.exports = toArray;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 function toAssociativeValues(value) {
 	if (typeof value === 'undefined') {
 		return [];
@@ -5046,7 +5291,7 @@ function toAssociativeValues(value) {
 }
 
 module.exports = toAssociativeValues;
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var toNumber = require('./toNumber');
 
 function toBytes(value, precision) {
@@ -5089,7 +5334,7 @@ function toBytes(value, precision) {
 }
 
 module.exports = toBytes;
-},{"./toNumber":17}],17:[function(require,module,exports){
+},{"./toNumber":18}],18:[function(require,module,exports){
 var round = require('./round');
 
 function toNumber(value, precision) {
@@ -5107,7 +5352,7 @@ function toNumber(value, precision) {
 }
 
 module.exports = toNumber;
-},{"./round":12}],18:[function(require,module,exports){
+},{"./round":13}],19:[function(require,module,exports){
 function toString(value, glue, keyGlue) {
 	if (typeof value === 'string') {
 		return value;
@@ -5139,7 +5384,7 @@ function toString(value, glue, keyGlue) {
 }
 
 module.exports = toString;
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var strtotime = require('locutus/php/datetime/strtotime');
 
 function toUnixTime(date, preserveJsMs) {
@@ -5168,7 +5413,7 @@ function toUnixTime(date, preserveJsMs) {
 }
 
 module.exports = toUnixTime;
-},{"locutus/php/datetime/strtotime":24}],20:[function(require,module,exports){
+},{"locutus/php/datetime/strtotime":25}],21:[function(require,module,exports){
 function toUpperCase(s, option, preserveCase) {
 	option = option != null ? option : null;
 	s = preserveCase || preserveCase == null ? String(s) : String(s).toLowerCase();
@@ -5191,7 +5436,7 @@ function toUpperCase(s, option, preserveCase) {
 }
 
 module.exports = toUpperCase;
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5261,7 +5506,7 @@ module.exports = function _phpCastString(value) {
   }
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 module.exports = function array_reverse(array, preserveKeys) {
@@ -5303,7 +5548,7 @@ module.exports = function array_reverse(array, preserveKeys) {
   return tmpArr;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -5504,7 +5749,7 @@ module.exports = function strftime(fmt, timestamp) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../strings/setlocale":28}],24:[function(require,module,exports){
+},{"../strings/setlocale":29}],25:[function(require,module,exports){
 'use strict';
 
 var reSpace = '[ \\t]+';
@@ -6589,7 +6834,7 @@ module.exports = function strtotime(str, now) {
   return Math.floor(result.toDate(new Date(now * 1000)) / 1000);
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6607,7 +6852,7 @@ module.exports = function getenv(varname) {
 };
 
 }).call(this,require('_process'))
-},{"_process":34}],26:[function(require,module,exports){
+},{"_process":35}],27:[function(require,module,exports){
 'use strict';
 
 module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEncode) {
@@ -6681,7 +6926,7 @@ module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEn
   return string;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 module.exports = function number_format(number, decimals, decPoint, thousandsSep) {
@@ -6769,7 +7014,7 @@ module.exports = function number_format(number, decimals, decPoint, thousandsSep
   return s.join(dec);
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -7107,7 +7352,7 @@ module.exports = function setlocale(category, locale) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../info/getenv":25}],29:[function(require,module,exports){
+},{"../info/getenv":26}],30:[function(require,module,exports){
 'use strict';
 
 module.exports = function str_pad(input, padLength, padString, padType) {
@@ -7157,7 +7402,7 @@ module.exports = function str_pad(input, padLength, padString, padType) {
   return input;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 module.exports = function str_repeat(input, multiplier) {
@@ -7184,7 +7429,7 @@ module.exports = function str_repeat(input, multiplier) {
   return y;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 module.exports = function strip_tags(input, allowed) {
@@ -7254,7 +7499,7 @@ module.exports = function strip_tags(input, allowed) {
   }
 };
 
-},{"../_helpers/_phpCastString":21}],32:[function(require,module,exports){
+},{"../_helpers/_phpCastString":22}],33:[function(require,module,exports){
 'use strict';
 
 module.exports = function strrev(string) {
@@ -7289,7 +7534,7 @@ module.exports = function strrev(string) {
   return string.split('').reverse().join('');
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 module.exports = function trim(str, charlist) {
@@ -7338,7 +7583,7 @@ module.exports = function trim(str, charlist) {
   return whitespace.indexOf(str.charAt(0)) === -1 ? str : '';
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -7524,7 +7769,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var htmlspecialchars = require('locutus/php/strings/htmlspecialchars');
 
 Latte.prototype.registerPlugin(
@@ -7539,7 +7784,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/htmlspecialchars":26}],36:[function(require,module,exports){
+},{"locutus/php/strings/htmlspecialchars":27}],37:[function(require,module,exports){
 var toBytes = require('es5-util/js/toBytes');
 
 Latte.prototype.registerPlugin(
@@ -7551,7 +7796,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toBytes":16}],37:[function(require,module,exports){
+},{"es5-util/js/toBytes":17}],38:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
@@ -7562,7 +7807,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toUpperCase":20}],38:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":21}],39:[function(require,module,exports){
 var isNotSetLoose = require('es5-util/js/isNotSetLoose');
 var toUnixTime = require('es5-util/js/toUnixTime');
 var strftime = require('locutus/php/datetime/strftime');
@@ -7582,7 +7827,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/isNotSetLoose":7,"es5-util/js/toUnixTime":19,"locutus/php/datetime/strftime":23}],39:[function(require,module,exports){
+},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":20,"locutus/php/datetime/strftime":24}],40:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
@@ -7593,7 +7838,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toUpperCase":20}],40:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":21}],41:[function(require,module,exports){
 var toString = require('es5-util/js/toString');
 
 Latte.prototype.registerPlugin(
@@ -7604,7 +7849,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toString":18}],41:[function(require,module,exports){
+},{"es5-util/js/toString":19}],42:[function(require,module,exports){
 var isObjectLike = require('es5-util/js/isObjectLike');
 var toAssociativeValues = require('es5-util/js/toAssociativeValues');
 
@@ -7620,7 +7865,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/isObjectLike":9,"es5-util/js/toAssociativeValues":15}],42:[function(require,module,exports){
+},{"es5-util/js/isObjectLike":10,"es5-util/js/toAssociativeValues":16}],43:[function(require,module,exports){
 var toNumber = require('es5-util/js/toNumber');
 var number_format = require('locutus/php/strings/number_format');
 
@@ -7635,7 +7880,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toNumber":17,"locutus/php/strings/number_format":27}],43:[function(require,module,exports){
+},{"es5-util/js/toNumber":18,"locutus/php/strings/number_format":28}],44:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
@@ -7646,7 +7891,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_pad":29}],44:[function(require,module,exports){
+},{"locutus/php/strings/str_pad":30}],45:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
@@ -7657,7 +7902,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_pad":29}],45:[function(require,module,exports){
+},{"locutus/php/strings/str_pad":30}],46:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
@@ -7668,7 +7913,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_pad":29}],46:[function(require,module,exports){
+},{"locutus/php/strings/str_pad":30}],47:[function(require,module,exports){
 var str_repeat = require('locutus/php/strings/str_repeat');
 
 Latte.prototype.registerPlugin(
@@ -7679,7 +7924,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_repeat":30}],47:[function(require,module,exports){
+},{"locutus/php/strings/str_repeat":31}],48:[function(require,module,exports){
 var findReplace = require('es5-util/js/findReplace');
 
 Latte.prototype.registerPlugin(
@@ -7690,7 +7935,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/findReplace":1}],48:[function(require,module,exports){
+},{"es5-util/js/findReplace":1}],49:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
 var toArray = require('es5-util/js/toArray');
 var array_reverse = require('locutus/php/array/array_reverse');
@@ -7707,7 +7952,7 @@ Latte.prototype.registerPlugin(
 		return strrev(String(s));
 	});
 
-},{"es5-util/js/isArrayLikeObject":3,"es5-util/js/toArray":14,"locutus/php/array/array_reverse":22,"locutus/php/strings/strrev":32}],49:[function(require,module,exports){
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":15,"locutus/php/array/array_reverse":23,"locutus/php/strings/strrev":33}],50:[function(require,module,exports){
 var strip_tags = require('locutus/php/strings/strip_tags');
 
 Latte.prototype.registerPlugin(
@@ -7718,7 +7963,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/strip_tags":31}],50:[function(require,module,exports){
+},{"locutus/php/strings/strip_tags":32}],51:[function(require,module,exports){
 var substr = require('es5-util/js/substr');
 
 var substring = function (s, start, length, validatePositions) {
@@ -7728,7 +7973,7 @@ var substring = function (s, start, length, validatePositions) {
 Latte.prototype.registerPlugin('modifier', 'substring', substring);
 Latte.prototype.registerPlugin('modifier', 'substr', substring);
 
-},{"es5-util/js/substr":13}],51:[function(require,module,exports){
+},{"es5-util/js/substr":14}],52:[function(require,module,exports){
 var trim = require('locutus/php/strings/trim');
 
 Latte.prototype.registerPlugin(
@@ -7740,12 +7985,203 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/trim":33}],52:[function(require,module,exports){
+},{"locutus/php/strings/trim":34}],53:[function(require,module,exports){
+var getNestedParts = require('./../helpers/getNestedParts');
+var replaceParts = require('./../helpers/replaceParts');
+var explode = require('es5-util/js/toArray');
+var implode = require('es5-util/js/toString');
+
+function defaultFilter(s, ldelim, rdelim) {
+  var str = s, a, z;
+
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)(.*)(' + rdelim + '{1})([\\S\\s]*)', 'img');
+  a = str.replace(re, "$1");
+  s = str.replace(re, "$5");
+  z = str.replace(re, "$7");
+
+  if (s === str) {
+    return s;
+  }
+
+  var braces = replaceParts(s, getNestedParts(s, '[', ']'), 24);
+  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
+  var paramParts = explode(parens.s, ',');
+
+  paramParts.forEach(function (param, index, paramParts) {
+    var equalPos = param.indexOf('=');
+    var variable = param.slice(0, equalPos).trim();
+    var value = param.slice(equalPos + 1).trim();
+    paramParts[index] = ldelim + variable + ' = ' + variable + '|default:' + value + rdelim;
+  });
+
+  return a + braces.returnParts(parens.returnParts(implode(paramParts, ''))) + z;
+}
+
+module.exports = defaultFilter;
+
+},{"./../helpers/getNestedParts":54,"./../helpers/replaceParts":56,"es5-util/js/toArray":15,"es5-util/js/toString":19}],54:[function(require,module,exports){
+function getNestedParts(str, open, close) {
+  if (str.length < 2) {
+    return [];
+  }
+
+  close = close != null ? close : open;
+
+  if (str.length === 2) {
+    return str[0] === open && str[1] === close ? [str] : [];
+  }
+
+  var parts = [], nestedLevels = {}, tags = [open, "'", '"', '`'], tagsPos, level = 0, escaped, currentChar;
+
+  for (var i = 0, j = 0; i < str.length; i++, j = i) {
+    currentChar = str[i];
+    escaped = false;
+
+    if (nestedLevels[level]) {
+      if (currentChar === nestedLevels[level].closeTag) {
+        if (level === 1 && close === nestedLevels[level].closeTag) {
+          parts.push(str.slice(nestedLevels[level].startIndex, i + 1));
+        }
+        delete nestedLevels[level--];
+      } else if ((tagsPos = tags.indexOf(currentChar)) > -1 && close === nestedLevels[level].closeTag) {
+        nestedLevels[++level] = {
+          startIndex: i,
+          closeTag: tagsPos === 0 ? close : tags[tagsPos],
+        };
+      }
+    } else if ((tagsPos = tags.indexOf(currentChar)) > -1) {
+      nestedLevels[++level] = {
+        startIndex: i,
+        closeTag: tagsPos === 0 ? close : tags[tagsPos],
+      };
+    }
+
+  }
+
+  if (Object.keys(nestedLevels).length > 0) {
+    parts.push(str.slice(nestedLevels[1].startIndex));
+  }
+
+  return parts;
+}
+
+module.exports = getNestedParts;
+
+},{}],55:[function(require,module,exports){
+function nAttributesFilter(s, ldelim, rdelim) {
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  var re = new RegExp('(n:[A-Za-z0-9 ]+=[\\s]*)(["\'])(' + ldelim + '?)((?:(?!\\2)[^}])*)(' + rdelim + '?)(\\2)', 'img');
+  return s.replace(re, "$1$2" + ldelim + "$4" + rdelim + "$2");
+}
+
+module.exports = nAttributesFilter;
+
+},{}],56:[function(require,module,exports){
+var getiUID = require('es5-util/js/getUID').getiUID;
+
+function replaceParts(str, parts, length) {
+  var reference = new Map();
+
+  function returnParts(newStr) {
+    reference.forEach(function (part, id) {
+      newStr = newStr.replace(id, part)
+    });
+
+    return newStr;
+  }
+
+  function getId() {
+    var id;
+
+    do {
+      id = getiUID(length);
+    } while (reference.has(id));
+
+    return id;
+  }
+
+  parts.forEach(function (part) {
+    var id = getId();
+
+    reference.set(id, part);
+
+    str = str.replace(part, id);
+  });
+
+  return {
+    s: str,
+    returnParts: returnParts,
+  };
+}
+
+module.exports = replaceParts;
+
+},{"es5-util/js/getUID":2}],57:[function(require,module,exports){
+var getNestedParts = require('./../helpers/getNestedParts');
+var replaceParts = require('./../helpers/replaceParts');
+var explode = require('es5-util/js/toArray');
+var implode = require('es5-util/js/toString');
+
+function smartyFilter(s, ldelim, rdelim) {
+  //  force comma after template name
+  s = s.replace(/({include ["']{1}[A-Za-z0-9]+["']{1})(,?)/g, "$1,");
+
+  var str = s, a, z;
+
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(include{1})(\\s)(.*)(' + rdelim + '{1})([\\S\\s]*)', 'img');
+  a = str.replace(re, "$1$2$3$4");
+  s = str.replace(re, "$5");
+  z = str.replace(re, "$6$7");
+
+  if (s === str) {
+    return s;
+  }
+
+  var braces = replaceParts(s, getNestedParts(s, '[', ']'), 24);
+  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
+  var paramParts = explode(parens.s, ',');
+
+  paramParts.forEach(function (param, index, paramParts) {
+    paramParts[index] = param.replace('=>', '=').trim();
+  });
+
+  return a + braces.returnParts(parens.returnParts(implode(paramParts, ' '))) + z;
+}
+
+module.exports = smartyFilter;
+
+},{"./../helpers/getNestedParts":54,"./../helpers/replaceParts":56,"es5-util/js/toArray":15,"es5-util/js/toString":19}],58:[function(require,module,exports){
+function varFilter(s, ldelim, rdelim) {
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  var re = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
+  return s.replace(re, "$1$4$5");
+}
+
+module.exports = varFilter;
+
+},{}],59:[function(require,module,exports){
+var defaultFilter = require('./../helpers/defaultFilter');
+
+Latte.prototype.registerFilter('pre', function (s) {
+  return defaultFilter(s);
+});
+
+},{"./../helpers/defaultFilter":53}],60:[function(require,module,exports){
 Latte.prototype.registerPlugin(
 	'function',
 	'l',
 	function (params, data) {
-		return Latte.prototype.left_delimiter;
+		return Latte.prototype.left_delimiter || data.smarty.ldelim;
 	}
 );
 
@@ -7753,11 +8189,11 @@ Latte.prototype.registerPlugin(
 	'function',
 	'r',
 	function (params, data) {
-		return Latte.prototype.right_delimiter;
+		return Latte.prototype.right_delimiter || data.smarty.rdelim;
 	}
 );
 
-},{}],53:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 var hasKeys = require('es5-util/js/hasKeys');
 
 if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params')) {
@@ -7776,99 +8212,26 @@ Latte.prototype.registerFilter('pre', function (s) {
 	return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
 });
 
-},{"es5-util/js/hasKeys":2}],54:[function(require,module,exports){
-var isEmptyLoose = require('es5-util/js/isEmptyLoose');
-var isNotEmptyLoose = require('es5-util/js/isNotEmptyLoose');
-var isNotSetLoose = require('es5-util/js/isNotSetLoose');
-var isSetLoose = require('es5-util/js/isSetLoose');
+},{"es5-util/js/hasKeys":3}],62:[function(require,module,exports){
+var smartyFilter = require('./../helpers/smartyFilter');
 
-if (typeof Object.assign !== 'function') {
-	Object.defineProperty(Object, "assign", {
-		value: function assign(target, varArgs) {
-			if (target === null || target === undefined) {
-				throw new TypeError('Cannot convert undefined or null to object');
-			}
+Latte.prototype.registerFilter('pre', function (s) {
+  return smartyFilter(s);
+});
 
-			var to = Object(target);
+},{"./../helpers/smartyFilter":57}],63:[function(require,module,exports){
+Latte.prototype.registerFilter('pre', function (s) {
+  return s.replace(new RegExp('\\$iterator->', 'g'), '$iterator@');
+});
 
-			for (var index = 1; index < arguments.length; index++) {
-				var nextSource = arguments[index];
+},{}],64:[function(require,module,exports){
+var nAttributesFilter = require('./../helpers/nAttributesFilter');
 
-				if (nextSource !== null && nextSource !== undefined) {
-					for (var nextKey in nextSource) {
-						// Avoid bugs when hasOwnProperty is shadowed
-						if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-							to[nextKey] = nextSource[nextKey];
-						}
-					}
-				}
-			}
-			return to;
-		},
-		writable: true,
-		configurable: true
-	});
-}
+Latte.prototype.registerFilter('pre', function (s) {
+  return nAttributesFilter(s, Latte.prototype.left_delimiter || this.ldelim || '{', Latte.prototype.right_delimiter || this.rdelim || '}');
+});
 
-var preserveData = function (data, repeat) {
-	if (repeat.value && !data.hasOwnProperty('__orig')) {
-		data.__orig = Object.assign({}, data);
-	} else if (!repeat.value && data.hasOwnProperty('__orig')) {
-		for (var key in data.__orig) {
-			if (data.__orig.hasOwnProperty(key)) {
-				data[key] = data.__orig[key];
-			}
-		}
-		delete data.__orig;
-	}
-	return '';
-};
-
-Latte.prototype.registerPlugin(
-	'block',
-	'ifset',
-	function (params, content, data, repeat) {
-		if (repeat.value || isNotSetLoose(params[0])) {
-			return preserveData(data, repeat);
-		}
-		return content;
-	}
-);
-
-Latte.prototype.registerPlugin(
-	'block',
-	'ifempty',
-	function (params, content, data, repeat) {
-		if (repeat.value || isNotEmptyLoose(params[0])) {
-			return preserveData(data, repeat);
-		}
-		return content;
-	}
-);
-
-Latte.prototype.registerPlugin(
-	'block',
-	'ifnotset',
-	function (params, content, data, repeat) {
-		if (repeat.value || isSetLoose(params[0])) {
-			return preserveData(data, repeat);
-		}
-		return content;
-	}
-);
-
-Latte.prototype.registerPlugin(
-	'block',
-	'ifnotempty',
-	function (params, content, data, repeat) {
-		if (repeat.value || isEmptyLoose(params[0])) {
-			return preserveData(data, repeat);
-		}
-		return content;
-	}
-);
-
-},{"es5-util/js/isEmptyLoose":4,"es5-util/js/isNotEmptyLoose":6,"es5-util/js/isNotSetLoose":7,"es5-util/js/isSetLoose":10}],55:[function(require,module,exports){
+},{"./../helpers/nAttributesFilter":55}],65:[function(require,module,exports){
 var isEmptyLoose = require('es5-util/js/isEmptyLoose');
 var isNotEmptyLoose = require('es5-util/js/isNotEmptyLoose');
 var isNotSetTag = require('es5-util/js/isNotSetTag');
@@ -7920,7 +8283,7 @@ Latte.postProcess = function (htmlString) {
   return $dom.html();
 };
 
-},{"es5-util/js/isEmptyLoose":4,"es5-util/js/isNotEmptyLoose":6,"es5-util/js/isNotSetTag":8,"es5-util/js/isSetTag":11}],56:[function(require,module,exports){
+},{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":12}],66:[function(require,module,exports){
 Latte.prototype.registerPlugin(
 	'block',
 	'spaceless',
@@ -7932,4 +8295,11 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{}]},{},[35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56]);
+},{}],67:[function(require,module,exports){
+var varFilter = require('./../helpers/varFilter');
+
+Latte.prototype.registerFilter('pre', function (s) {
+  return varFilter(s);
+});
+
+},{"./../helpers/varFilter":58}]},{},[53,54,55,56,57,58,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,59,60,61,62,63,64,65,66,67]);
