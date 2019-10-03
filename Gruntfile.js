@@ -9,7 +9,7 @@ module.exports = function (grunt) {
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
       js: {
-        src: ['src/filters/**/*.js', 'src/tags/**/*.js'],
+        src: ['src/helpers/**/*.js', 'src/filters/**/*.js', 'src/tags/**/*.js'],
         dest: 'src/addonFunctions.js'
       }
     },
@@ -19,7 +19,7 @@ module.exports = function (grunt) {
       }
     },
     eslint: {
-      src: ['src/**/*.js', '!src/filters/**/*.js', '!src/tags/**/*.js', '!src/utils/**/*.js', '!src/addonFunctions.js', 'Gruntfile.js', 'karma.conf.js', 'test/**/*.js', 'build/*.js']
+      src: ['src/**/*.js', '!src/filters/**/*.js', '!src/helpers/**/*.js', '!src/tags/**/*.js', '!src/utils/**/*.js', '!src/addonFunctions.js', 'Gruntfile.js', 'karma.conf.js', 'test/**/*.js', '!test/add-on-functions/**/*.js', 'build/*.js']
     },
     karma: {
       unit: {
@@ -55,6 +55,10 @@ module.exports = function (grunt) {
           }
         ]
       }
+    },
+    watch: {
+      files: ['src/**/*.js'],
+      tasks: ['quick-build']
     }
   })
 
@@ -68,7 +72,10 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-karma')
   grunt.loadNpmTasks('grunt-contrib-uglify')
   grunt.loadNpmTasks('grunt-contrib-copy')
+  grunt.loadNpmTasks('grunt-contrib-watch')
   grunt.loadNpmTasks('grunt-browserify')
+
+  grunt.registerTask('quick-build', ['browserify', 'build', 'uglify', 'copy'])
 
   // Order goes as test, compile, compress and distribute.
   grunt.registerTask('default', ['eslint', 'browserify', 'karma', 'build', 'uglify', 'copy'])
