@@ -4,7 +4,7 @@
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-10-03T10:01Z
+ * Date: 2019-10-26T07:35Z
  */
 (function (factory) {
   'use strict'
@@ -8017,7 +8017,7 @@ function defaultFilter(s, ldelim, rdelim) {
     paramParts[index] = ldelim + variable + ' = ' + variable + '|default:' + value + rdelim;
   });
 
-  return a + braces.returnParts(parens.returnParts(implode(paramParts, ''))) + z;
+  return defaultFilter(a + braces.returnParts(parens.returnParts(implode(paramParts, ''))) + z, ldelim, rdelim);
 }
 
 module.exports = defaultFilter;

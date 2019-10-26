@@ -26,6 +26,14 @@ const table = [
     `{$foo = $foo|default:value}`,
   ],
   [
+    `prefix {default $foo1 = value} middle {default $foo2 = value} suffix`,
+    `prefix {$foo1 = $foo1|default:value} middle {$foo2 = $foo2|default:value} suffix`,
+  ],
+  [
+    `prefix {default $foo1 = value}{default $foo2 = value, $foo3 = value} middle {default $foo4 = value} suffix`,
+    `prefix {$foo1 = $foo1|default:value}{$foo2 = $foo2|default:value}{$foo3 = $foo3|default:value} middle {$foo4 = $foo4|default:value} suffix`,
+  ],
+  [
     `prefix {default $foo = value} suffix`,
     `prefix {$foo = $foo|default:value} suffix`,
   ],
