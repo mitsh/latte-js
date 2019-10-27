@@ -1,10 +1,10 @@
 /*!
- * LatteJS template engine (v4.1.0)
+ * LatteJS template engine (v4.2.0)
  * https://github.com/pfaciana/latte-js
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-10-26T07:35Z
+ * Date: 2019-10-27T08:55Z
  */
 (function (factory) {
   'use strict'
@@ -2575,7 +2575,7 @@
       }
     }
   }
-var version = '4.1.0'
+var version = '4.2.0'
 
   /*
    Define LatteJS constructor. Latte object just stores,
@@ -5180,7 +5180,7 @@ function isNotSetLoose(value) {
 }
 
 module.exports = isNotSetLoose;
-},{"./isSetLoose":11}],9:[function(require,module,exports){
+},{"./isSetLoose":12}],9:[function(require,module,exports){
 var isSetTag = require('./isSetTag');
 
 function isNotSetTag(value) {
@@ -5188,25 +5188,31 @@ function isNotSetTag(value) {
 }
 
 module.exports = isNotSetTag;
-},{"./isSetTag":12}],10:[function(require,module,exports){
+},{"./isSetTag":13}],10:[function(require,module,exports){
+function isObject(value) {
+	return (typeof value == 'object' || typeof value == 'function') && value !== null;
+}
+
+module.exports = isObject;
+},{}],11:[function(require,module,exports){
 function isObjectLike(value) {
 	return typeof value == 'object' && value !== null;
 }
 
 module.exports = isObjectLike;
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function isSetLoose(value) {
 	return ['undefined', 'null'].indexOf(String(value)) === -1;
 }
 
 module.exports = isSetLoose;
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 function isSetTag(value) {
 	return ['undefined', 'null'].indexOf(String(value)) === -1 && value !== '';
 }
 
 module.exports = isSetTag;
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 function round(value, precision) {
 	precision |= 0;
 
@@ -5219,7 +5225,7 @@ function round(value, precision) {
 }
 
 module.exports = round;
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var toString = require('./toString');
 
 function substr(string, start, length, validatePositions) {
@@ -5245,7 +5251,7 @@ function substr(string, start, length, validatePositions) {
 }
 
 module.exports = substr;
-},{"./toString":19}],15:[function(require,module,exports){
+},{"./toString":20}],16:[function(require,module,exports){
 function toArray(value, delimiter) {
 	if (typeof value === 'undefined' || value === null) {
 		return [];
@@ -5269,7 +5275,7 @@ function toArray(value, delimiter) {
 }
 
 module.exports = toArray;
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 function toAssociativeValues(value) {
 	if (typeof value === 'undefined') {
 		return [];
@@ -5291,7 +5297,7 @@ function toAssociativeValues(value) {
 }
 
 module.exports = toAssociativeValues;
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var toNumber = require('./toNumber');
 
 function toBytes(value, precision) {
@@ -5334,7 +5340,7 @@ function toBytes(value, precision) {
 }
 
 module.exports = toBytes;
-},{"./toNumber":18}],18:[function(require,module,exports){
+},{"./toNumber":19}],19:[function(require,module,exports){
 var round = require('./round');
 
 function toNumber(value, precision) {
@@ -5352,7 +5358,7 @@ function toNumber(value, precision) {
 }
 
 module.exports = toNumber;
-},{"./round":13}],19:[function(require,module,exports){
+},{"./round":14}],20:[function(require,module,exports){
 function toString(value, glue, keyGlue) {
 	if (typeof value === 'string') {
 		return value;
@@ -5384,7 +5390,7 @@ function toString(value, glue, keyGlue) {
 }
 
 module.exports = toString;
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var strtotime = require('locutus/php/datetime/strtotime');
 
 function toUnixTime(date, preserveJsMs) {
@@ -5413,7 +5419,7 @@ function toUnixTime(date, preserveJsMs) {
 }
 
 module.exports = toUnixTime;
-},{"locutus/php/datetime/strtotime":25}],21:[function(require,module,exports){
+},{"locutus/php/datetime/strtotime":26}],22:[function(require,module,exports){
 function toUpperCase(s, option, preserveCase) {
 	option = option != null ? option : null;
 	s = preserveCase || preserveCase == null ? String(s) : String(s).toLowerCase();
@@ -5436,7 +5442,7 @@ function toUpperCase(s, option, preserveCase) {
 }
 
 module.exports = toUpperCase;
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5506,7 +5512,7 @@ module.exports = function _phpCastString(value) {
   }
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 module.exports = function array_reverse(array, preserveKeys) {
@@ -5548,7 +5554,7 @@ module.exports = function array_reverse(array, preserveKeys) {
   return tmpArr;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -5749,7 +5755,7 @@ module.exports = function strftime(fmt, timestamp) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../strings/setlocale":29}],25:[function(require,module,exports){
+},{"../strings/setlocale":30}],26:[function(require,module,exports){
 'use strict';
 
 var reSpace = '[ \\t]+';
@@ -6834,7 +6840,7 @@ module.exports = function strtotime(str, now) {
   return Math.floor(result.toDate(new Date(now * 1000)) / 1000);
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6852,7 +6858,7 @@ module.exports = function getenv(varname) {
 };
 
 }).call(this,require('_process'))
-},{"_process":35}],27:[function(require,module,exports){
+},{"_process":36}],28:[function(require,module,exports){
 'use strict';
 
 module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEncode) {
@@ -6926,7 +6932,7 @@ module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEn
   return string;
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 module.exports = function number_format(number, decimals, decPoint, thousandsSep) {
@@ -7014,7 +7020,7 @@ module.exports = function number_format(number, decimals, decPoint, thousandsSep
   return s.join(dec);
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -7352,7 +7358,7 @@ module.exports = function setlocale(category, locale) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../info/getenv":26}],30:[function(require,module,exports){
+},{"../info/getenv":27}],31:[function(require,module,exports){
 'use strict';
 
 module.exports = function str_pad(input, padLength, padString, padType) {
@@ -7402,7 +7408,7 @@ module.exports = function str_pad(input, padLength, padString, padType) {
   return input;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 module.exports = function str_repeat(input, multiplier) {
@@ -7429,7 +7435,7 @@ module.exports = function str_repeat(input, multiplier) {
   return y;
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 module.exports = function strip_tags(input, allowed) {
@@ -7499,7 +7505,7 @@ module.exports = function strip_tags(input, allowed) {
   }
 };
 
-},{"../_helpers/_phpCastString":22}],33:[function(require,module,exports){
+},{"../_helpers/_phpCastString":23}],34:[function(require,module,exports){
 'use strict';
 
 module.exports = function strrev(string) {
@@ -7534,7 +7540,7 @@ module.exports = function strrev(string) {
   return string.split('').reverse().join('');
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 module.exports = function trim(str, charlist) {
@@ -7583,7 +7589,7 @@ module.exports = function trim(str, charlist) {
   return whitespace.indexOf(str.charAt(0)) === -1 ? str : '';
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -7769,7 +7775,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var htmlspecialchars = require('locutus/php/strings/htmlspecialchars');
 
 Latte.prototype.registerPlugin(
@@ -7784,7 +7790,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/htmlspecialchars":27}],37:[function(require,module,exports){
+},{"locutus/php/strings/htmlspecialchars":28}],38:[function(require,module,exports){
 var toBytes = require('es5-util/js/toBytes');
 
 Latte.prototype.registerPlugin(
@@ -7796,7 +7802,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toBytes":17}],38:[function(require,module,exports){
+},{"es5-util/js/toBytes":18}],39:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
@@ -7807,7 +7813,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toUpperCase":21}],39:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":22}],40:[function(require,module,exports){
 var isNotSetLoose = require('es5-util/js/isNotSetLoose');
 var toUnixTime = require('es5-util/js/toUnixTime');
 var strftime = require('locutus/php/datetime/strftime');
@@ -7827,7 +7833,16 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":20,"locutus/php/datetime/strftime":24}],40:[function(require,module,exports){
+},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":21,"locutus/php/datetime/strftime":25}],41:[function(require,module,exports){
+var getDefaultTags = require('./../helpers/getDefaultTags');
+
+Latte.getDefaultTags = getDefaultTags;
+
+Latte.setDefaultTags = function (template, obj) {
+  return getDefaultTags(obj) + template;
+};
+
+},{"./../helpers/getDefaultTags":56}],42:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
@@ -7838,7 +7853,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toUpperCase":21}],41:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":22}],43:[function(require,module,exports){
 var toString = require('es5-util/js/toString');
 
 Latte.prototype.registerPlugin(
@@ -7849,7 +7864,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toString":19}],42:[function(require,module,exports){
+},{"es5-util/js/toString":20}],44:[function(require,module,exports){
 var isObjectLike = require('es5-util/js/isObjectLike');
 var toAssociativeValues = require('es5-util/js/toAssociativeValues');
 
@@ -7865,7 +7880,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/isObjectLike":10,"es5-util/js/toAssociativeValues":16}],43:[function(require,module,exports){
+},{"es5-util/js/isObjectLike":11,"es5-util/js/toAssociativeValues":17}],45:[function(require,module,exports){
 var toNumber = require('es5-util/js/toNumber');
 var number_format = require('locutus/php/strings/number_format');
 
@@ -7880,7 +7895,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/toNumber":18,"locutus/php/strings/number_format":28}],44:[function(require,module,exports){
+},{"es5-util/js/toNumber":19,"locutus/php/strings/number_format":29}],46:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
@@ -7891,7 +7906,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_pad":30}],45:[function(require,module,exports){
+},{"locutus/php/strings/str_pad":31}],47:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
@@ -7902,7 +7917,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_pad":30}],46:[function(require,module,exports){
+},{"locutus/php/strings/str_pad":31}],48:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
@@ -7913,7 +7928,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_pad":30}],47:[function(require,module,exports){
+},{"locutus/php/strings/str_pad":31}],49:[function(require,module,exports){
 var str_repeat = require('locutus/php/strings/str_repeat');
 
 Latte.prototype.registerPlugin(
@@ -7924,7 +7939,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/str_repeat":31}],48:[function(require,module,exports){
+},{"locutus/php/strings/str_repeat":32}],50:[function(require,module,exports){
 var findReplace = require('es5-util/js/findReplace');
 
 Latte.prototype.registerPlugin(
@@ -7935,7 +7950,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"es5-util/js/findReplace":1}],49:[function(require,module,exports){
+},{"es5-util/js/findReplace":1}],51:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
 var toArray = require('es5-util/js/toArray');
 var array_reverse = require('locutus/php/array/array_reverse');
@@ -7952,7 +7967,7 @@ Latte.prototype.registerPlugin(
 		return strrev(String(s));
 	});
 
-},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":15,"locutus/php/array/array_reverse":23,"locutus/php/strings/strrev":33}],50:[function(require,module,exports){
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":16,"locutus/php/array/array_reverse":24,"locutus/php/strings/strrev":34}],52:[function(require,module,exports){
 var strip_tags = require('locutus/php/strings/strip_tags');
 
 Latte.prototype.registerPlugin(
@@ -7963,7 +7978,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/strip_tags":32}],51:[function(require,module,exports){
+},{"locutus/php/strings/strip_tags":33}],53:[function(require,module,exports){
 var substr = require('es5-util/js/substr');
 
 var substring = function (s, start, length, validatePositions) {
@@ -7973,7 +7988,7 @@ var substring = function (s, start, length, validatePositions) {
 Latte.prototype.registerPlugin('modifier', 'substring', substring);
 Latte.prototype.registerPlugin('modifier', 'substr', substring);
 
-},{"es5-util/js/substr":14}],52:[function(require,module,exports){
+},{"es5-util/js/substr":15}],54:[function(require,module,exports){
 var trim = require('locutus/php/strings/trim');
 
 Latte.prototype.registerPlugin(
@@ -7985,7 +8000,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{"locutus/php/strings/trim":34}],53:[function(require,module,exports){
+},{"locutus/php/strings/trim":35}],55:[function(require,module,exports){
 var getNestedParts = require('./../helpers/getNestedParts');
 var replaceParts = require('./../helpers/replaceParts');
 var explode = require('es5-util/js/toArray');
@@ -8022,7 +8037,24 @@ function defaultFilter(s, ldelim, rdelim) {
 
 module.exports = defaultFilter;
 
-},{"./../helpers/getNestedParts":54,"./../helpers/replaceParts":56,"es5-util/js/toArray":15,"es5-util/js/toString":19}],54:[function(require,module,exports){
+},{"./../helpers/getNestedParts":57,"./../helpers/replaceParts":59,"es5-util/js/toArray":16,"es5-util/js/toString":20}],56:[function(require,module,exports){
+var smartyObjectFilter = require('./smartyObjectFilter');
+
+function getDefaultTags(obj) {
+  var s = [];
+
+  for (var key in obj) {
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(String(key))) {
+      s.push('{$' + String(key) + ' = $' + String(key) + '|default:' + smartyObjectFilter(obj[key]) + '}')
+    }
+  }
+
+  return s.join('');
+}
+
+module.exports = getDefaultTags;
+
+},{"./smartyObjectFilter":61}],57:[function(require,module,exports){
 function getNestedParts(str, open, close) {
   if (str.length < 2) {
     return [];
@@ -8070,7 +8102,7 @@ function getNestedParts(str, open, close) {
 
 module.exports = getNestedParts;
 
-},{}],55:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 function nAttributesFilter(s, ldelim, rdelim) {
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
@@ -8081,7 +8113,7 @@ function nAttributesFilter(s, ldelim, rdelim) {
 
 module.exports = nAttributesFilter;
 
-},{}],56:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var getiUID = require('es5-util/js/getUID').getiUID;
 
 function replaceParts(str, parts, length) {
@@ -8121,7 +8153,7 @@ function replaceParts(str, parts, length) {
 
 module.exports = replaceParts;
 
-},{"es5-util/js/getUID":2}],57:[function(require,module,exports){
+},{"es5-util/js/getUID":2}],60:[function(require,module,exports){
 var getNestedParts = require('./../helpers/getNestedParts');
 var replaceParts = require('./../helpers/replaceParts');
 var explode = require('es5-util/js/toArray');
@@ -8158,7 +8190,29 @@ function smartyFilter(s, ldelim, rdelim) {
 
 module.exports = smartyFilter;
 
-},{"./../helpers/getNestedParts":54,"./../helpers/replaceParts":56,"es5-util/js/toArray":15,"es5-util/js/toString":19}],58:[function(require,module,exports){
+},{"./../helpers/getNestedParts":57,"./../helpers/replaceParts":59,"es5-util/js/toArray":16,"es5-util/js/toString":20}],61:[function(require,module,exports){
+var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
+var isObject = require('es5-util/js/isObject');
+
+function smartyObjectFilter(input) {
+  if (!isObject(input)) {
+    return input == null ? '""' : JSON.stringify(input);
+  }
+
+  var items = [];
+
+  for (var key in input) {
+    if (input.hasOwnProperty(key) || typeof input[key] !== 'function') {
+      items.push((isArrayLikeObject(input) ? '' : '"' + key + '"=>') + smartyObjectFilter(input[key]));
+    }
+  }
+
+  return '[' + items.join(',') + ']';
+}
+
+module.exports = smartyObjectFilter;
+
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],62:[function(require,module,exports){
 function varFilter(s, ldelim, rdelim) {
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
@@ -8169,14 +8223,14 @@ function varFilter(s, ldelim, rdelim) {
 
 module.exports = varFilter;
 
-},{}],59:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 var defaultFilter = require('./../helpers/defaultFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return defaultFilter(s);
 });
 
-},{"./../helpers/defaultFilter":53}],60:[function(require,module,exports){
+},{"./../helpers/defaultFilter":55}],64:[function(require,module,exports){
 Latte.prototype.registerPlugin(
 	'function',
 	'l',
@@ -8193,7 +8247,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{}],61:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var hasKeys = require('es5-util/js/hasKeys');
 
 if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params')) {
@@ -8212,26 +8266,26 @@ Latte.prototype.registerFilter('pre', function (s) {
 	return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
 });
 
-},{"es5-util/js/hasKeys":3}],62:[function(require,module,exports){
+},{"es5-util/js/hasKeys":3}],66:[function(require,module,exports){
 var smartyFilter = require('./../helpers/smartyFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return smartyFilter(s);
 });
 
-},{"./../helpers/smartyFilter":57}],63:[function(require,module,exports){
+},{"./../helpers/smartyFilter":60}],67:[function(require,module,exports){
 Latte.prototype.registerFilter('pre', function (s) {
   return s.replace(new RegExp('\\$iterator->', 'g'), '$iterator@');
 });
 
-},{}],64:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var nAttributesFilter = require('./../helpers/nAttributesFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return nAttributesFilter(s, Latte.prototype.left_delimiter || this.ldelim || '{', Latte.prototype.right_delimiter || this.rdelim || '}');
 });
 
-},{"./../helpers/nAttributesFilter":55}],65:[function(require,module,exports){
+},{"./../helpers/nAttributesFilter":58}],69:[function(require,module,exports){
 var isEmptyLoose = require('es5-util/js/isEmptyLoose');
 var isNotEmptyLoose = require('es5-util/js/isNotEmptyLoose');
 var isNotSetTag = require('es5-util/js/isNotSetTag');
@@ -8283,7 +8337,7 @@ Latte.postProcess = function (htmlString) {
   return $dom.html();
 };
 
-},{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":12}],66:[function(require,module,exports){
+},{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":13}],70:[function(require,module,exports){
 Latte.prototype.registerPlugin(
 	'block',
 	'spaceless',
@@ -8295,11 +8349,11 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{}],67:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var varFilter = require('./../helpers/varFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return varFilter(s);
 });
 
-},{"./../helpers/varFilter":58}]},{},[53,54,55,56,57,58,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,59,60,61,62,63,64,65,66,67]);
+},{"./../helpers/varFilter":62}]},{},[55,56,57,58,59,60,61,62,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,63,64,65,66,67,68,69,70,71]);
