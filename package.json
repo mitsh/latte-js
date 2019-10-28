@@ -3,7 +3,7 @@
   "title": "LatteJS",
   "description": "LatteJS is javascript templating engine based on Nette's Latte Template Engine.",
   "main": "dist/latte.js",
-  "version": "4.3.1",
+  "version": "4.3.2",
   "url": "https://github.com/pfaciana/latte-js/",
   "keywords": [
     "latte-js",
