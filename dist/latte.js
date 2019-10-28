@@ -1,10 +1,10 @@
 /*!
- * LatteJS template engine (v4.3.0)
+ * LatteJS template engine (v4.3.2)
  * https://github.com/pfaciana/latte-js
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-10-28T08:32Z
+ * Date: 2019-10-28T08:41Z
  */
 (function (factory) {
   'use strict'
@@ -2575,7 +2575,7 @@
       }
     }
   }
-var version = '4.3.0'
+var version = '4.3.2'
 
   /*
    Define LatteJS constructor. Latte object just stores,
