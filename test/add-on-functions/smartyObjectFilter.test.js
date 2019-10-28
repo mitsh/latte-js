@@ -41,6 +41,7 @@ const table = [
   ['non-empty nested object', {a: 1, b: {1: '2a', 2: ['a', 2, {x: '{y}'}]}, c: 3}, '["a"=>1,"b"=>["1"=>"2a","2"=>["a",2,["x"=>"{y}"]]],"c"=>3]'],
   ['function', Foo, '[]'],
   ['class', new Foo, '["a"=>1,"b"=>2,"3"=>4,"c"=>3]'],
+  ['!func', `!ns fake('random.words|5')`, `fake('random.words|5')`]
 ];
 
 test.each(table)(
