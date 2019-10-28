@@ -3195,7 +3195,16 @@ var isObject = require('es5-util/js/isObject');
 
 function smartyObjectFilter(input) {
   if (!isObject(input)) {
-    return input == null ? '""' : JSON.stringify(input);
+    if (input == null) {
+      return '""';
+    }
+
+    var noStringify = '!ns ';
+    if (typeof input === 'string' && input.substring(0, noStringify.length) === noStringify) {
+      return input.slice(noStringify.length);
+    }
+
+    return JSON.stringify(input);
   }
 
   var items = [];

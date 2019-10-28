@@ -1,10 +1,10 @@
 /*!
- * LatteJS template engine (v4.3.2)
+ * LatteJS template engine (v4.3.3)
  * https://github.com/pfaciana/latte-js
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-10-28T08:41Z
+ * Date: 2019-10-28T09:18Z
  */
 (function (factory) {
   'use strict'
@@ -2575,7 +2575,7 @@
       }
     }
   }
-var version = '4.3.2'
+var version = '4.3.3'
 
   /*
    Define LatteJS constructor. Latte object just stores,
@@ -8261,7 +8261,16 @@ var isObject = require('es5-util/js/isObject');
 
 function smartyObjectFilter(input) {
   if (!isObject(input)) {
-    return input == null ? '""' : JSON.stringify(input);
+    if (input == null) {
+      return '""';
+    }
+
+    var noStringify = '!ns ';
+    if (typeof input === 'string' && input.substring(0, noStringify.length) === noStringify) {
+      return input.slice(noStringify.length);
+    }
+
+    return JSON.stringify(input);
   }
 
   var items = [];
