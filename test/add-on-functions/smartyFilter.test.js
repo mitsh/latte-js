@@ -67,6 +67,27 @@ const table = [
   [`no change!`],
   [`{no change!}`],
   [`{includeignore}`],
+  [`{include 'parent'}`,],
+  [
+    `{include 'parent',}{include 'parent'}`,
+    `{include 'parent'}{include 'parent'}`,
+  ],
+  [
+    `{include 'parent'}{include 'parent',}`,
+    `{include 'parent'}{include 'parent'}`,
+  ],
+  [
+    `{include 'parent',}{include 'parent',}{include 'parent'}`,
+    `{include 'parent'}{include 'parent'}{include 'parent'}`,
+  ],
+  [
+    `{include 'parent',}{include 'parent',}{include 'parent',  }{include 'parent'  }`,
+    `{include 'parent'}{include 'parent'}{include 'parent'}{include 'parent'}`,
+  ],
+  [
+    `prefix {include 'parent' a = 'b'   } inner {include 'parent', x => 'y'   } suffix`,
+    `prefix {include 'parent' a = 'b'} inner {include 'parent' x = 'y'} suffix`,
+  ],
 ];
 
 test.each(table)(

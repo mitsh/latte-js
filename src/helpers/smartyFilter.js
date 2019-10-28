@@ -1,5 +1,5 @@
-var getNestedParts = require('./../helpers/getNestedParts');
-var replaceParts = require('./../helpers/replaceParts');
+var encodeTemplate = require('./encodeTemplate');
+var replaceParts = require('./replaceParts');
 var explode = require('es5-util/js/toArray');
 var implode = require('es5-util/js/toString');
 
@@ -7,29 +7,38 @@ function smartyFilter(s, ldelim, rdelim) {
   //  force comma after template name
   s = s.replace(/({include ["']{1}[A-Za-z0-9]+["']{1})(,?)/g, "$1,");
 
-  var str = s, a, z;
-
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(include{1})(\\s)(.*)(' + rdelim + '{1})([\\S\\s]*)', 'img');
-  a = str.replace(re, "$1$2$3$4");
-  s = str.replace(re, "$5");
-  z = str.replace(re, "$6$7");
+  var es = encodeTemplate(s, ldelim, rdelim);
+  var re = new RegExp(ldelim + '{1}(include){1}\\s[^' + rdelim + ']*?' + rdelim + '{1}', 'img');
+  var found = es.s.match(re);
 
-  if (s === str) {
+  if (!found) {
     return s;
   }
 
-  var braces = replaceParts(s, getNestedParts(s, '[', ']'), 24);
-  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
-  var paramParts = explode(parens.s, ',');
+  var replace = [];
 
-  paramParts.forEach(function (param, index, paramParts) {
-    paramParts[index] = param.replace('=>', '=').trim();
+  found.forEach(function (foundItem, i) {
+    var foundItemInner = foundItem.slice(ldelim.length, -ldelim.length);
+    var foundParts = explode(foundItemInner, ',');
+    var replacedParts = [];
+
+
+    foundParts.forEach(function (foundPart) {
+      foundPart = foundPart.replace('=>', '=').trim();
+      if (foundPart.length > 0) {
+        replacedParts.push(foundPart);
+      }
+    });
+
+    replace[i] = ldelim + implode(replacedParts, ' ').trim() + rdelim;
   });
 
-  return a + braces.returnParts(parens.returnParts(implode(paramParts, ' '))) + z;
+  var ep = replaceParts(es.s, found, 24);
+
+  return es.decode(ep.returnParts(ep.s, replace));
 }
 
 module.exports = smartyFilter;
