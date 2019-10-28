@@ -1,11 +1,15 @@
 var getiUID = require('es5-util/js/getUID').getiUID;
 
-function replaceParts(str, parts, length) {
+function replaceParts(str, parts, length, getUID) {
+  getUID = getUID != null ? getUID : getiUID;
+
   var reference = new Map();
 
-  function returnParts(newStr) {
+  function returnParts(newStr, newParts) {
+    var counter = 0;
     reference.forEach(function (part, id) {
-      newStr = newStr.replace(id, part)
+      var replacePart = newParts != null ? newParts[counter++] : part;
+      newStr = newStr.replace(id, replacePart)
     });
 
     return newStr;
@@ -15,7 +19,7 @@ function replaceParts(str, parts, length) {
     var id;
 
     do {
-      id = getiUID(length);
+      id = getUID(length);
     } while (reference.has(id));
 
     return id;
