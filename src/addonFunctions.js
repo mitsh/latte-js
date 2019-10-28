@@ -2776,7 +2776,7 @@ Latte.setDefaultTags = function (template, obj) {
   return getDefaultTags(obj) + template;
 };
 
-},{"./../helpers/getDefaultTags":56}],42:[function(require,module,exports){
+},{"./../helpers/getDefaultTags":57}],42:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
@@ -2935,8 +2935,8 @@ Latte.prototype.registerPlugin(
 );
 
 },{"locutus/php/strings/trim":35}],55:[function(require,module,exports){
-var getNestedParts = require('./../helpers/getNestedParts');
-var replaceParts = require('./../helpers/replaceParts');
+var getNestedParts = require('./getNestedParts');
+var replaceParts = require('./replaceParts');
 var explode = require('es5-util/js/toArray');
 var implode = require('es5-util/js/toString');
 
@@ -2946,7 +2946,7 @@ function defaultFilter(s, ldelim, rdelim) {
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)(.*)(' + rdelim + '{1})([\\S\\s]*)', 'img');
+  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)([^' + rdelim + ']*?)(' + rdelim + '{1})([\\S\\s]*)', 'img');
   a = str.replace(re, "$1");
   s = str.replace(re, "$5");
   z = str.replace(re, "$7");
@@ -2971,7 +2971,33 @@ function defaultFilter(s, ldelim, rdelim) {
 
 module.exports = defaultFilter;
 
-},{"./../helpers/getNestedParts":57,"./../helpers/replaceParts":59,"es5-util/js/toArray":16,"es5-util/js/toString":20}],56:[function(require,module,exports){
+},{"./getNestedParts":58,"./replaceParts":61,"es5-util/js/toArray":16,"es5-util/js/toString":20}],56:[function(require,module,exports){
+var getNestedParts = require('./getNestedParts');
+var replaceParts = require('./replaceParts');
+var replaceDelims = require('./replaceDelims').replaceDelims;
+var returnDelims = require('./replaceDelims').returnDelims;
+
+function encodeTemplate(str, ldelim, rdelim, length, getUID) {
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+  length = length != null ? length : 24;
+
+  var delims = replaceDelims(str, ldelim, rdelim);
+  var braces = replaceParts(delims, getNestedParts(delims, '[', ']'), length, getUID);
+  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), length, getUID);
+
+  return {
+    s: parens.s,
+    decode: function (newStr) {
+      newStr = newStr != null ? newStr : parens.s;
+      return returnDelims(braces.returnParts(parens.returnParts(newStr)));
+    },
+  };
+}
+
+module.exports = encodeTemplate;
+
+},{"./getNestedParts":58,"./replaceDelims":60,"./replaceParts":61}],57:[function(require,module,exports){
 var smartyObjectFilter = require('./smartyObjectFilter');
 
 function getDefaultTags(obj) {
@@ -2988,7 +3014,7 @@ function getDefaultTags(obj) {
 
 module.exports = getDefaultTags;
 
-},{"./smartyObjectFilter":61}],57:[function(require,module,exports){
+},{"./smartyObjectFilter":63}],58:[function(require,module,exports){
 function getNestedParts(str, open, close) {
   if (str.length < 2) {
     return [];
@@ -3036,7 +3062,7 @@ function getNestedParts(str, open, close) {
 
 module.exports = getNestedParts;
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 function nAttributesFilter(s, ldelim, rdelim) {
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
@@ -3047,15 +3073,45 @@ function nAttributesFilter(s, ldelim, rdelim) {
 
 module.exports = nAttributesFilter;
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
+function replaceDelims(s, ldelim, rdelim) {
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), '__ldelim__');
+  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), '__rdelim__');
+
+  return s;
+}
+
+function returnDelims(s, ldelim, rdelim) {
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp('__ldelim__', 'g'), ldelim + 'l' + rdelim);
+  s = s.replace(new RegExp('__rdelim__', 'g'), ldelim + 'r' + rdelim);
+
+  return s;
+}
+
+
+module.exports.replaceDelims = replaceDelims;
+
+module.exports.returnDelims = returnDelims;
+
+},{}],61:[function(require,module,exports){
 var getiUID = require('es5-util/js/getUID').getiUID;
 
-function replaceParts(str, parts, length) {
+function replaceParts(str, parts, length, getUID) {
+  getUID = getUID != null ? getUID : getiUID;
+
   var reference = new Map();
 
-  function returnParts(newStr) {
+  function returnParts(newStr, newParts) {
+    var counter = 0;
     reference.forEach(function (part, id) {
-      newStr = newStr.replace(id, part)
+      var replacePart = newParts != null ? newParts[counter++] : part;
+      newStr = newStr.replace(id, replacePart)
     });
 
     return newStr;
@@ -3065,7 +3121,7 @@ function replaceParts(str, parts, length) {
     var id;
 
     do {
-      id = getiUID(length);
+      id = getUID(length);
     } while (reference.has(id));
 
     return id;
@@ -3087,9 +3143,9 @@ function replaceParts(str, parts, length) {
 
 module.exports = replaceParts;
 
-},{"es5-util/js/getUID":2}],60:[function(require,module,exports){
-var getNestedParts = require('./../helpers/getNestedParts');
-var replaceParts = require('./../helpers/replaceParts');
+},{"es5-util/js/getUID":2}],62:[function(require,module,exports){
+var encodeTemplate = require('./encodeTemplate');
+var replaceParts = require('./replaceParts');
 var explode = require('es5-util/js/toArray');
 var implode = require('es5-util/js/toString');
 
@@ -3097,34 +3153,43 @@ function smartyFilter(s, ldelim, rdelim) {
   //  force comma after template name
   s = s.replace(/({include ["']{1}[A-Za-z0-9]+["']{1})(,?)/g, "$1,");
 
-  var str = s, a, z;
-
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(include{1})(\\s)(.*)(' + rdelim + '{1})([\\S\\s]*)', 'img');
-  a = str.replace(re, "$1$2$3$4");
-  s = str.replace(re, "$5");
-  z = str.replace(re, "$6$7");
+  var es = encodeTemplate(s, ldelim, rdelim);
+  var re = new RegExp(ldelim + '{1}(include){1}\\s[^' + rdelim + ']*?' + rdelim + '{1}', 'img');
+  var found = es.s.match(re);
 
-  if (s === str) {
+  if (!found) {
     return s;
   }
 
-  var braces = replaceParts(s, getNestedParts(s, '[', ']'), 24);
-  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
-  var paramParts = explode(parens.s, ',');
+  var replace = [];
 
-  paramParts.forEach(function (param, index, paramParts) {
-    paramParts[index] = param.replace('=>', '=').trim();
+  found.forEach(function (foundItem, i) {
+    var foundItemInner = foundItem.slice(ldelim.length, -ldelim.length);
+    var foundParts = explode(foundItemInner, ',');
+    var replacedParts = [];
+
+
+    foundParts.forEach(function (foundPart) {
+      foundPart = foundPart.replace('=>', '=').trim();
+      if (foundPart.length > 0) {
+        replacedParts.push(foundPart);
+      }
+    });
+
+    replace[i] = ldelim + implode(replacedParts, ' ').trim() + rdelim;
   });
 
-  return a + braces.returnParts(parens.returnParts(implode(paramParts, ' '))) + z;
+  var ep = replaceParts(es.s, found, 24);
+
+  return es.decode(ep.returnParts(ep.s, replace));
 }
 
 module.exports = smartyFilter;
 
-},{"./../helpers/getNestedParts":57,"./../helpers/replaceParts":59,"es5-util/js/toArray":16,"es5-util/js/toString":20}],61:[function(require,module,exports){
+},{"./encodeTemplate":56,"./replaceParts":61,"es5-util/js/toArray":16,"es5-util/js/toString":20}],63:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
 var isObject = require('es5-util/js/isObject');
 
@@ -3146,7 +3211,7 @@ function smartyObjectFilter(input) {
 
 module.exports = smartyObjectFilter;
 
-},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],62:[function(require,module,exports){
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],64:[function(require,module,exports){
 function varFilter(s, ldelim, rdelim) {
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
@@ -3157,14 +3222,14 @@ function varFilter(s, ldelim, rdelim) {
 
 module.exports = varFilter;
 
-},{}],63:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var defaultFilter = require('./../helpers/defaultFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return defaultFilter(s);
 });
 
-},{"./../helpers/defaultFilter":55}],64:[function(require,module,exports){
+},{"./../helpers/defaultFilter":55}],66:[function(require,module,exports){
 Latte.prototype.registerPlugin(
 	'function',
 	'l',
@@ -3181,7 +3246,7 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{}],65:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var hasKeys = require('es5-util/js/hasKeys');
 
 if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params')) {
@@ -3200,26 +3265,26 @@ Latte.prototype.registerFilter('pre', function (s) {
 	return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
 });
 
-},{"es5-util/js/hasKeys":3}],66:[function(require,module,exports){
+},{"es5-util/js/hasKeys":3}],68:[function(require,module,exports){
 var smartyFilter = require('./../helpers/smartyFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return smartyFilter(s);
 });
 
-},{"./../helpers/smartyFilter":60}],67:[function(require,module,exports){
+},{"./../helpers/smartyFilter":62}],69:[function(require,module,exports){
 Latte.prototype.registerFilter('pre', function (s) {
   return s.replace(new RegExp('\\$iterator->', 'g'), '$iterator@');
 });
 
-},{}],68:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var nAttributesFilter = require('./../helpers/nAttributesFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return nAttributesFilter(s, Latte.prototype.left_delimiter || this.ldelim || '{', Latte.prototype.right_delimiter || this.rdelim || '}');
 });
 
-},{"./../helpers/nAttributesFilter":58}],69:[function(require,module,exports){
+},{"./../helpers/nAttributesFilter":59}],71:[function(require,module,exports){
 var isEmptyLoose = require('es5-util/js/isEmptyLoose');
 var isNotEmptyLoose = require('es5-util/js/isNotEmptyLoose');
 var isNotSetTag = require('es5-util/js/isNotSetTag');
@@ -3271,7 +3336,7 @@ Latte.postProcess = function (htmlString) {
   return $dom.html();
 };
 
-},{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":13}],70:[function(require,module,exports){
+},{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":13}],72:[function(require,module,exports){
 Latte.prototype.registerPlugin(
 	'block',
 	'spaceless',
@@ -3283,11 +3348,11 @@ Latte.prototype.registerPlugin(
 	}
 );
 
-},{}],71:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var varFilter = require('./../helpers/varFilter');
 
 Latte.prototype.registerFilter('pre', function (s) {
   return varFilter(s);
 });
 
-},{"./../helpers/varFilter":62}]},{},[55,56,57,58,59,60,61,62,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,63,64,65,66,67,68,69,70,71]);
+},{"./../helpers/varFilter":64}]},{},[55,56,57,58,59,60,61,62,63,64,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,65,66,67,68,69,70,71,72,73]);
