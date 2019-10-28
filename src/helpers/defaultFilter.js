@@ -1,5 +1,5 @@
-var getNestedParts = require('./../helpers/getNestedParts');
-var replaceParts = require('./../helpers/replaceParts');
+var getNestedParts = require('./getNestedParts');
+var replaceParts = require('./replaceParts');
 var explode = require('es5-util/js/toArray');
 var implode = require('es5-util/js/toString');
 
@@ -9,7 +9,7 @@ function defaultFilter(s, ldelim, rdelim) {
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)(.*)(' + rdelim + '{1})([\\S\\s]*)', 'img');
+  var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)([^' + rdelim + ']*?)(' + rdelim + '{1})([\\S\\s]*)', 'img');
   a = str.replace(re, "$1");
   s = str.replace(re, "$5");
   z = str.replace(re, "$7");
