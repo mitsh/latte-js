@@ -18,6 +18,14 @@ const table = [
     `{$f = $b}`
   ],
   [
+    `{var $a = $b}{var $x = $y}`,
+    `{$a = $b}{$x = $y}`
+  ],
+  [
+    `prefix {include 'parent'} inner {var $a = $b} ? {var $m = 'n'} : {var $x = $y} suffix`,
+    `prefix {include 'parent'} inner {$a = $b} ? {$m = 'n'} : {$x = $y} suffix`
+  ],
+  [
     `{var $items = ['I', '♥', 'Nette_Framework']}`,
     `{$items = ['I', '♥', 'Nette_Framework']}`
   ],
