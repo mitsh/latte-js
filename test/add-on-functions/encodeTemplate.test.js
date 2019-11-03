@@ -43,6 +43,18 @@ const table = [
     `prefix {include 'parent' a = __0__ b = __1__} suffix`,
     `prefix {include 'parent' a = [a=>'{l}text{r}'] b = [b=>(1+2)]} suffix`,
   ],
+  [
+    `prefix {include 'parent' x = '{l}text{r}'} suffix`,
+    `prefix {include 'parent' x = '__ldelim__text__rdelim__'} suffix`,
+    `prefix {include 'parent' x = '__ldelim__text__rdelim__'} suffix`,
+    `prefix {include 'parent' x = '{l}text{r}'} suffix`,
+  ],
+  [
+    `prefix {'true' ? 'yes' : '{l}no{r}'} suffix`,
+    `prefix {'true' ? 'yes' : '__ldelim__no__rdelim__'} suffix`,
+    `prefix {'true' ? 'yes' : '__ldelim__no__rdelim__'} suffix`,
+    `prefix {'true' ? 'yes' : '{l}no{r}'} suffix`,
+  ],
 ];
 
 test.each(table)(

@@ -18,7 +18,19 @@ function returnDelims(s, ldelim, rdelim) {
   return s;
 }
 
+function processDelims(s, ldelim, rdelim) {
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), ldelim);
+  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), rdelim);
+
+  return s;
+};
+
 
 module.exports.replaceDelims = replaceDelims;
 
 module.exports.returnDelims = returnDelims;
+
+module.exports.processDelims = processDelims;
