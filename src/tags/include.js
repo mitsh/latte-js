@@ -1,5 +1,6 @@
-var smartyFilter = require('./../helpers/smartyFilter');
+var latteFilter = require('./../helpers/latteFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
-  return smartyFilter(s);
+Latte.prototype.registerFilter('pre', function (s)
+{
+  return latteFilter(s);
 });

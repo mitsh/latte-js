@@ -18,9 +18,6 @@ module.exports = function (grunt) {
         dest: "dist/<%= grunt.option('filename') %>"
       }
     },
-    eslint: {
-      src: ['src/**/*.js', '!src/filters/**/*.js', '!src/helpers/**/*.js', '!src/tags/**/*.js', '!src/utils/**/*.js', '!src/addonFunctions.js', 'Gruntfile.js', 'karma.conf.js', 'test/**/*.js', '!test/add-on-functions/**/*.js', 'build/*.js']
-    },
     karma: {
       unit: {
         configFile: 'karma.conf.js'
@@ -78,5 +75,5 @@ module.exports = function (grunt) {
   grunt.registerTask('quick-build', ['browserify', 'build', 'uglify', 'copy'])
 
   // Order goes as test, compile, compress and distribute.
-  grunt.registerTask('default', ['eslint', 'browserify', 'karma', 'build', 'uglify', 'copy'])
+  grunt.registerTask('default', ['browserify', 'karma', 'build', 'uglify', 'copy'])
 }

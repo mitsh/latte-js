@@ -1,4 +1,5 @@
-define(['./core', './plugins', './inbuiltModifiers', './customFunctions'], function (Latte) {
+define(['./core', './plugins', './inbuiltModifiers', './customFunctions'], function (Latte)
+{
   'use strict'
 
   return Latte

@@ -325,7 +325,1134 @@ function toString(value, glue, keyGlue) {
 
 module.exports = toString;
 },{}],21:[function(require,module,exports){
-var strtotime = require('locutus/php/datetime/strtotime');
+'use strict';
+
+var reSpace = '[ \\t]+';
+var reSpaceOpt = '[ \\t]*';
+var reMeridian = '(?:([ap])\\.?m\\.?([\\t ]|$))';
+var reHour24 = '(2[0-4]|[01]?[0-9])';
+var reHour24lz = '([01][0-9]|2[0-4])';
+var reHour12 = '(0?[1-9]|1[0-2])';
+var reMinute = '([0-5]?[0-9])';
+var reMinutelz = '([0-5][0-9])';
+var reSecond = '(60|[0-5]?[0-9])';
+var reSecondlz = '(60|[0-5][0-9])';
+var reFrac = '(?:\\.([0-9]+))';
+
+var reDayfull = 'sunday|monday|tuesday|wednesday|thursday|friday|saturday';
+var reDayabbr = 'sun|mon|tue|wed|thu|fri|sat';
+var reDaytext = reDayfull + '|' + reDayabbr + '|weekdays?';
+
+var reReltextnumber = 'first|second|third|fourth|fifth|sixth|seventh|eighth?|ninth|tenth|eleventh|twelfth';
+var reReltexttext = 'next|last|previous|this';
+var reReltextunit = '(?:second|sec|minute|min|hour|day|fortnight|forthnight|month|year)s?|weeks|' + reDaytext;
+
+var reYear = '([0-9]{1,4})';
+var reYear2 = '([0-9]{2})';
+var reYear4 = '([0-9]{4})';
+var reYear4withSign = '([+-]?[0-9]{4})';
+var reMonth = '(1[0-2]|0?[0-9])';
+var reMonthlz = '(0[0-9]|1[0-2])';
+var reDay = '(?:(3[01]|[0-2]?[0-9])(?:st|nd|rd|th)?)';
+var reDaylz = '(0[0-9]|[1-2][0-9]|3[01])';
+
+var reMonthFull = 'january|february|march|april|may|june|july|august|september|october|november|december';
+var reMonthAbbr = 'jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec';
+var reMonthroman = 'i[vx]|vi{0,3}|xi{0,2}|i{1,3}';
+var reMonthText = '(' + reMonthFull + '|' + reMonthAbbr + '|' + reMonthroman + ')';
+
+var reTzCorrection = '((?:GMT)?([+-])' + reHour24 + ':?' + reMinute + '?)';
+var reDayOfYear = '(00[1-9]|0[1-9][0-9]|[12][0-9][0-9]|3[0-5][0-9]|36[0-6])';
+var reWeekOfYear = '(0[1-9]|[1-4][0-9]|5[0-3])';
+
+var reDateNoYear = reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]*';
+
+function processMeridian(hour, meridian) {
+	meridian = meridian && meridian.toLowerCase();
+
+	switch (meridian) {
+		case 'a':
+			hour += hour === 12 ? -12 : 0;
+			break;
+		case 'p':
+			hour += hour !== 12 ? 12 : 0;
+			break;
+	}
+
+	return hour;
+}
+
+function processYear(yearStr) {
+	var year = +yearStr;
+
+	if (yearStr.length < 4 && year < 100) {
+		year += year < 70 ? 2000 : 1900;
+	}
+
+	return year;
+}
+
+function lookupMonth(monthStr) {
+	return {
+		jan: 0,
+		january: 0,
+		i: 0,
+		feb: 1,
+		february: 1,
+		ii: 1,
+		mar: 2,
+		march: 2,
+		iii: 2,
+		apr: 3,
+		april: 3,
+		iv: 3,
+		may: 4,
+		v: 4,
+		jun: 5,
+		june: 5,
+		vi: 5,
+		jul: 6,
+		july: 6,
+		vii: 6,
+		aug: 7,
+		august: 7,
+		viii: 7,
+		sep: 8,
+		sept: 8,
+		september: 8,
+		ix: 8,
+		oct: 9,
+		october: 9,
+		x: 9,
+		nov: 10,
+		november: 10,
+		xi: 10,
+		dec: 11,
+		december: 11,
+		xii: 11
+	}[monthStr.toLowerCase()];
+}
+
+function lookupWeekday(dayStr) {
+	var desiredSundayNumber = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+	var dayNumbers = {
+		mon: 1,
+		monday: 1,
+		tue: 2,
+		tuesday: 2,
+		wed: 3,
+		wednesday: 3,
+		thu: 4,
+		thursday: 4,
+		fri: 5,
+		friday: 5,
+		sat: 6,
+		saturday: 6,
+		sun: 0,
+		sunday: 0
+	};
+
+	return dayNumbers[dayStr.toLowerCase()] || desiredSundayNumber;
+}
+
+function lookupRelative(relText) {
+	var relativeNumbers = {
+		last: -1,
+		previous: -1,
+		this: 0,
+		first: 1,
+		next: 1,
+		second: 2,
+		third: 3,
+		fourth: 4,
+		fifth: 5,
+		sixth: 6,
+		seventh: 7,
+		eight: 8,
+		eighth: 8,
+		ninth: 9,
+		tenth: 10,
+		eleventh: 11,
+		twelfth: 12
+	};
+
+	var relativeBehavior = {
+		this: 1
+	};
+
+	var relTextLower = relText.toLowerCase();
+
+	return {
+		amount: relativeNumbers[relTextLower],
+		behavior: relativeBehavior[relTextLower] || 0
+	};
+}
+
+function processTzCorrection(tzOffset, oldValue) {
+	var reTzCorrectionLoose = /(?:GMT)?([+-])(\d+)(:?)(\d{0,2})/i;
+	tzOffset = tzOffset && tzOffset.match(reTzCorrectionLoose);
+
+	if (!tzOffset) {
+		return oldValue;
+	}
+
+	var sign = tzOffset[1] === '-' ? 1 : -1;
+	var hours = +tzOffset[2];
+	var minutes = +tzOffset[4];
+
+	if (!tzOffset[4] && !tzOffset[3]) {
+		minutes = Math.floor(hours % 100);
+		hours = Math.floor(hours / 100);
+	}
+
+	return sign * (hours * 60 + minutes);
+}
+
+var formats = {
+	yesterday: {
+		regex: /^yesterday/i,
+		name: 'yesterday',
+		callback: function callback() {
+			this.rd -= 1;
+			return this.resetTime();
+		}
+	},
+
+	now: {
+		regex: /^now/i,
+		name: 'now'
+		// do nothing
+	},
+
+	noon: {
+		regex: /^noon/i,
+		name: 'noon',
+		callback: function callback() {
+			return this.resetTime() && this.time(12, 0, 0, 0);
+		}
+	},
+
+	midnightOrToday: {
+		regex: /^(midnight|today)/i,
+		name: 'midnight | today',
+		callback: function callback() {
+			return this.resetTime();
+		}
+	},
+
+	tomorrow: {
+		regex: /^tomorrow/i,
+		name: 'tomorrow',
+		callback: function callback() {
+			this.rd += 1;
+			return this.resetTime();
+		}
+	},
+
+	timestamp: {
+		regex: /^@(-?\d+)/i,
+		name: 'timestamp',
+		callback: function callback(match, timestamp) {
+			this.rs += +timestamp;
+			this.y = 1970;
+			this.m = 0;
+			this.d = 1;
+			this.dates = 0;
+
+			return this.resetTime() && this.zone(0);
+		}
+	},
+
+	firstOrLastDay: {
+		regex: /^(first|last) day of/i,
+		name: 'firstdayof | lastdayof',
+		callback: function callback(match, day) {
+			if (day.toLowerCase() === 'first') {
+				this.firstOrLastDayOfMonth = 1;
+			} else {
+				this.firstOrLastDayOfMonth = -1;
+			}
+		}
+	},
+
+	backOrFrontOf: {
+		regex: RegExp('^(back|front) of ' + reHour24 + reSpaceOpt + reMeridian + '?', 'i'),
+		name: 'backof | frontof',
+		callback: function callback(match, side, hours, meridian) {
+			var back = side.toLowerCase() === 'back';
+			var hour = +hours;
+			var minute = 15;
+
+			if (!back) {
+				hour -= 1;
+				minute = 45;
+			}
+
+			hour = processMeridian(hour, meridian);
+
+			return this.resetTime() && this.time(hour, minute, 0, 0);
+		}
+	},
+
+	weekdayOf: {
+		regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reDayfull + '|' + reDayabbr + ')' + reSpace + 'of', 'i'),
+		name: 'weekdayof'
+		// todo
+	},
+
+	mssqltime: {
+		regex: RegExp('^' + reHour12 + ':' + reMinutelz + ':' + reSecondlz + '[:.]([0-9]+)' + reMeridian, 'i'),
+		name: 'mssqltime',
+		callback: function callback(match, hour, minute, second, frac, meridian) {
+			return this.time(processMeridian(+hour, meridian), +minute, +second, +frac.substr(0, 3));
+		}
+	},
+
+	timeLong12: {
+		regex: RegExp('^' + reHour12 + '[:.]' + reMinute + '[:.]' + reSecondlz + reSpaceOpt + reMeridian, 'i'),
+		name: 'timelong12',
+		callback: function callback(match, hour, minute, second, meridian) {
+			return this.time(processMeridian(+hour, meridian), +minute, +second, 0);
+		}
+	},
+
+	timeShort12: {
+		regex: RegExp('^' + reHour12 + '[:.]' + reMinutelz + reSpaceOpt + reMeridian, 'i'),
+		name: 'timeshort12',
+		callback: function callback(match, hour, minute, meridian) {
+			return this.time(processMeridian(+hour, meridian), +minute, 0, 0);
+		}
+	},
+
+	timeTiny12: {
+		regex: RegExp('^' + reHour12 + reSpaceOpt + reMeridian, 'i'),
+		name: 'timetiny12',
+		callback: function callback(match, hour, meridian) {
+			return this.time(processMeridian(+hour, meridian), 0, 0, 0);
+		}
+	},
+
+	soap: {
+		regex: RegExp('^' + reYear4 + '-' + reMonthlz + '-' + reDaylz + 'T' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reFrac + reTzCorrection + '?', 'i'),
+		name: 'soap',
+		callback: function callback(match, year, month, day, hour, minute, second, frac, tzCorrection) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, +frac.substr(0, 3)) && this.zone(processTzCorrection(tzCorrection));
+		}
+	},
+
+	wddx: {
+		regex: RegExp('^' + reYear4 + '-' + reMonth + '-' + reDay + 'T' + reHour24 + ':' + reMinute + ':' + reSecond),
+		name: 'wddx',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	exif: {
+		regex: RegExp('^' + reYear4 + ':' + reMonthlz + ':' + reDaylz + ' ' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz, 'i'),
+		name: 'exif',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	xmlRpc: {
+		regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + 'T' + reHour24 + ':' + reMinutelz + ':' + reSecondlz),
+		name: 'xmlrpc',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	xmlRpcNoColon: {
+		regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + '[Tt]' + reHour24 + reMinutelz + reSecondlz),
+		name: 'xmlrpcnocolon',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	clf: {
+		regex: RegExp('^' + reDay + '/(' + reMonthAbbr + ')/' + reYear4 + ':' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reSpace + reTzCorrection, 'i'),
+		name: 'clf',
+		callback: function callback(match, day, month, year, hour, minute, second, tzCorrection) {
+			return this.ymd(+year, lookupMonth(month), +day) && this.time(+hour, +minute, +second, 0) && this.zone(processTzCorrection(tzCorrection));
+		}
+	},
+
+	iso8601long: {
+		regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond + reFrac, 'i'),
+		name: 'iso8601long',
+		callback: function callback(match, hour, minute, second, frac) {
+			return this.time(+hour, +minute, +second, +frac.substr(0, 3));
+		}
+	},
+
+	dateTextual: {
+		regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]+' + reYear, 'i'),
+		name: 'datetextual',
+		callback: function callback(match, month, day, year) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	pointedDate4: {
+		regex: RegExp('^' + reDay + '[.\\t-]' + reMonth + '[.-]' + reYear4),
+		name: 'pointeddate4',
+		callback: function callback(match, day, month, year) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	pointedDate2: {
+		regex: RegExp('^' + reDay + '[.\\t]' + reMonth + '\\.' + reYear2),
+		name: 'pointeddate2',
+		callback: function callback(match, day, month, year) {
+			return this.ymd(processYear(year), month - 1, +day);
+		}
+	},
+
+	timeLong24: {
+		regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond),
+		name: 'timelong24',
+		callback: function callback(match, hour, minute, second) {
+			return this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	dateNoColon: {
+		regex: RegExp('^' + reYear4 + reMonthlz + reDaylz),
+		name: 'datenocolon',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	pgydotd: {
+		regex: RegExp('^' + reYear4 + '\\.?' + reDayOfYear),
+		name: 'pgydotd',
+		callback: function callback(match, year, day) {
+			return this.ymd(+year, 0, +day);
+		}
+	},
+
+	timeShort24: {
+		regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute, 'i'),
+		name: 'timeshort24',
+		callback: function callback(match, hour, minute) {
+			return this.time(+hour, +minute, 0, 0);
+		}
+	},
+
+	iso8601noColon: {
+		regex: RegExp('^t?' + reHour24lz + reMinutelz + reSecondlz, 'i'),
+		name: 'iso8601nocolon',
+		callback: function callback(match, hour, minute, second) {
+			return this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	iso8601dateSlash: {
+		// eventhough the trailing slash is optional in PHP
+		// here it's mandatory and inputs without the slash
+		// are handled by dateslash
+		regex: RegExp('^' + reYear4 + '/' + reMonthlz + '/' + reDaylz + '/'),
+		name: 'iso8601dateslash',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	dateSlash: {
+		regex: RegExp('^' + reYear4 + '/' + reMonth + '/' + reDay),
+		name: 'dateslash',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	american: {
+		regex: RegExp('^' + reMonth + '/' + reDay + '/' + reYear),
+		name: 'american',
+		callback: function callback(match, month, day, year) {
+			return this.ymd(processYear(year), month - 1, +day);
+		}
+	},
+
+	americanShort: {
+		regex: RegExp('^' + reMonth + '/' + reDay),
+		name: 'americanshort',
+		callback: function callback(match, month, day) {
+			return this.ymd(this.y, month - 1, +day);
+		}
+	},
+
+	gnuDateShortOrIso8601date2: {
+		// iso8601date2 is complete subset of gnudateshort
+		regex: RegExp('^' + reYear + '-' + reMonth + '-' + reDay),
+		name: 'gnudateshort | iso8601date2',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(processYear(year), month - 1, +day);
+		}
+	},
+
+	iso8601date4: {
+		regex: RegExp('^' + reYear4withSign + '-' + reMonthlz + '-' + reDaylz),
+		name: 'iso8601date4',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	gnuNoColon: {
+		regex: RegExp('^t?' + reHour24lz + reMinutelz, 'i'),
+		name: 'gnunocolon',
+		callback: function callback(match, hour, minute) {
+			// this rule is a special case
+			// if time was already set once by any preceding rule, it sets the captured value as year
+			switch (this.times) {
+				case 0:
+					return this.time(+hour, +minute, 0, this.f);
+				case 1:
+					this.y = hour * 100 + +minute;
+					this.times++;
+
+					return true;
+				default:
+					return false;
+			}
+		}
+	},
+
+	gnuDateShorter: {
+		regex: RegExp('^' + reYear4 + '-' + reMonth),
+		name: 'gnudateshorter',
+		callback: function callback(match, year, month) {
+			return this.ymd(+year, month - 1, 1);
+		}
+	},
+
+	pgTextReverse: {
+		// note: allowed years are from 32-9999
+		// years below 32 should be treated as days in datefull
+		regex: RegExp('^' + '(\\d{3,4}|[4-9]\\d|3[2-9])-(' + reMonthAbbr + ')-' + reDaylz, 'i'),
+		name: 'pgtextreverse',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	dateFull: {
+		regex: RegExp('^' + reDay + '[ \\t.-]*' + reMonthText + '[ \\t.-]*' + reYear, 'i'),
+		name: 'datefull',
+		callback: function callback(match, day, month, year) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	dateNoDay: {
+		regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reYear4, 'i'),
+		name: 'datenoday',
+		callback: function callback(match, month, year) {
+			return this.ymd(+year, lookupMonth(month), 1);
+		}
+	},
+
+	dateNoDayRev: {
+		regex: RegExp('^' + reYear4 + '[ .\\t-]*' + reMonthText, 'i'),
+		name: 'datenodayrev',
+		callback: function callback(match, year, month) {
+			return this.ymd(+year, lookupMonth(month), 1);
+		}
+	},
+
+	pgTextShort: {
+		regex: RegExp('^(' + reMonthAbbr + ')-' + reDaylz + '-' + reYear, 'i'),
+		name: 'pgtextshort',
+		callback: function callback(match, month, day, year) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	dateNoYear: {
+		regex: RegExp('^' + reDateNoYear, 'i'),
+		name: 'datenoyear',
+		callback: function callback(match, month, day) {
+			return this.ymd(this.y, lookupMonth(month), +day);
+		}
+	},
+
+	dateNoYearRev: {
+		regex: RegExp('^' + reDay + '[ .\\t-]*' + reMonthText, 'i'),
+		name: 'datenoyearrev',
+		callback: function callback(match, day, month) {
+			return this.ymd(this.y, lookupMonth(month), +day);
+		}
+	},
+
+	isoWeekDay: {
+		regex: RegExp('^' + reYear4 + '-?W' + reWeekOfYear + '(?:-?([0-7]))?'),
+		name: 'isoweekday | isoweek',
+		callback: function callback(match, year, week, day) {
+			day = day ? +day : 1;
+
+			if (!this.ymd(+year, 0, 1)) {
+				return false;
+			}
+
+			// get day of week for Jan 1st
+			var dayOfWeek = new Date(this.y, this.m, this.d).getDay();
+
+			// and use the day to figure out the offset for day 1 of week 1
+			dayOfWeek = 0 - (dayOfWeek > 4 ? dayOfWeek - 7 : dayOfWeek);
+
+			this.rd += dayOfWeek + (week - 1) * 7 + day;
+		}
+	},
+
+	relativeText: {
+		regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reReltextunit + ')', 'i'),
+		name: 'relativetext',
+		callback: function callback(match, relValue, relUnit) {
+			// todo: implement handling of 'this time-unit'
+			// eslint-disable-next-line no-unused-vars
+			var _lookupRelative = lookupRelative(relValue),
+				amount = _lookupRelative.amount,
+				behavior = _lookupRelative.behavior;
+
+			switch (relUnit.toLowerCase()) {
+				case 'sec':
+				case 'secs':
+				case 'second':
+				case 'seconds':
+					this.rs += amount;
+					break;
+				case 'min':
+				case 'mins':
+				case 'minute':
+				case 'minutes':
+					this.ri += amount;
+					break;
+				case 'hour':
+				case 'hours':
+					this.rh += amount;
+					break;
+				case 'day':
+				case 'days':
+					this.rd += amount;
+					break;
+				case 'fortnight':
+				case 'fortnights':
+				case 'forthnight':
+				case 'forthnights':
+					this.rd += amount * 14;
+					break;
+				case 'week':
+				case 'weeks':
+					this.rd += amount * 7;
+					break;
+				case 'month':
+				case 'months':
+					this.rm += amount;
+					break;
+				case 'year':
+				case 'years':
+					this.ry += amount;
+					break;
+				case 'mon':
+				case 'monday':
+				case 'tue':
+				case 'tuesday':
+				case 'wed':
+				case 'wednesday':
+				case 'thu':
+				case 'thursday':
+				case 'fri':
+				case 'friday':
+				case 'sat':
+				case 'saturday':
+				case 'sun':
+				case 'sunday':
+					this.resetTime();
+					this.weekday = lookupWeekday(relUnit, 7);
+					this.weekdayBehavior = 1;
+					this.rd += (amount > 0 ? amount - 1 : amount) * 7;
+					break;
+				case 'weekday':
+				case 'weekdays':
+					// todo
+					break;
+			}
+		}
+	},
+
+	relative: {
+		regex: RegExp('^([+-]*)[ \\t]*(\\d+)' + reSpaceOpt + '(' + reReltextunit + '|week)', 'i'),
+		name: 'relative',
+		callback: function callback(match, signs, relValue, relUnit) {
+			var minuses = signs.replace(/[^-]/g, '').length;
+
+			var amount = +relValue * Math.pow(-1, minuses);
+
+			switch (relUnit.toLowerCase()) {
+				case 'sec':
+				case 'secs':
+				case 'second':
+				case 'seconds':
+					this.rs += amount;
+					break;
+				case 'min':
+				case 'mins':
+				case 'minute':
+				case 'minutes':
+					this.ri += amount;
+					break;
+				case 'hour':
+				case 'hours':
+					this.rh += amount;
+					break;
+				case 'day':
+				case 'days':
+					this.rd += amount;
+					break;
+				case 'fortnight':
+				case 'fortnights':
+				case 'forthnight':
+				case 'forthnights':
+					this.rd += amount * 14;
+					break;
+				case 'week':
+				case 'weeks':
+					this.rd += amount * 7;
+					break;
+				case 'month':
+				case 'months':
+					this.rm += amount;
+					break;
+				case 'year':
+				case 'years':
+					this.ry += amount;
+					break;
+				case 'mon':
+				case 'monday':
+				case 'tue':
+				case 'tuesday':
+				case 'wed':
+				case 'wednesday':
+				case 'thu':
+				case 'thursday':
+				case 'fri':
+				case 'friday':
+				case 'sat':
+				case 'saturday':
+				case 'sun':
+				case 'sunday':
+					this.resetTime();
+					this.weekday = lookupWeekday(relUnit, 7);
+					this.weekdayBehavior = 1;
+					this.rd += (amount > 0 ? amount - 1 : amount) * 7;
+					break;
+				case 'weekday':
+				case 'weekdays':
+					// todo
+					break;
+			}
+		}
+	},
+
+	dayText: {
+		regex: RegExp('^(' + reDaytext + ')', 'i'),
+		name: 'daytext',
+		callback: function callback(match, dayText) {
+			this.resetTime();
+			this.weekday = lookupWeekday(dayText, 0);
+
+			if (this.weekdayBehavior !== 2) {
+				this.weekdayBehavior = 1;
+			}
+		}
+	},
+
+	relativeTextWeek: {
+		regex: RegExp('^(' + reReltexttext + ')' + reSpace + 'week', 'i'),
+		name: 'relativetextweek',
+		callback: function callback(match, relText) {
+			this.weekdayBehavior = 2;
+
+			switch (relText.toLowerCase()) {
+				case 'this':
+					this.rd += 0;
+					break;
+				case 'next':
+					this.rd += 7;
+					break;
+				case 'last':
+				case 'previous':
+					this.rd -= 7;
+					break;
+			}
+
+			if (isNaN(this.weekday)) {
+				this.weekday = 1;
+			}
+		}
+	},
+
+	monthFullOrMonthAbbr: {
+		regex: RegExp('^(' + reMonthFull + '|' + reMonthAbbr + ')', 'i'),
+		name: 'monthfull | monthabbr',
+		callback: function callback(match, month) {
+			return this.ymd(this.y, lookupMonth(month), this.d);
+		}
+	},
+
+	tzCorrection: {
+		regex: RegExp('^' + reTzCorrection, 'i'),
+		name: 'tzcorrection',
+		callback: function callback(tzCorrection) {
+			return this.zone(processTzCorrection(tzCorrection));
+		}
+	},
+
+	ago: {
+		regex: /^ago/i,
+		name: 'ago',
+		callback: function callback() {
+			this.ry = -this.ry;
+			this.rm = -this.rm;
+			this.rd = -this.rd;
+			this.rh = -this.rh;
+			this.ri = -this.ri;
+			this.rs = -this.rs;
+			this.rf = -this.rf;
+		}
+	},
+
+	year4: {
+		regex: RegExp('^' + reYear4),
+		name: 'year4',
+		callback: function callback(match, year) {
+			this.y = +year;
+			return true;
+		}
+	},
+
+	whitespace: {
+		regex: /^[ .,\t]+/,
+		name: 'whitespace'
+		// do nothing
+	},
+
+	dateShortWithTimeLong: {
+		regex: RegExp('^' + reDateNoYear + 't?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond, 'i'),
+		name: 'dateshortwithtimelong',
+		callback: function callback(match, month, day, hour, minute, second) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	dateShortWithTimeLong12: {
+		regex: RegExp('^' + reDateNoYear + reHour12 + '[:.]' + reMinute + '[:.]' + reSecondlz + reSpaceOpt + reMeridian, 'i'),
+		name: 'dateshortwithtimelong12',
+		callback: function callback(match, month, day, hour, minute, second, meridian) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(processMeridian(+hour, meridian), +minute, +second, 0);
+		}
+	},
+
+	dateShortWithTimeShort: {
+		regex: RegExp('^' + reDateNoYear + 't?' + reHour24 + '[:.]' + reMinute, 'i'),
+		name: 'dateshortwithtimeshort',
+		callback: function callback(match, month, day, hour, minute) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(+hour, +minute, 0, 0);
+		}
+	},
+
+	dateShortWithTimeShort12: {
+		regex: RegExp('^' + reDateNoYear + reHour12 + '[:.]' + reMinutelz + reSpaceOpt + reMeridian, 'i'),
+		name: 'dateshortwithtimeshort12',
+		callback: function callback(match, month, day, hour, minute, meridian) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(processMeridian(+hour, meridian), +minute, 0, 0);
+		}
+	}
+};
+
+var resultProto = {
+	// date
+	y: NaN,
+	m: NaN,
+	d: NaN,
+	// time
+	h: NaN,
+	i: NaN,
+	s: NaN,
+	f: NaN,
+
+	// relative shifts
+	ry: 0,
+	rm: 0,
+	rd: 0,
+	rh: 0,
+	ri: 0,
+	rs: 0,
+	rf: 0,
+
+	// weekday related shifts
+	weekday: NaN,
+	weekdayBehavior: 0,
+
+	// first or last day of month
+	// 0 none, 1 first, -1 last
+	firstOrLastDayOfMonth: 0,
+
+	// timezone correction in minutes
+	z: NaN,
+
+	// counters
+	dates: 0,
+	times: 0,
+	zones: 0,
+
+	// helper functions
+	ymd: function ymd(y, m, d) {
+		if (this.dates > 0) {
+			return false;
+		}
+
+		this.dates++;
+		this.y = y;
+		this.m = m;
+		this.d = d;
+		return true;
+	},
+	time: function time(h, i, s, f) {
+		if (this.times > 0) {
+			return false;
+		}
+
+		this.times++;
+		this.h = h;
+		this.i = i;
+		this.s = s;
+		this.f = f;
+
+		return true;
+	},
+	resetTime: function resetTime() {
+		this.h = 0;
+		this.i = 0;
+		this.s = 0;
+		this.f = 0;
+		this.times = 0;
+
+		return true;
+	},
+	zone: function zone(minutes) {
+		if (this.zones <= 1) {
+			this.zones++;
+			this.z = minutes;
+			return true;
+		}
+
+		return false;
+	},
+	toDate: function toDate(relativeTo) {
+		if (this.dates && !this.times) {
+			this.h = this.i = this.s = this.f = 0;
+		}
+
+		// fill holes
+		if (isNaN(this.y)) {
+			this.y = relativeTo.getFullYear();
+		}
+
+		if (isNaN(this.m)) {
+			this.m = relativeTo.getMonth();
+		}
+
+		if (isNaN(this.d)) {
+			this.d = relativeTo.getDate();
+		}
+
+		if (isNaN(this.h)) {
+			this.h = relativeTo.getHours();
+		}
+
+		if (isNaN(this.i)) {
+			this.i = relativeTo.getMinutes();
+		}
+
+		if (isNaN(this.s)) {
+			this.s = relativeTo.getSeconds();
+		}
+
+		if (isNaN(this.f)) {
+			this.f = relativeTo.getMilliseconds();
+		}
+
+		// adjust special early
+		switch (this.firstOrLastDayOfMonth) {
+			case 1:
+				this.d = 1;
+				break;
+			case -1:
+				this.d = 0;
+				this.m += 1;
+				break;
+		}
+
+		if (!isNaN(this.weekday)) {
+			var date = new Date(relativeTo.getTime());
+			date.setFullYear(this.y, this.m, this.d);
+			date.setHours(this.h, this.i, this.s, this.f);
+
+			var dow = date.getDay();
+
+			if (this.weekdayBehavior === 2) {
+				// To make "this week" work, where the current day of week is a "sunday"
+				if (dow === 0 && this.weekday !== 0) {
+					this.weekday = -6;
+				}
+
+				// To make "sunday this week" work, where the current day of week is not a "sunday"
+				if (this.weekday === 0 && dow !== 0) {
+					this.weekday = 7;
+				}
+
+				this.d -= dow;
+				this.d += this.weekday;
+			} else {
+				var diff = this.weekday - dow;
+
+				// some PHP magic
+				if (this.rd < 0 && diff < 0 || this.rd >= 0 && diff <= -this.weekdayBehavior) {
+					diff += 7;
+				}
+
+				if (this.weekday >= 0) {
+					this.d += diff;
+				} else {
+					this.d -= 7 - (Math.abs(this.weekday) - dow);
+				}
+
+				this.weekday = NaN;
+			}
+		}
+
+		// adjust relative
+		this.y += this.ry;
+		this.m += this.rm;
+		this.d += this.rd;
+
+		this.h += this.rh;
+		this.i += this.ri;
+		this.s += this.rs;
+		this.f += this.rf;
+
+		this.ry = this.rm = this.rd = 0;
+		this.rh = this.ri = this.rs = this.rf = 0;
+
+		var result = new Date(relativeTo.getTime());
+		// since Date constructor treats years <= 99 as 1900+
+		// it can't be used, thus this weird way
+		result.setFullYear(this.y, this.m, this.d);
+		result.setHours(this.h, this.i, this.s, this.f);
+
+		// note: this is done twice in PHP
+		// early when processing special relatives
+		// and late
+		// todo: check if the logic can be reduced
+		// to just one time action
+		switch (this.firstOrLastDayOfMonth) {
+			case 1:
+				result.setDate(1);
+				break;
+			case -1:
+				result.setMonth(result.getMonth() + 1, 0);
+				break;
+		}
+
+		// adjust timezone
+		if (!isNaN(this.z) && result.getTimezoneOffset() !== this.z) {
+			result.setUTCFullYear(result.getFullYear(), result.getMonth(), result.getDate());
+
+			result.setUTCHours(result.getHours(), result.getMinutes() + this.z, result.getSeconds(), result.getMilliseconds());
+		}
+
+		return result;
+	}
+};
+
+module.exports = function toTime(str, now) {
+	//       discuss at: https://locutus.io/php/toTime/
+	//      original by: Caio Ariede (https://caioariede.com)
+	//      improved by: Kevin van Zonneveld (https://kvz.io)
+	//      improved by: Caio Ariede (https://caioariede.com)
+	//      improved by: A. Matías Quezada (https://amatiasq.com)
+	//      improved by: preuter
+	//      improved by: Brett Zamir (https://brett-zamir.me)
+	//      improved by: Mirko Faber
+	//         input by: David
+	//      bugfixed by: Wagner B. Soares
+	//      bugfixed by: Artur Tchernychev
+	//      bugfixed by: Stephan Bösch-Plepelits (https://github.com/plepe)
+	// reimplemented by: Rafał Kukawski
+	//           note 1: Examples all have a fixed timestamp to prevent
+	//           note 1: tests to fail because of variable time(zones)
+	//        example 1: toTime('+1 day', 1129633200)
+	//        returns 1: 1129719600
+	//        example 2: toTime('+1 week 2 days 4 hours 2 seconds', 1129633200)
+	//        returns 2: 1130425202
+	//        example 3: toTime('last month', 1129633200)
+	//        returns 3: 1127041200
+	//        example 4: toTime('2009-05-04 08:30:00+00')
+	//        returns 4: 1241425800
+	//        example 5: toTime('2009-05-04 08:30:00+02:00')
+	//        returns 5: 1241418600
+
+	if (now == null) {
+		now = Math.floor(Date.now() / 1000);
+	}
+
+	// the rule order is important
+	// if multiple rules match, the longest match wins
+	// if multiple rules match the same string, the first match wins
+	var rules = [formats.yesterday, formats.now, formats.noon, formats.midnightOrToday, formats.tomorrow, formats.timestamp, formats.firstOrLastDay, formats.backOrFrontOf,
+		// formats.weekdayOf, // not yet implemented
+		formats.timeTiny12, formats.timeShort12, formats.timeLong12, formats.mssqltime, formats.timeShort24, formats.timeLong24, formats.iso8601long, formats.gnuNoColon, formats.iso8601noColon, formats.americanShort, formats.american, formats.iso8601date4, formats.iso8601dateSlash, formats.dateSlash, formats.gnuDateShortOrIso8601date2, formats.gnuDateShorter, formats.dateFull, formats.pointedDate4, formats.pointedDate2, formats.dateNoDay, formats.dateNoDayRev, formats.dateTextual, formats.dateNoYear, formats.dateNoYearRev, formats.dateNoColon, formats.xmlRpc, formats.xmlRpcNoColon, formats.soap, formats.wddx, formats.exif, formats.pgydotd, formats.isoWeekDay, formats.pgTextShort, formats.pgTextReverse, formats.clf, formats.year4, formats.ago, formats.dayText, formats.relativeTextWeek, formats.relativeText, formats.monthFullOrMonthAbbr, formats.tzCorrection, formats.dateShortWithTimeShort12, formats.dateShortWithTimeLong12, formats.dateShortWithTimeShort, formats.dateShortWithTimeLong, formats.relative, formats.whitespace];
+
+	var result = Object.create(resultProto);
+
+	while (str.length) {
+		var longestMatch = null;
+		var finalRule = null;
+
+		for (var i = 0, l = rules.length; i < l; i++) {
+			var format = rules[i];
+
+			var match = str.match(format.regex);
+
+			if (match) {
+				if (!longestMatch || match[0].length > longestMatch[0].length) {
+					longestMatch = match;
+					finalRule = format;
+				}
+			}
+		}
+
+		if (!finalRule || finalRule.callback && finalRule.callback.apply(result, longestMatch) === false) {
+			return false;
+		}
+
+		str = str.substr(longestMatch[0].length);
+		finalRule = null;
+		longestMatch = null;
+	}
+
+	return Math.floor(result.toDate(new Date(now * 1000)) / 1000);
+};
+},{}],22:[function(require,module,exports){
+var toTime = require('./toTime');
 
 function toUnixTime(date, preserveJsMs) {
 	date = ['undefined', 'null', 'false', 'true'].indexOf(String(date)) > -1 ? new Date() : date;
@@ -340,7 +1467,7 @@ function toUnixTime(date, preserveJsMs) {
 	}
 
 	if (isNaN(date)) {
-		date = strtotime(date);
+		date = toTime(date);
 		return isNaN(date) || date === false ? NaN : date;
 	}
 
@@ -353,7 +1480,7 @@ function toUnixTime(date, preserveJsMs) {
 }
 
 module.exports = toUnixTime;
-},{"locutus/php/datetime/strtotime":26}],22:[function(require,module,exports){
+},{"./toTime":21}],23:[function(require,module,exports){
 function toUpperCase(s, option, preserveCase) {
 	option = option != null ? option : null;
 	s = preserveCase || preserveCase == null ? String(s) : String(s).toLowerCase();
@@ -376,7 +1503,7 @@ function toUpperCase(s, option, preserveCase) {
 }
 
 module.exports = toUpperCase;
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -446,20 +1573,20 @@ module.exports = function _phpCastString(value) {
   }
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 module.exports = function array_reverse(array, preserveKeys) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/array_reverse/
-  // original by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/array_reverse/
+  // original by: Kevin van Zonneveld (https://kvz.io)
   // improved by: Karol Kowalski
   //   example 1: array_reverse( [ 'php', '4.0', ['green', 'red'] ], true)
   //   returns 1: { 2: ['green', 'red'], 1: '4.0', 0: 'php'}
 
   var isArray = Object.prototype.toString.call(array) === '[object Array]';
   var tmpArr = preserveKeys ? {} : [];
-  var key;
+  var key = void 0;
 
   if (isArray && !preserveKeys) {
     return array.slice(0).reverse();
@@ -488,19 +1615,19 @@ module.exports = function array_reverse(array, preserveKeys) {
   return tmpArr;
 };
 
-},{}],25:[function(require,module,exports){
-(function (global){
+},{}],26:[function(require,module,exports){
+(function (global){(function (){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 module.exports = function strftime(fmt, timestamp) {
-  //       discuss at: http://locutus.io/php/strftime/
-  //      original by: Blues (http://tech.bluesmoon.info/)
-  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  //       discuss at: https://locutus.io/php/strftime/
+  //      original by: Blues (https://tech.bluesmoon.info/)
+  // reimplemented by: Brett Zamir (https://brett-zamir.me)
   //         input by: Alex
-  //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //      improved by: Brett Zamir (http://brett-zamir.me)
+  //      bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //      improved by: Brett Zamir (https://brett-zamir.me)
   //           note 1: Uses global: locutus to store locale info
   //        example 1: strftime("%A", 1062462400); // Return value will depend on date and locale
   //        returns 1: 'Tuesday'
@@ -688,1099 +1815,14 @@ module.exports = function strftime(fmt, timestamp) {
   return str;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../strings/setlocale":31}],26:[function(require,module,exports){
-'use strict';
-
-var reSpace = '[ \\t]+';
-var reSpaceOpt = '[ \\t]*';
-var reMeridian = '(?:([ap])\\.?m\\.?([\\t ]|$))';
-var reHour24 = '(2[0-4]|[01]?[0-9])';
-var reHour24lz = '([01][0-9]|2[0-4])';
-var reHour12 = '(0?[1-9]|1[0-2])';
-var reMinute = '([0-5]?[0-9])';
-var reMinutelz = '([0-5][0-9])';
-var reSecond = '(60|[0-5]?[0-9])';
-var reSecondlz = '(60|[0-5][0-9])';
-var reFrac = '(?:\\.([0-9]+))';
-
-var reDayfull = 'sunday|monday|tuesday|wednesday|thursday|friday|saturday';
-var reDayabbr = 'sun|mon|tue|wed|thu|fri|sat';
-var reDaytext = reDayfull + '|' + reDayabbr + '|weekdays?';
-
-var reReltextnumber = 'first|second|third|fourth|fifth|sixth|seventh|eighth?|ninth|tenth|eleventh|twelfth';
-var reReltexttext = 'next|last|previous|this';
-var reReltextunit = '(?:second|sec|minute|min|hour|day|fortnight|forthnight|month|year)s?|weeks|' + reDaytext;
-
-var reYear = '([0-9]{1,4})';
-var reYear2 = '([0-9]{2})';
-var reYear4 = '([0-9]{4})';
-var reYear4withSign = '([+-]?[0-9]{4})';
-var reMonth = '(1[0-2]|0?[0-9])';
-var reMonthlz = '(0[0-9]|1[0-2])';
-var reDay = '(?:(3[01]|[0-2]?[0-9])(?:st|nd|rd|th)?)';
-var reDaylz = '(0[0-9]|[1-2][0-9]|3[01])';
-
-var reMonthFull = 'january|february|march|april|may|june|july|august|september|october|november|december';
-var reMonthAbbr = 'jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec';
-var reMonthroman = 'i[vx]|vi{0,3}|xi{0,2}|i{1,3}';
-var reMonthText = '(' + reMonthFull + '|' + reMonthAbbr + '|' + reMonthroman + ')';
-
-var reTzCorrection = '((?:GMT)?([+-])' + reHour24 + ':?' + reMinute + '?)';
-var reDayOfYear = '(00[1-9]|0[1-9][0-9]|[12][0-9][0-9]|3[0-5][0-9]|36[0-6])';
-var reWeekOfYear = '(0[1-9]|[1-4][0-9]|5[0-3])';
-
-function processMeridian(hour, meridian) {
-  meridian = meridian && meridian.toLowerCase();
-
-  switch (meridian) {
-    case 'a':
-      hour += hour === 12 ? -12 : 0;
-      break;
-    case 'p':
-      hour += hour !== 12 ? 12 : 0;
-      break;
-  }
-
-  return hour;
-}
-
-function processYear(yearStr) {
-  var year = +yearStr;
-
-  if (yearStr.length < 4 && year < 100) {
-    year += year < 70 ? 2000 : 1900;
-  }
-
-  return year;
-}
-
-function lookupMonth(monthStr) {
-  return {
-    jan: 0,
-    january: 0,
-    i: 0,
-    feb: 1,
-    february: 1,
-    ii: 1,
-    mar: 2,
-    march: 2,
-    iii: 2,
-    apr: 3,
-    april: 3,
-    iv: 3,
-    may: 4,
-    v: 4,
-    jun: 5,
-    june: 5,
-    vi: 5,
-    jul: 6,
-    july: 6,
-    vii: 6,
-    aug: 7,
-    august: 7,
-    viii: 7,
-    sep: 8,
-    sept: 8,
-    september: 8,
-    ix: 8,
-    oct: 9,
-    october: 9,
-    x: 9,
-    nov: 10,
-    november: 10,
-    xi: 10,
-    dec: 11,
-    december: 11,
-    xii: 11
-  }[monthStr.toLowerCase()];
-}
-
-function lookupWeekday(dayStr) {
-  var desiredSundayNumber = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-  var dayNumbers = {
-    mon: 1,
-    monday: 1,
-    tue: 2,
-    tuesday: 2,
-    wed: 3,
-    wednesday: 3,
-    thu: 4,
-    thursday: 4,
-    fri: 5,
-    friday: 5,
-    sat: 6,
-    saturday: 6,
-    sun: 0,
-    sunday: 0
-  };
-
-  return dayNumbers[dayStr.toLowerCase()] || desiredSundayNumber;
-}
-
-function lookupRelative(relText) {
-  var relativeNumbers = {
-    last: -1,
-    previous: -1,
-    this: 0,
-    first: 1,
-    next: 1,
-    second: 2,
-    third: 3,
-    fourth: 4,
-    fifth: 5,
-    sixth: 6,
-    seventh: 7,
-    eight: 8,
-    eighth: 8,
-    ninth: 9,
-    tenth: 10,
-    eleventh: 11,
-    twelfth: 12
-  };
-
-  var relativeBehavior = {
-    this: 1
-  };
-
-  var relTextLower = relText.toLowerCase();
-
-  return {
-    amount: relativeNumbers[relTextLower],
-    behavior: relativeBehavior[relTextLower] || 0
-  };
-}
-
-function processTzCorrection(tzOffset, oldValue) {
-  var reTzCorrectionLoose = /(?:GMT)?([+-])(\d+)(:?)(\d{0,2})/i;
-  tzOffset = tzOffset && tzOffset.match(reTzCorrectionLoose);
-
-  if (!tzOffset) {
-    return oldValue;
-  }
-
-  var sign = tzOffset[1] === '-' ? 1 : -1;
-  var hours = +tzOffset[2];
-  var minutes = +tzOffset[4];
-
-  if (!tzOffset[4] && !tzOffset[3]) {
-    minutes = Math.floor(hours % 100);
-    hours = Math.floor(hours / 100);
-  }
-
-  return sign * (hours * 60 + minutes);
-}
-
-var formats = {
-  yesterday: {
-    regex: /^yesterday/i,
-    name: 'yesterday',
-    callback: function callback() {
-      this.rd -= 1;
-      return this.resetTime();
-    }
-  },
-
-  now: {
-    regex: /^now/i,
-    name: 'now'
-    // do nothing
-  },
-
-  noon: {
-    regex: /^noon/i,
-    name: 'noon',
-    callback: function callback() {
-      return this.resetTime() && this.time(12, 0, 0, 0);
-    }
-  },
-
-  midnightOrToday: {
-    regex: /^(midnight|today)/i,
-    name: 'midnight | today',
-    callback: function callback() {
-      return this.resetTime();
-    }
-  },
-
-  tomorrow: {
-    regex: /^tomorrow/i,
-    name: 'tomorrow',
-    callback: function callback() {
-      this.rd += 1;
-      return this.resetTime();
-    }
-  },
-
-  timestamp: {
-    regex: /^@(-?\d+)/i,
-    name: 'timestamp',
-    callback: function callback(match, timestamp) {
-      this.rs += +timestamp;
-      this.y = 1970;
-      this.m = 0;
-      this.d = 1;
-      this.dates = 0;
-
-      return this.resetTime() && this.zone(0);
-    }
-  },
-
-  firstOrLastDay: {
-    regex: /^(first|last) day of/i,
-    name: 'firstdayof | lastdayof',
-    callback: function callback(match, day) {
-      if (day.toLowerCase() === 'first') {
-        this.firstOrLastDayOfMonth = 1;
-      } else {
-        this.firstOrLastDayOfMonth = -1;
-      }
-    }
-  },
-
-  backOrFrontOf: {
-    regex: RegExp('^(back|front) of ' + reHour24 + reSpaceOpt + reMeridian + '?', 'i'),
-    name: 'backof | frontof',
-    callback: function callback(match, side, hours, meridian) {
-      var back = side.toLowerCase() === 'back';
-      var hour = +hours;
-      var minute = 15;
-
-      if (!back) {
-        hour -= 1;
-        minute = 45;
-      }
-
-      hour = processMeridian(hour, meridian);
-
-      return this.resetTime() && this.time(hour, minute, 0, 0);
-    }
-  },
-
-  weekdayOf: {
-    regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reDayfull + '|' + reDayabbr + ')' + reSpace + 'of', 'i'),
-    name: 'weekdayof'
-    // todo
-  },
-
-  mssqltime: {
-    regex: RegExp('^' + reHour12 + ':' + reMinutelz + ':' + reSecondlz + '[:.]([0-9]+)' + reMeridian, 'i'),
-    name: 'mssqltime',
-    callback: function callback(match, hour, minute, second, frac, meridian) {
-      return this.time(processMeridian(+hour, meridian), +minute, +second, +frac.substr(0, 3));
-    }
-  },
-
-  timeLong12: {
-    regex: RegExp('^' + reHour12 + '[:.]' + reMinute + '[:.]' + reSecondlz + reSpaceOpt + reMeridian, 'i'),
-    name: 'timelong12',
-    callback: function callback(match, hour, minute, second, meridian) {
-      return this.time(processMeridian(+hour, meridian), +minute, +second, 0);
-    }
-  },
-
-  timeShort12: {
-    regex: RegExp('^' + reHour12 + '[:.]' + reMinutelz + reSpaceOpt + reMeridian, 'i'),
-    name: 'timeshort12',
-    callback: function callback(match, hour, minute, meridian) {
-      return this.time(processMeridian(+hour, meridian), +minute, 0, 0);
-    }
-  },
-
-  timeTiny12: {
-    regex: RegExp('^' + reHour12 + reSpaceOpt + reMeridian, 'i'),
-    name: 'timetiny12',
-    callback: function callback(match, hour, meridian) {
-      return this.time(processMeridian(+hour, meridian), 0, 0, 0);
-    }
-  },
-
-  soap: {
-    regex: RegExp('^' + reYear4 + '-' + reMonthlz + '-' + reDaylz + 'T' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reFrac + reTzCorrection + '?', 'i'),
-    name: 'soap',
-    callback: function callback(match, year, month, day, hour, minute, second, frac, tzCorrection) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, +frac.substr(0, 3)) && this.zone(processTzCorrection(tzCorrection));
-    }
-  },
-
-  wddx: {
-    regex: RegExp('^' + reYear4 + '-' + reMonth + '-' + reDay + 'T' + reHour24 + ':' + reMinute + ':' + reSecond),
-    name: 'wddx',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  exif: {
-    regex: RegExp('^' + reYear4 + ':' + reMonthlz + ':' + reDaylz + ' ' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz, 'i'),
-    name: 'exif',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  xmlRpc: {
-    regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + 'T' + reHour24 + ':' + reMinutelz + ':' + reSecondlz),
-    name: 'xmlrpc',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  xmlRpcNoColon: {
-    regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + '[Tt]' + reHour24 + reMinutelz + reSecondlz),
-    name: 'xmlrpcnocolon',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  clf: {
-    regex: RegExp('^' + reDay + '/(' + reMonthAbbr + ')/' + reYear4 + ':' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reSpace + reTzCorrection, 'i'),
-    name: 'clf',
-    callback: function callback(match, day, month, year, hour, minute, second, tzCorrection) {
-      return this.ymd(+year, lookupMonth(month), +day) && this.time(+hour, +minute, +second, 0) && this.zone(processTzCorrection(tzCorrection));
-    }
-  },
-
-  iso8601long: {
-    regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond + reFrac, 'i'),
-    name: 'iso8601long',
-    callback: function callback(match, hour, minute, second, frac) {
-      return this.time(+hour, +minute, +second, +frac.substr(0, 3));
-    }
-  },
-
-  dateTextual: {
-    regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]+' + reYear, 'i'),
-    name: 'datetextual',
-    callback: function callback(match, month, day, year) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  pointedDate4: {
-    regex: RegExp('^' + reDay + '[.\\t-]' + reMonth + '[.-]' + reYear4),
-    name: 'pointeddate4',
-    callback: function callback(match, day, month, year) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  pointedDate2: {
-    regex: RegExp('^' + reDay + '[.\\t]' + reMonth + '\\.' + reYear2),
-    name: 'pointeddate2',
-    callback: function callback(match, day, month, year) {
-      return this.ymd(processYear(year), month - 1, +day);
-    }
-  },
-
-  timeLong24: {
-    regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond),
-    name: 'timelong24',
-    callback: function callback(match, hour, minute, second) {
-      return this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  dateNoColon: {
-    regex: RegExp('^' + reYear4 + reMonthlz + reDaylz),
-    name: 'datenocolon',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  pgydotd: {
-    regex: RegExp('^' + reYear4 + '\\.?' + reDayOfYear),
-    name: 'pgydotd',
-    callback: function callback(match, year, day) {
-      return this.ymd(+year, 0, +day);
-    }
-  },
-
-  timeShort24: {
-    regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute, 'i'),
-    name: 'timeshort24',
-    callback: function callback(match, hour, minute) {
-      return this.time(+hour, +minute, 0, 0);
-    }
-  },
-
-  iso8601noColon: {
-    regex: RegExp('^t?' + reHour24lz + reMinutelz + reSecondlz, 'i'),
-    name: 'iso8601nocolon',
-    callback: function callback(match, hour, minute, second) {
-      return this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  iso8601dateSlash: {
-    // eventhough the trailing slash is optional in PHP
-    // here it's mandatory and inputs without the slash
-    // are handled by dateslash
-    regex: RegExp('^' + reYear4 + '/' + reMonthlz + '/' + reDaylz + '/'),
-    name: 'iso8601dateslash',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  dateSlash: {
-    regex: RegExp('^' + reYear4 + '/' + reMonth + '/' + reDay),
-    name: 'dateslash',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  american: {
-    regex: RegExp('^' + reMonth + '/' + reDay + '/' + reYear),
-    name: 'american',
-    callback: function callback(match, month, day, year) {
-      return this.ymd(processYear(year), month - 1, +day);
-    }
-  },
-
-  americanShort: {
-    regex: RegExp('^' + reMonth + '/' + reDay),
-    name: 'americanshort',
-    callback: function callback(match, month, day) {
-      return this.ymd(this.y, month - 1, +day);
-    }
-  },
-
-  gnuDateShortOrIso8601date2: {
-    // iso8601date2 is complete subset of gnudateshort
-    regex: RegExp('^' + reYear + '-' + reMonth + '-' + reDay),
-    name: 'gnudateshort | iso8601date2',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(processYear(year), month - 1, +day);
-    }
-  },
-
-  iso8601date4: {
-    regex: RegExp('^' + reYear4withSign + '-' + reMonthlz + '-' + reDaylz),
-    name: 'iso8601date4',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  gnuNoColon: {
-    regex: RegExp('^t' + reHour24lz + reMinutelz, 'i'),
-    name: 'gnunocolon',
-    callback: function callback(match, hour, minute) {
-      return this.time(+hour, +minute, 0, this.f);
-    }
-  },
-
-  gnuDateShorter: {
-    regex: RegExp('^' + reYear4 + '-' + reMonth),
-    name: 'gnudateshorter',
-    callback: function callback(match, year, month) {
-      return this.ymd(+year, month - 1, 1);
-    }
-  },
-
-  pgTextReverse: {
-    // note: allowed years are from 32-9999
-    // years below 32 should be treated as days in datefull
-    regex: RegExp('^' + '(\\d{3,4}|[4-9]\\d|3[2-9])-(' + reMonthAbbr + ')-' + reDaylz, 'i'),
-    name: 'pgtextreverse',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  dateFull: {
-    regex: RegExp('^' + reDay + '[ \\t.-]*' + reMonthText + '[ \\t.-]*' + reYear, 'i'),
-    name: 'datefull',
-    callback: function callback(match, day, month, year) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  dateNoDay: {
-    regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reYear4, 'i'),
-    name: 'datenoday',
-    callback: function callback(match, month, year) {
-      return this.ymd(+year, lookupMonth(month), 1);
-    }
-  },
-
-  dateNoDayRev: {
-    regex: RegExp('^' + reYear4 + '[ .\\t-]*' + reMonthText, 'i'),
-    name: 'datenodayrev',
-    callback: function callback(match, year, month) {
-      return this.ymd(+year, lookupMonth(month), 1);
-    }
-  },
-
-  pgTextShort: {
-    regex: RegExp('^(' + reMonthAbbr + ')-' + reDaylz + '-' + reYear, 'i'),
-    name: 'pgtextshort',
-    callback: function callback(match, month, day, year) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  dateNoYear: {
-    regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]*', 'i'),
-    name: 'datenoyear',
-    callback: function callback(match, month, day) {
-      return this.ymd(this.y, lookupMonth(month), +day);
-    }
-  },
-
-  dateNoYearRev: {
-    regex: RegExp('^' + reDay + '[ .\\t-]*' + reMonthText, 'i'),
-    name: 'datenoyearrev',
-    callback: function callback(match, day, month) {
-      return this.ymd(this.y, lookupMonth(month), +day);
-    }
-  },
-
-  isoWeekDay: {
-    regex: RegExp('^' + reYear4 + '-?W' + reWeekOfYear + '(?:-?([0-7]))?'),
-    name: 'isoweekday | isoweek',
-    callback: function callback(match, year, week, day) {
-      day = day ? +day : 1;
-
-      if (!this.ymd(+year, 0, 1)) {
-        return false;
-      }
-
-      // get day of week for Jan 1st
-      var dayOfWeek = new Date(this.y, this.m, this.d).getDay();
-
-      // and use the day to figure out the offset for day 1 of week 1
-      dayOfWeek = 0 - (dayOfWeek > 4 ? dayOfWeek - 7 : dayOfWeek);
-
-      this.rd += dayOfWeek + (week - 1) * 7 + day;
-    }
-  },
-
-  relativeText: {
-    regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reReltextunit + ')', 'i'),
-    name: 'relativetext',
-    callback: function callback(match, relValue, relUnit) {
-      // todo: implement handling of 'this time-unit'
-      // eslint-disable-next-line no-unused-vars
-      var _lookupRelative = lookupRelative(relValue),
-          amount = _lookupRelative.amount,
-          behavior = _lookupRelative.behavior;
-
-      switch (relUnit.toLowerCase()) {
-        case 'sec':
-        case 'secs':
-        case 'second':
-        case 'seconds':
-          this.rs += amount;
-          break;
-        case 'min':
-        case 'mins':
-        case 'minute':
-        case 'minutes':
-          this.ri += amount;
-          break;
-        case 'hour':
-        case 'hours':
-          this.rh += amount;
-          break;
-        case 'day':
-        case 'days':
-          this.rd += amount;
-          break;
-        case 'fortnight':
-        case 'fortnights':
-        case 'forthnight':
-        case 'forthnights':
-          this.rd += amount * 14;
-          break;
-        case 'week':
-        case 'weeks':
-          this.rd += amount * 7;
-          break;
-        case 'month':
-        case 'months':
-          this.rm += amount;
-          break;
-        case 'year':
-        case 'years':
-          this.ry += amount;
-          break;
-        case 'mon':case 'monday':
-        case 'tue':case 'tuesday':
-        case 'wed':case 'wednesday':
-        case 'thu':case 'thursday':
-        case 'fri':case 'friday':
-        case 'sat':case 'saturday':
-        case 'sun':case 'sunday':
-          this.resetTime();
-          this.weekday = lookupWeekday(relUnit, 7);
-          this.weekdayBehavior = 1;
-          this.rd += (amount > 0 ? amount - 1 : amount) * 7;
-          break;
-        case 'weekday':
-        case 'weekdays':
-          // todo
-          break;
-      }
-    }
-  },
-
-  relative: {
-    regex: RegExp('^([+-]*)[ \\t]*(\\d+)' + reSpaceOpt + '(' + reReltextunit + '|week)', 'i'),
-    name: 'relative',
-    callback: function callback(match, signs, relValue, relUnit) {
-      var minuses = signs.replace(/[^-]/g, '').length;
-
-      var amount = +relValue * Math.pow(-1, minuses);
-
-      switch (relUnit.toLowerCase()) {
-        case 'sec':
-        case 'secs':
-        case 'second':
-        case 'seconds':
-          this.rs += amount;
-          break;
-        case 'min':
-        case 'mins':
-        case 'minute':
-        case 'minutes':
-          this.ri += amount;
-          break;
-        case 'hour':
-        case 'hours':
-          this.rh += amount;
-          break;
-        case 'day':
-        case 'days':
-          this.rd += amount;
-          break;
-        case 'fortnight':
-        case 'fortnights':
-        case 'forthnight':
-        case 'forthnights':
-          this.rd += amount * 14;
-          break;
-        case 'week':
-        case 'weeks':
-          this.rd += amount * 7;
-          break;
-        case 'month':
-        case 'months':
-          this.rm += amount;
-          break;
-        case 'year':
-        case 'years':
-          this.ry += amount;
-          break;
-        case 'mon':case 'monday':
-        case 'tue':case 'tuesday':
-        case 'wed':case 'wednesday':
-        case 'thu':case 'thursday':
-        case 'fri':case 'friday':
-        case 'sat':case 'saturday':
-        case 'sun':case 'sunday':
-          this.resetTime();
-          this.weekday = lookupWeekday(relUnit, 7);
-          this.weekdayBehavior = 1;
-          this.rd += (amount > 0 ? amount - 1 : amount) * 7;
-          break;
-        case 'weekday':
-        case 'weekdays':
-          // todo
-          break;
-      }
-    }
-  },
-
-  dayText: {
-    regex: RegExp('^(' + reDaytext + ')', 'i'),
-    name: 'daytext',
-    callback: function callback(match, dayText) {
-      this.resetTime();
-      this.weekday = lookupWeekday(dayText, 0);
-
-      if (this.weekdayBehavior !== 2) {
-        this.weekdayBehavior = 1;
-      }
-    }
-  },
-
-  relativeTextWeek: {
-    regex: RegExp('^(' + reReltexttext + ')' + reSpace + 'week', 'i'),
-    name: 'relativetextweek',
-    callback: function callback(match, relText) {
-      this.weekdayBehavior = 2;
-
-      switch (relText.toLowerCase()) {
-        case 'this':
-          this.rd += 0;
-          break;
-        case 'next':
-          this.rd += 7;
-          break;
-        case 'last':
-        case 'previous':
-          this.rd -= 7;
-          break;
-      }
-
-      if (isNaN(this.weekday)) {
-        this.weekday = 1;
-      }
-    }
-  },
-
-  monthFullOrMonthAbbr: {
-    regex: RegExp('^(' + reMonthFull + '|' + reMonthAbbr + ')', 'i'),
-    name: 'monthfull | monthabbr',
-    callback: function callback(match, month) {
-      return this.ymd(this.y, lookupMonth(month), this.d);
-    }
-  },
-
-  tzCorrection: {
-    regex: RegExp('^' + reTzCorrection, 'i'),
-    name: 'tzcorrection',
-    callback: function callback(tzCorrection) {
-      return this.zone(processTzCorrection(tzCorrection));
-    }
-  },
-
-  ago: {
-    regex: /^ago/i,
-    name: 'ago',
-    callback: function callback() {
-      this.ry = -this.ry;
-      this.rm = -this.rm;
-      this.rd = -this.rd;
-      this.rh = -this.rh;
-      this.ri = -this.ri;
-      this.rs = -this.rs;
-      this.rf = -this.rf;
-    }
-  },
-
-  gnuNoColon2: {
-    // second instance of gnunocolon, without leading 't'
-    // it's down here, because it is very generic (4 digits in a row)
-    // thus conflicts with many rules above
-    // only year4 should come afterwards
-    regex: RegExp('^' + reHour24lz + reMinutelz, 'i'),
-    name: 'gnunocolon',
-    callback: function callback(match, hour, minute) {
-      return this.time(+hour, +minute, 0, this.f);
-    }
-  },
-
-  year4: {
-    regex: RegExp('^' + reYear4),
-    name: 'year4',
-    callback: function callback(match, year) {
-      this.y = +year;
-      return true;
-    }
-  },
-
-  whitespace: {
-    regex: /^[ .,\t]+/,
-    name: 'whitespace'
-    // do nothing
-  },
-
-  any: {
-    regex: /^[\s\S]+/,
-    name: 'any',
-    callback: function callback() {
-      return false;
-    }
-  }
-};
-
-var resultProto = {
-  // date
-  y: NaN,
-  m: NaN,
-  d: NaN,
-  // time
-  h: NaN,
-  i: NaN,
-  s: NaN,
-  f: NaN,
-
-  // relative shifts
-  ry: 0,
-  rm: 0,
-  rd: 0,
-  rh: 0,
-  ri: 0,
-  rs: 0,
-  rf: 0,
-
-  // weekday related shifts
-  weekday: NaN,
-  weekdayBehavior: 0,
-
-  // first or last day of month
-  // 0 none, 1 first, -1 last
-  firstOrLastDayOfMonth: 0,
-
-  // timezone correction in minutes
-  z: NaN,
-
-  // counters
-  dates: 0,
-  times: 0,
-  zones: 0,
-
-  // helper functions
-  ymd: function ymd(y, m, d) {
-    if (this.dates > 0) {
-      return false;
-    }
-
-    this.dates++;
-    this.y = y;
-    this.m = m;
-    this.d = d;
-    return true;
-  },
-  time: function time(h, i, s, f) {
-    if (this.times > 0) {
-      return false;
-    }
-
-    this.times++;
-    this.h = h;
-    this.i = i;
-    this.s = s;
-    this.f = f;
-
-    return true;
-  },
-  resetTime: function resetTime() {
-    this.h = 0;
-    this.i = 0;
-    this.s = 0;
-    this.f = 0;
-    this.times = 0;
-
-    return true;
-  },
-  zone: function zone(minutes) {
-    if (this.zones <= 1) {
-      this.zones++;
-      this.z = minutes;
-      return true;
-    }
-
-    return false;
-  },
-  toDate: function toDate(relativeTo) {
-    if (this.dates && !this.times) {
-      this.h = this.i = this.s = this.f = 0;
-    }
-
-    // fill holes
-    if (isNaN(this.y)) {
-      this.y = relativeTo.getFullYear();
-    }
-
-    if (isNaN(this.m)) {
-      this.m = relativeTo.getMonth();
-    }
-
-    if (isNaN(this.d)) {
-      this.d = relativeTo.getDate();
-    }
-
-    if (isNaN(this.h)) {
-      this.h = relativeTo.getHours();
-    }
-
-    if (isNaN(this.i)) {
-      this.i = relativeTo.getMinutes();
-    }
-
-    if (isNaN(this.s)) {
-      this.s = relativeTo.getSeconds();
-    }
-
-    if (isNaN(this.f)) {
-      this.f = relativeTo.getMilliseconds();
-    }
-
-    // adjust special early
-    switch (this.firstOrLastDayOfMonth) {
-      case 1:
-        this.d = 1;
-        break;
-      case -1:
-        this.d = 0;
-        this.m += 1;
-        break;
-    }
-
-    if (!isNaN(this.weekday)) {
-      var date = new Date(relativeTo.getTime());
-      date.setFullYear(this.y, this.m, this.d);
-      date.setHours(this.h, this.i, this.s, this.f);
-
-      var dow = date.getDay();
-
-      if (this.weekdayBehavior === 2) {
-        // To make "this week" work, where the current day of week is a "sunday"
-        if (dow === 0 && this.weekday !== 0) {
-          this.weekday = -6;
-        }
-
-        // To make "sunday this week" work, where the current day of week is not a "sunday"
-        if (this.weekday === 0 && dow !== 0) {
-          this.weekday = 7;
-        }
-
-        this.d -= dow;
-        this.d += this.weekday;
-      } else {
-        var diff = this.weekday - dow;
-
-        // some PHP magic
-        if (this.rd < 0 && diff < 0 || this.rd >= 0 && diff <= -this.weekdayBehavior) {
-          diff += 7;
-        }
-
-        if (this.weekday >= 0) {
-          this.d += diff;
-        } else {
-          this.d -= 7 - (Math.abs(this.weekday) - dow);
-        }
-
-        this.weekday = NaN;
-      }
-    }
-
-    // adjust relative
-    this.y += this.ry;
-    this.m += this.rm;
-    this.d += this.rd;
-
-    this.h += this.rh;
-    this.i += this.ri;
-    this.s += this.rs;
-    this.f += this.rf;
-
-    this.ry = this.rm = this.rd = 0;
-    this.rh = this.ri = this.rs = this.rf = 0;
-
-    var result = new Date(relativeTo.getTime());
-    // since Date constructor treats years <= 99 as 1900+
-    // it can't be used, thus this weird way
-    result.setFullYear(this.y, this.m, this.d);
-    result.setHours(this.h, this.i, this.s, this.f);
-
-    // note: this is done twice in PHP
-    // early when processing special relatives
-    // and late
-    // todo: check if the logic can be reduced
-    // to just one time action
-    switch (this.firstOrLastDayOfMonth) {
-      case 1:
-        result.setDate(1);
-        break;
-      case -1:
-        result.setMonth(result.getMonth() + 1, 0);
-        break;
-    }
-
-    // adjust timezone
-    if (!isNaN(this.z) && result.getTimezoneOffset() !== this.z) {
-      result.setUTCFullYear(result.getFullYear(), result.getMonth(), result.getDate());
-
-      result.setUTCHours(result.getHours(), result.getMinutes() + this.z, result.getSeconds(), result.getMilliseconds());
-    }
-
-    return result;
-  }
-};
-
-module.exports = function strtotime(str, now) {
-  //       discuss at: http://locutus.io/php/strtotime/
-  //      original by: Caio Ariede (http://caioariede.com)
-  //      improved by: Kevin van Zonneveld (http://kvz.io)
-  //      improved by: Caio Ariede (http://caioariede.com)
-  //      improved by: A. Matías Quezada (http://amatiasq.com)
-  //      improved by: preuter
-  //      improved by: Brett Zamir (http://brett-zamir.me)
-  //      improved by: Mirko Faber
-  //         input by: David
-  //      bugfixed by: Wagner B. Soares
-  //      bugfixed by: Artur Tchernychev
-  //      bugfixed by: Stephan Bösch-Plepelits (http://github.com/plepe)
-  // reimplemented by: Rafał Kukawski
-  //           note 1: Examples all have a fixed timestamp to prevent
-  //           note 1: tests to fail because of variable time(zones)
-  //        example 1: strtotime('+1 day', 1129633200)
-  //        returns 1: 1129719600
-  //        example 2: strtotime('+1 week 2 days 4 hours 2 seconds', 1129633200)
-  //        returns 2: 1130425202
-  //        example 3: strtotime('last month', 1129633200)
-  //        returns 3: 1127041200
-  //        example 4: strtotime('2009-05-04 08:30:00+00')
-  //        returns 4: 1241425800
-  //        example 5: strtotime('2009-05-04 08:30:00+02:00')
-  //        returns 5: 1241418600
-  if (now == null) {
-    now = Math.floor(Date.now() / 1000);
-  }
-
-  // the rule order is very fragile
-  // as many formats are similar to others
-  // so small change can cause
-  // input misinterpretation
-  var rules = [formats.yesterday, formats.now, formats.noon, formats.midnightOrToday, formats.tomorrow, formats.timestamp, formats.firstOrLastDay, formats.backOrFrontOf,
-  // formats.weekdayOf, // not yet implemented
-  formats.mssqltime, formats.timeLong12, formats.timeShort12, formats.timeTiny12, formats.soap, formats.wddx, formats.exif, formats.xmlRpc, formats.xmlRpcNoColon, formats.clf, formats.iso8601long, formats.dateTextual, formats.pointedDate4, formats.pointedDate2, formats.timeLong24, formats.dateNoColon, formats.pgydotd, formats.timeShort24, formats.iso8601noColon,
-  // iso8601dateSlash needs to come before dateSlash
-  formats.iso8601dateSlash, formats.dateSlash, formats.american, formats.americanShort, formats.gnuDateShortOrIso8601date2, formats.iso8601date4, formats.gnuNoColon, formats.gnuDateShorter, formats.pgTextReverse, formats.dateFull, formats.dateNoDay, formats.dateNoDayRev, formats.pgTextShort, formats.dateNoYear, formats.dateNoYearRev, formats.isoWeekDay, formats.relativeText, formats.relative, formats.dayText, formats.relativeTextWeek, formats.monthFullOrMonthAbbr, formats.tzCorrection, formats.ago, formats.gnuNoColon2, formats.year4,
-  // note: the two rules below
-  // should always come last
-  formats.whitespace, formats.any];
-
-  var result = Object.create(resultProto);
-
-  while (str.length) {
-    for (var i = 0, l = rules.length; i < l; i++) {
-      var format = rules[i];
-
-      var match = str.match(format.regex);
-
-      if (match) {
-        // care only about false results. Ignore other values
-        if (format.callback && format.callback.apply(result, match) === false) {
-          return false;
-        }
-
-        str = str.substr(match[0].length);
-        break;
-      }
-    }
-  }
-
-  return Math.floor(result.toDate(new Date(now * 1000)) / 1000);
-};
-
-},{}],27:[function(require,module,exports){
-(function (process){
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../strings/setlocale":31}],27:[function(require,module,exports){
+(function (process){(function (){
 'use strict';
 
 module.exports = function getenv(varname) {
-  //  discuss at: http://locutus.io/php/getenv/
-  // original by: Brett Zamir (http://brett-zamir.me)
+  //  discuss at: https://locutus.io/php/getenv/
+  // original by: Brett Zamir (https://brett-zamir.me)
   //   example 1: getenv('LC_ALL')
   //   returns 1: false
 
@@ -1791,15 +1833,15 @@ module.exports = function getenv(varname) {
   return process.env[varname];
 };
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 },{"_process":37}],28:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 module.exports = function explode(delimiter, string, limit) {
-  //  discuss at: http://locutus.io/php/explode/
-  // original by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/explode/
+  // original by: Kevin van Zonneveld (https://kvz.io)
   //   example 1: explode(' ', 'Kevin van Zonneveld')
   //   returns 1: [ 'Kevin', 'van', 'Zonneveld' ]
 
@@ -1850,18 +1892,18 @@ module.exports = function explode(delimiter, string, limit) {
 'use strict';
 
 module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEncode) {
-  //       discuss at: http://locutus.io/php/htmlspecialchars/
+  //       discuss at: https://locutus.io/php/htmlspecialchars/
   //      original by: Mirek Slugen
-  //      improved by: Kevin van Zonneveld (http://kvz.io)
+  //      improved by: Kevin van Zonneveld (https://kvz.io)
   //      bugfixed by: Nathan
   //      bugfixed by: Arno
-  //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //       revised by: Kevin van Zonneveld (http://kvz.io)
+  //      bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //      bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //       revised by: Kevin van Zonneveld (https://kvz.io)
   //         input by: Ratheous
-  //         input by: Mailfaker (http://www.weedem.fr/)
+  //         input by: Mailfaker (https://www.weedem.fr/)
   //         input by: felix
-  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  // reimplemented by: Brett Zamir (https://brett-zamir.me)
   //           note 1: charset argument not supported
   //        example 1: htmlspecialchars("<a href='test'>Test</a>", 'ENT_QUOTES')
   //        returns 1: '&lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;'
@@ -1887,12 +1929,12 @@ module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEn
   string = string.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   var OPTS = {
-    'ENT_NOQUOTES': 0,
-    'ENT_HTML_QUOTE_SINGLE': 1,
-    'ENT_HTML_QUOTE_DOUBLE': 2,
-    'ENT_COMPAT': 2,
-    'ENT_QUOTES': 3,
-    'ENT_IGNORE': 4
+    ENT_NOQUOTES: 0,
+    ENT_HTML_QUOTE_SINGLE: 1,
+    ENT_HTML_QUOTE_DOUBLE: 2,
+    ENT_COMPAT: 2,
+    ENT_QUOTES: 3,
+    ENT_IGNORE: 4
   };
   if (quoteStyle === 0) {
     noquotes = true;
@@ -1925,26 +1967,26 @@ module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEn
 
 module.exports = function number_format(number, decimals, decPoint, thousandsSep) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/number_format/
-  // original by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  // improved by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/number_format/
+  // original by: Jonas Raoni Soares Silva (https://www.jsfromhell.com)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
   // improved by: davook
-  // improved by: Brett Zamir (http://brett-zamir.me)
-  // improved by: Brett Zamir (http://brett-zamir.me)
+  // improved by: Brett Zamir (https://brett-zamir.me)
+  // improved by: Brett Zamir (https://brett-zamir.me)
   // improved by: Theriault (https://github.com/Theriault)
-  // improved by: Kevin van Zonneveld (http://kvz.io)
-  // bugfixed by: Michael White (http://getsprink.com)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
+  // bugfixed by: Michael White (https://getsprink.com)
   // bugfixed by: Benjamin Lupton
-  // bugfixed by: Allan Jensen (http://www.winternet.no)
+  // bugfixed by: Allan Jensen (https://www.winternet.no)
   // bugfixed by: Howard Yeend
   // bugfixed by: Diogo Resende
   // bugfixed by: Rival
-  // bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //  revised by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  //  revised by: Luke Smith (http://lucassmith.name)
-  //    input by: Kheang Hok Chin (http://www.distantia.ca/)
+  // bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //  revised by: Jonas Raoni Soares Silva (https://www.jsfromhell.com)
+  //  revised by: Luke Smith (https://lucassmith.name)
+  //    input by: Kheang Hok Chin (https://www.distantia.ca/)
   //    input by: Jay Klehr
-  //    input by: Amir Habibi (http://www.residence-mixte.com/)
+  //    input by: Amir Habibi (https://www.residence-mixte.com/)
   //    input by: Amirouche
   //   example 1: number_format(1234.56)
   //   returns 1: '1,235'
@@ -2009,21 +2051,21 @@ module.exports = function number_format(number, decimals, decPoint, thousandsSep
 };
 
 },{}],31:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 module.exports = function setlocale(category, locale) {
-  //  discuss at: http://locutus.io/php/setlocale/
-  // original by: Brett Zamir (http://brett-zamir.me)
-  // original by: Blues (http://hacks.bluesmoon.info/strftime/strftime.js)
-  // original by: YUI Library (http://developer.yahoo.com/yui/docs/YAHOO.util.DateLocale.html)
+  //  discuss at: https://locutus.io/php/setlocale/
+  // original by: Brett Zamir (https://brett-zamir.me)
+  // original by: Blues (https://hacks.bluesmoon.info/strftime/strftime.js)
+  // original by: YUI Library (https://developer.yahoo.com/yui/docs/YAHOO.util.DateLocale.html)
   //      note 1: Is extensible, but currently only implements locales en,
   //      note 1: en_US, en_GB, en_AU, fr, and fr_CA for LC_TIME only; C for LC_CTYPE;
   //      note 1: C and en for LC_MONETARY/LC_NUMERIC; en for LC_COLLATE
   //      note 1: Uses global: locutus to store locale info
-  //      note 1: Consider using http://demo.icu-project.org/icu-bin/locexp as basis for localization (as in i18n_loc_set_default())
+  //      note 1: Consider using https://demo.icu-project.org/icu-bin/locexp as basis for localization (as in i18n_loc_set_default())
   //      note 2: This function tries to establish the locale via the `window` global.
   //      note 2: This feature will not work in Node and hence is Browser-only
   //   example 1: setlocale('LC_ALL', 'en_US')
@@ -2042,25 +2084,25 @@ module.exports = function setlocale(category, locale) {
       return new Date(orig);
     }
     var newObj = {};
-    for (var i in orig) {
-      if (_typeof(orig[i]) === 'object') {
-        newObj[i] = _copy(orig[i]);
+    for (var _i in orig) {
+      if (_typeof(orig[_i]) === 'object') {
+        newObj[_i] = _copy(orig[_i]);
       } else {
-        newObj[i] = orig[i];
+        newObj[_i] = orig[_i];
       }
     }
     return newObj;
   };
 
   // Function usable by a ngettext implementation (apparently not an accessible part of setlocale(),
-  // but locale-specific) See http://www.gnu.org/software/gettext/manual/gettext.html#Plural-forms
+  // but locale-specific) See https://www.gnu.org/software/gettext/manual/gettext.html#Plural-forms
   // though amended with others from https://developer.mozilla.org/En/Localization_and_Plurals (new
   // categories noted with "MDC" below, though not sure of whether there is a convention for the
   // relative order of these newer groups as far as ngettext) The function name indicates the number
-  // of plural forms (nplural) Need to look into http://cldr.unicode.org/ (maybe future JavaScript);
+  // of plural forms (nplural) Need to look into https://cldr.unicode.org/ (maybe future JavaScript);
   // Dojo has some functions (under new BSD), including JSON conversions of LDML XML from CLDR:
-  // http://bugs.dojotoolkit.org/browser/dojo/trunk/cldr and docs at
-  // http://api.dojotoolkit.org/jsdoc/HEAD/dojo.cldr
+  // https://bugs.dojotoolkit.org/browser/dojo/trunk/cldr and docs at
+  // https://api.dojotoolkit.org/jsdoc/HEAD/dojo.cldr
 
   // var _nplurals1 = function (n) {
   //   // e.g., Japanese
@@ -2088,12 +2130,12 @@ module.exports = function setlocale(category, locale) {
     $locutus.php.locales = {};
 
     $locutus.php.locales.en = {
-      'LC_COLLATE': function LC_COLLATE(str1, str2) {
+      LC_COLLATE: function LC_COLLATE(str1, str2) {
         // @todo: This one taken from strcmp, but need for other locales; we don't use localeCompare
         // since its locale is not settable
         return str1 === str2 ? 0 : str1 > str2 ? 1 : -1;
       },
-      'LC_CTYPE': {
+      LC_CTYPE: {
         // Need to change any of these for English as opposed to C?
         an: /^[A-Za-z\d]+$/g,
         al: /^[A-Za-z]+$/g,
@@ -2111,7 +2153,7 @@ module.exports = function setlocale(category, locale) {
         lower: 'abcdefghijklmnopqrstuvwxyz',
         upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       },
-      'LC_TIME': {
+      LC_TIME: {
         // Comments include nl_langinfo() constant equivalents and any
         // changes from Blues' implementation
         a: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -2134,7 +2176,7 @@ module.exports = function setlocale(category, locale) {
         // D_FMT // switched order of %m and %d; changed %y to %Y (C uses %y)
         X: '%r',
         // T_FMT // changed from %T to %r  (%T is default for C, not English US)
-        // Following are from nl_langinfo() or http://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
+        // Following are from nl_langinfo() or https://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
         alt_digits: '',
         // e.g., ordinal
         ERA: '',
@@ -2145,7 +2187,7 @@ module.exports = function setlocale(category, locale) {
       },
       // Assuming distinction between numeric and monetary is thus:
       // See below for C locale
-      'LC_MONETARY': {
+      LC_MONETARY: {
         // based on Windows "english" (English_United States.1252) locale
         int_curr_symbol: 'USD',
         currency_symbol: '$',
@@ -2176,13 +2218,13 @@ module.exports = function setlocale(category, locale) {
         // succeeds curr. symbol
         n_sign_posn: 0 // see p_sign_posn
       },
-      'LC_NUMERIC': {
+      LC_NUMERIC: {
         // based on Windows "english" (English_United States.1252) locale
         decimal_point: '.',
         thousands_sep: ',',
         grouping: [3] // see mon_grouping, but for non-monetary values (use thousands_sep)
       },
-      'LC_MESSAGES': {
+      LC_MESSAGES: {
         YESEXPR: '^[yY].*',
         NOEXPR: '^[nN].*',
         YESSTR: '',
@@ -2260,8 +2302,8 @@ module.exports = function setlocale(category, locale) {
     // Try to establish the locale via the `window` global
     if (typeof window !== 'undefined' && window.document) {
       var d = window.document;
-      var NS_XHTML = 'http://www.w3.org/1999/xhtml';
-      var NS_XML = 'http://www.w3.org/XML/1998/namespace';
+      var NS_XHTML = 'https://www.w3.org/1999/xhtml';
+      var NS_XML = 'https://www.w3.org/XML/1998/namespace';
       if (d.getElementsByTagNameNS && d.getElementsByTagNameNS(NS_XHTML, 'html')[0]) {
         if (d.getElementsByTagNameNS(NS_XHTML, 'html')[0].getAttributeNS && d.getElementsByTagNameNS(NS_XHTML, 'html')[0].getAttributeNS(NS_XML, 'lang')) {
           $locutus.php.locale = d.getElementsByTagName(NS_XHTML, 'html')[0].getAttributeNS(NS_XML, 'lang');
@@ -2285,18 +2327,18 @@ module.exports = function setlocale(category, locale) {
 
   if (!$locutus.php.localeCategories) {
     $locutus.php.localeCategories = {
-      'LC_COLLATE': $locutus.php.locale,
+      LC_COLLATE: $locutus.php.locale,
       // for string comparison, see strcoll()
-      'LC_CTYPE': $locutus.php.locale,
+      LC_CTYPE: $locutus.php.locale,
       // for character classification and conversion, for example strtoupper()
-      'LC_MONETARY': $locutus.php.locale,
+      LC_MONETARY: $locutus.php.locale,
       // for localeconv()
-      'LC_NUMERIC': $locutus.php.locale,
+      LC_NUMERIC: $locutus.php.locale,
       // for decimal separator (See also localeconv())
-      'LC_TIME': $locutus.php.locale,
+      LC_TIME: $locutus.php.locale,
       // for date and time formatting with strftime()
       // for system responses (available if PHP was compiled with libintl):
-      'LC_MESSAGES': $locutus.php.locale
+      LC_MESSAGES: $locutus.php.locale
     };
   }
 
@@ -2345,24 +2387,24 @@ module.exports = function setlocale(category, locale) {
   return locale;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../info/getenv":27}],32:[function(require,module,exports){
 'use strict';
 
 module.exports = function str_pad(input, padLength, padString, padType) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/str_pad/
-  // original by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: Michael White (http://getsprink.com)
+  //  discuss at: https://locutus.io/php/str_pad/
+  // original by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: Michael White (https://getsprink.com)
   //    input by: Marco van Oort
-  // bugfixed by: Brett Zamir (http://brett-zamir.me)
+  // bugfixed by: Brett Zamir (https://brett-zamir.me)
   //   example 1: str_pad('Kevin van Zonneveld', 30, '-=', 'STR_PAD_LEFT')
   //   returns 1: '-=-=-=-=-=-Kevin van Zonneveld'
   //   example 2: str_pad('Kevin van Zonneveld', 30, '-', 'STR_PAD_BOTH')
   //   returns 2: '------Kevin van Zonneveld-----'
 
   var half = '';
-  var padToGo;
+  var padToGo = void 0;
 
   var _strPadRepeater = function _strPadRepeater(s, len) {
     var collect = '';
@@ -2401,10 +2443,10 @@ module.exports = function str_pad(input, padLength, padString, padType) {
 
 module.exports = function str_repeat(input, multiplier) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/str_repeat/
-  // original by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  // improved by: Ian Carter (http://euona.com/)
+  //  discuss at: https://locutus.io/php/str_repeat/
+  // original by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: Jonas Raoni Soares Silva (https://www.jsfromhell.com)
+  // improved by: Ian Carter (https://euona.com/)
   //   example 1: str_repeat('-=', 10)
   //   returns 1: '-=-=-=-=-=-=-=-=-=-='
 
@@ -2428,32 +2470,32 @@ module.exports = function str_repeat(input, multiplier) {
 
 module.exports = function strip_tags(input, allowed) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/strip_tags/
-  // original by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/strip_tags/
+  // original by: Kevin van Zonneveld (https://kvz.io)
   // improved by: Luke Godfrey
-  // improved by: Kevin van Zonneveld (http://kvz.io)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
   //    input by: Pul
   //    input by: Alex
   //    input by: Marc Palau
-  //    input by: Brett Zamir (http://brett-zamir.me)
+  //    input by: Brett Zamir (https://brett-zamir.me)
   //    input by: Bobby Drake
   //    input by: Evertjan Garretsen
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
   // bugfixed by: Onno Marsman (https://twitter.com/onnomarsman)
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
   // bugfixed by: Eric Nagel
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
   // bugfixed by: Tomasz Wesolowski
   // bugfixed by: Tymon Sturgeon (https://scryptonite.com)
   // bugfixed by: Tim de Koning (https://www.kingsquare.nl)
-  //  revised by: Rafał Kukawski (http://blog.kukawski.pl)
+  //  revised by: Rafał Kukawski (https://blog.kukawski.pl)
   //   example 1: strip_tags('<p>Kevin</p> <br /><b>van</b> <i>Zonneveld</i>', '<i><b>')
   //   returns 1: 'Kevin <b>van</b> <i>Zonneveld</i>'
   //   example 2: strip_tags('<p>Kevin <img src="someimage.png" onmouseover="someFunction()">van <i>Zonneveld</i></p>', '<p>')
   //   returns 2: '<p>Kevin van Zonneveld</p>'
-  //   example 3: strip_tags("<a href='http://kvz.io'>Kevin van Zonneveld</a>", "<a>")
-  //   returns 3: "<a href='http://kvz.io'>Kevin van Zonneveld</a>"
+  //   example 3: strip_tags("<a href='https://kvz.io'>Kevin van Zonneveld</a>", "<a>")
+  //   returns 3: "<a href='https://kvz.io'>Kevin van Zonneveld</a>"
   //   example 4: strip_tags('1 < 5 5 > 1')
   //   returns 4: '1 < 5 5 > 1'
   //   example 5: strip_tags('1 <br/> 1')
@@ -2493,14 +2535,14 @@ module.exports = function strip_tags(input, allowed) {
   }
 };
 
-},{"../_helpers/_phpCastString":23}],35:[function(require,module,exports){
+},{"../_helpers/_phpCastString":24}],35:[function(require,module,exports){
 'use strict';
 
 module.exports = function strrev(string) {
-  //       discuss at: http://locutus.io/php/strrev/
-  //      original by: Kevin van Zonneveld (http://kvz.io)
+  //       discuss at: https://locutus.io/php/strrev/
+  //      original by: Kevin van Zonneveld (https://kvz.io)
   //      bugfixed by: Onno Marsman (https://twitter.com/onnomarsman)
-  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  // reimplemented by: Brett Zamir (https://brett-zamir.me)
   //        example 1: strrev('Kevin van Zonneveld')
   //        returns 1: 'dlevennoZ nav niveK'
   //        example 2: strrev('a\u0301haB')
@@ -2515,7 +2557,7 @@ module.exports = function strrev(string) {
   // out if you don't care about combining characters
   // Keep Unicode combining characters together with the character preceding
   // them and which they are modifying (as in PHP 6)
-  // See http://unicode.org/reports/tr44/#Property_Table (Me+Mn)
+  // See https://unicode.org/reports/tr44/#Property_Table (Me+Mn)
   // We also add the low surrogate range at the beginning here so it will be
   // maintained with its preceding high surrogate
 
@@ -2532,12 +2574,12 @@ module.exports = function strrev(string) {
 'use strict';
 
 module.exports = function trim(str, charlist) {
-  //  discuss at: http://locutus.io/php/trim/
-  // original by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: mdsjack (http://www.mdsjack.bo.it)
-  // improved by: Alexander Ermolaev (http://snippets.dzone.com/user/AlexanderErmolaev)
-  // improved by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: Steven Levithan (http://blog.stevenlevithan.com)
+  //  discuss at: https://locutus.io/php/trim/
+  // original by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: mdsjack (https://www.mdsjack.bo.it)
+  // improved by: Alexander Ermolaev (https://snippets.dzone.com/user/AlexanderErmolaev)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: Steven Levithan (https://blog.stevenlevithan.com)
   // improved by: Jack
   //    input by: Erkekjetter
   //    input by: DxGx
@@ -2767,66 +2809,74 @@ process.umask = function() { return 0; };
 var htmlspecialchars = require('locutus/php/strings/htmlspecialchars');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'breaklines',
-	function (s) {
-		if (s == null) {
-			return '';
-		}
+  'modifier',
+  'breaklines',
+  function (s)
+  {
+    if (s == null)
+    {
+      return '';
+    }
 
-		return htmlspecialchars(s, 0, 'UTF-8').replace(/(\r\n|\n\r|\r|\n)/g, '<br />\n');
-	}
+    return htmlspecialchars(s, 0, 'UTF-8').replace(/(\r\n|\n\r|\r|\n)/g, '<br />\n');
+  }
 );
 
 },{"locutus/php/strings/htmlspecialchars":29}],39:[function(require,module,exports){
 var toBytes = require('es5-util/js/toBytes');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'bytes',
-	function (s, precision) {
-		precision = precision != null ? precision : 2;
-		return toBytes(s, precision);
-	}
+  'modifier',
+  'bytes',
+  function (s, precision)
+  {
+    precision = precision != null ? precision : 2;
+    return toBytes(s, precision);
+  }
 );
 
 },{"es5-util/js/toBytes":18}],40:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'capitalize',
-	function (s, preserveCase) {
-		return toUpperCase(s, 'words', !!preserveCase);
-	}
+  'modifier',
+  'capitalize',
+  function (s, preserveCase)
+  {
+    return toUpperCase(s, 'words', !!preserveCase);
+  }
 );
 
-},{"es5-util/js/toUpperCase":22}],41:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":23}],41:[function(require,module,exports){
 var isNotSetLoose = require('es5-util/js/isNotSetLoose');
-var toUnixTime = require('es5-util/js/toUnixTime');
-var strftime = require('locutus/php/datetime/strftime');
+var toUnixTime    = require('es5-util/js/toUnixTime');
+var strftime      = require('locutus/php/datetime/strftime');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'date',
-	function (time, format, defaultDate) {
-		if (isNotSetLoose(time) || !time) {
-			if (isNotSetLoose(defaultDate)) {
-				return '';
-			}
-			time = defaultDate;
-		}
+  'modifier',
+  'date',
+  function (time, format, defaultDate)
+  {
+    if (isNotSetLoose(time) || !time)
+    {
+      if (isNotSetLoose(defaultDate))
+      {
+        return '';
+      }
+      time = defaultDate;
+    }
 
-		return strftime(format != null ? format : '%b %e, %Y', toUnixTime(time));
-	}
+    return strftime(format != null ? format : '%b %e, %Y', toUnixTime(time));
+  }
 );
 
-},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":21,"locutus/php/datetime/strftime":25}],42:[function(require,module,exports){
+},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":22,"locutus/php/datetime/strftime":26}],42:[function(require,module,exports){
 var getDefaultTags = require('./../helpers/getDefaultTags');
 
 Latte.getDefaultTags = getDefaultTags;
 
-Latte.setDefaultTags = function (template, obj) {
+Latte.setDefaultTags = function (template, obj)
+{
   return getDefaultTags(obj) + template;
 };
 
@@ -2834,143 +2884,157 @@ Latte.setDefaultTags = function (template, obj) {
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'firstUpper',
-	function (s, preserveCase) {
-		return toUpperCase(s, 'first', !!preserveCase);
-	}
+  'modifier',
+  'firstUpper',
+  function (s, preserveCase)
+  {
+    return toUpperCase(s, 'first', !!preserveCase);
+  }
 );
 
-},{"es5-util/js/toUpperCase":22}],44:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":23}],44:[function(require,module,exports){
 var toString = require('es5-util/js/toString');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'implode',
-	function (arr, glue, keyGlue) {
-		return toString(arr, glue != null ? glue : '', keyGlue);
-	}
+  'modifier',
+  'implode',
+  function (arr, glue, keyGlue)
+  {
+    return toString(arr, glue != null ? glue : '', keyGlue);
+  }
 );
 
 },{"es5-util/js/toString":20}],45:[function(require,module,exports){
-var isObjectLike = require('es5-util/js/isObjectLike');
+var isObjectLike        = require('es5-util/js/isObjectLike');
 var toAssociativeValues = require('es5-util/js/toAssociativeValues');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'length',
-	function (s) {
-		if (s == null) {
-			return 0;
-		}
+  'modifier',
+  'length',
+  function (s)
+  {
+    if (s == null)
+    {
+      return 0;
+    }
 
-		return (isObjectLike(s) ? toAssociativeValues(s) : s).length;
-	}
+    return (isObjectLike(s) ? toAssociativeValues(s) : s).length;
+  }
 );
 
 },{"es5-util/js/isObjectLike":11,"es5-util/js/toAssociativeValues":17}],46:[function(require,module,exports){
-var toNumber = require('es5-util/js/toNumber');
+var toNumber      = require('es5-util/js/toNumber');
 var number_format = require('locutus/php/strings/number_format');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'number',
-	function (s, decimals, dec_point, thousands_sep) {
-		decimals = decimals != null ? decimals : 0;
-		dec_point = dec_point != null ? dec_point : '.';
-		thousands_sep = thousands_sep != null ? thousands_sep : ',';
-		return number_format(toNumber(s), decimals, dec_point, thousands_sep);
-	}
+  'modifier',
+  'number',
+  function (s, decimals, dec_point, thousands_sep)
+  {
+    decimals      = decimals != null ? decimals : 0;
+    dec_point     = dec_point != null ? dec_point : '.';
+    thousands_sep = thousands_sep != null ? thousands_sep : ',';
+    return number_format(toNumber(s), decimals, dec_point, thousands_sep);
+  }
 );
 
 },{"es5-util/js/toNumber":19,"locutus/php/strings/number_format":30}],47:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padBoth',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_BOTH');
-	}
+  'modifier',
+  'padBoth',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_BOTH');
+  }
 );
 
 },{"locutus/php/strings/str_pad":32}],48:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padLeft',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_LEFT');
-	}
+  'modifier',
+  'padLeft',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_LEFT');
+  }
 );
 
 },{"locutus/php/strings/str_pad":32}],49:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padRight',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_RIGHT');
-	}
+  'modifier',
+  'padRight',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_RIGHT');
+  }
 );
 
 },{"locutus/php/strings/str_pad":32}],50:[function(require,module,exports){
 var str_repeat = require('locutus/php/strings/str_repeat');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'repeat',
-	function (s, count) {
-		return str_repeat(String(s), ~~count);
-	}
+  'modifier',
+  'repeat',
+  function (s, count)
+  {
+    return str_repeat(String(s), ~~count);
+  }
 );
 
 },{"locutus/php/strings/str_repeat":33}],51:[function(require,module,exports){
 var findReplace = require('es5-util/js/findReplace');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'replaceRe',
-	function (s, find, replace) {
-		return findReplace(s, find, replace);
-	}
+  'modifier',
+  'replaceRe',
+  function (s, find, replace)
+  {
+    return findReplace(s, find, replace);
+  }
 );
 
 },{"es5-util/js/findReplace":1}],52:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
-var toArray = require('es5-util/js/toArray');
-var array_reverse = require('locutus/php/array/array_reverse');
-var strrev = require('locutus/php/strings/strrev');
+var toArray           = require('es5-util/js/toArray');
+var array_reverse     = require('locutus/php/array/array_reverse');
+var strrev            = require('locutus/php/strings/strrev');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'reverse',
-	function (s, preserveKeys) {
-		if (isArrayLikeObject(s)) {
-			return array_reverse(toArray(s), !!preserveKeys);
-		}
+  'modifier',
+  'reverse',
+  function (s, preserveKeys)
+  {
+    if (isArrayLikeObject(s))
+    {
+      return array_reverse(toArray(s), !!preserveKeys);
+    }
 
-		return strrev(String(s));
-	});
+    return strrev(String(s));
+  });
 
-},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":16,"locutus/php/array/array_reverse":24,"locutus/php/strings/strrev":35}],53:[function(require,module,exports){
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":16,"locutus/php/array/array_reverse":25,"locutus/php/strings/strrev":35}],53:[function(require,module,exports){
 var strip_tags = require('locutus/php/strings/strip_tags');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'striptags',
-	function (s) {
-		return strip_tags(s);
-	}
+  'modifier',
+  'striptags',
+  function (s)
+  {
+    return strip_tags(s);
+  }
 );
 
 },{"locutus/php/strings/strip_tags":34}],54:[function(require,module,exports){
 var substr = require('es5-util/js/substr');
 
-var substring = function (s, start, length, validatePositions) {
-	return substr(s, start, length, !!validatePositions);
+var substring = function (s, start, length, validatePositions)
+{
+  return substr(s, start, length, !!validatePositions);
 };
 
 Latte.prototype.registerPlugin('modifier', 'substring', substring);
@@ -2980,43 +3044,49 @@ Latte.prototype.registerPlugin('modifier', 'substr', substring);
 var trim = require('locutus/php/strings/trim');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'trim',
-	function (s, charlist) {
-		charlist = charlist != null ? charlist : " \t\n\r\0\x0B";
-		return trim(String(s), charlist);
-	}
+  'modifier',
+  'trim',
+  function (s, charlist)
+  {
+    charlist = charlist != null ? charlist : " \t\n\r\0\x0B";
+    return trim(String(s), charlist);
+  }
 );
 
 },{"locutus/php/strings/trim":36}],56:[function(require,module,exports){
 var getNestedParts = require('./getNestedParts');
-var replaceParts = require('./replaceParts');
-var explode = require('es5-util/js/toArray');
-var implode = require('es5-util/js/toString');
+var replaceParts   = require('./replaceParts');
+var explode        = require('es5-util/js/toArray');
+var implode        = require('es5-util/js/toString');
 
-function defaultFilter(s, ldelim, rdelim) {
-  var str = s, a, z;
+function defaultFilter(s, ldelim, rdelim)
+{
+  var str = s,
+      a,
+      z;
 
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
   var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)([^' + rdelim + ']*?)(' + rdelim + '{1})([\\S\\s]*)', 'img');
-  a = str.replace(re, "$1");
-  s = str.replace(re, "$5");
-  z = str.replace(re, "$7");
+  a      = str.replace(re, "$1");
+  s      = str.replace(re, "$5");
+  z      = str.replace(re, "$7");
 
-  if (s === str) {
+  if (s === str)
+  {
     return s;
   }
 
-  var braces = replaceParts(s, getNestedParts(s, '[', ']'), 24);
-  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
+  var braces     = replaceParts(s, getNestedParts(s, '[', ']'), 24);
+  var parens     = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
   var paramParts = explode(parens.s, ',');
 
-  paramParts.forEach(function (param, index, paramParts) {
-    var equalPos = param.indexOf('=');
-    var variable = param.slice(0, equalPos).trim();
-    var value = param.slice(equalPos + 1).trim();
+  paramParts.forEach(function (param, index, paramParts)
+  {
+    var equalPos      = param.indexOf('=');
+    var variable      = param.slice(0, equalPos).trim();
+    var value         = param.slice(equalPos + 1).trim();
     paramParts[index] = ldelim + variable + ' = ' + variable + '|default:' + value + rdelim;
   });
 
@@ -3025,13 +3095,14 @@ function defaultFilter(s, ldelim, rdelim) {
 
 module.exports = defaultFilter;
 
-},{"./getNestedParts":60,"./replaceParts":63,"es5-util/js/toArray":16,"es5-util/js/toString":20}],57:[function(require,module,exports){
+},{"./getNestedParts":60,"./replaceParts":65,"es5-util/js/toArray":16,"es5-util/js/toString":20}],57:[function(require,module,exports){
 var getNestedParts = require('./getNestedParts');
-var replaceParts = require('./replaceParts');
-var replaceDelims = require('./replaceDelims').replaceDelims;
-var returnDelims = require('./replaceDelims').returnDelims;
+var replaceParts   = require('./replaceParts');
+var replaceDelims  = require('./replaceDelims').replaceDelims;
+var returnDelims   = require('./replaceDelims').returnDelims;
 
-function encodeTemplate(str, ldelim, rdelim, length, getUID) {
+function encodeTemplate(str, ldelim, rdelim, length, getUID)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
   length = length != null ? length : 24;
@@ -3041,8 +3112,9 @@ function encodeTemplate(str, ldelim, rdelim, length, getUID) {
   var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), length, getUID);
 
   return {
-    s: parens.s,
-    decode: function (newStr) {
+    s     : parens.s,
+    decode: function (newStr)
+    {
       newStr = newStr != null ? newStr : parens.s;
       return returnDelims(braces.returnParts(parens.returnParts(newStr)));
     },
@@ -3051,30 +3123,39 @@ function encodeTemplate(str, ldelim, rdelim, length, getUID) {
 
 module.exports = encodeTemplate;
 
-},{"./getNestedParts":60,"./replaceDelims":62,"./replaceParts":63}],58:[function(require,module,exports){
+},{"./getNestedParts":60,"./replaceDelims":64,"./replaceParts":65}],58:[function(require,module,exports){
 var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('locutus/php/strings/explode');
+var replaceParts   = require('./replaceParts');
+var explode        = require('locutus/php/strings/explode');
 
-function forFilter(s, ldelim, rdelim) {
+function forFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}(?:for ){1}([^};]*?);{1}([^};]*?);{1}([^}]*?)' + rdelim + '{1}', 'mg');
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}(?:for ){1}([^};]*?);{1}([^};]*?);{1}([^}]*?)' + rdelim + '{1}', 'mg');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
-    var parts, expr1, expr2, expr3, variable, step = '1';
+  found.forEach(function (foundItem, i)
+  {
+    var parts,
+        expr1,
+        expr2,
+        expr3,
+        variable,
+        step  = '1';
     foundItem = foundItem.slice(ldelim.length + 'for '.length, -ldelim.length);
 
-    if ((parts = explode(';', foundItem, 3)).length !== 3) {
+    if ((parts = explode(';', foundItem, 3)).length !== 3)
+    {
       return replace[i] = foundItem;
     }
 
@@ -3083,19 +3164,22 @@ function forFilter(s, ldelim, rdelim) {
     expr3 = parts[2].trim();
 
     var expr3match = expr3.match(/([+-]{1})([+-=]{1})([^, ;}]*)/) || [];
-    if (expr3match[2] === '=') {
+    if (expr3match[2] === '=')
+    {
       step = expr3match[3] || '1';
     }
-    if (expr3match[1] === '-') {
+    if (expr3match[1] === '-')
+    {
       step = '-' + step;
     }
 
     var expr2match = expr2.match(/([<>]{1})(=?) *(.*)/) || [];
-    var glt = expr2match[1] || '<';
-    var glte = expr2match[2] || '';
-    var condition = expr2match[3] || '2';
+    var glt        = expr2match[1] || '<';
+    var glte       = expr2match[2] || '';
+    var condition  = expr2match[3] || '2';
 
-    if (glte !== '=') {
+    if (glte !== '=')
+    {
       condition += glt === '<' ? '-1' : '+1';
     }
 
@@ -3109,15 +3193,18 @@ function forFilter(s, ldelim, rdelim) {
 
 module.exports = forFilter;
 
-},{"./encodeTemplate":57,"./replaceParts":63,"locutus/php/strings/explode":28}],59:[function(require,module,exports){
-var smartyObjectFilter = require('./smartyObjectFilter');
+},{"./encodeTemplate":57,"./replaceParts":65,"locutus/php/strings/explode":28}],59:[function(require,module,exports){
+var latteObjectFilter = require('./latteObjectFilter');
 
-function getDefaultTags(obj) {
+function getDefaultTags(obj)
+{
   var s = [];
 
-  for (var key in obj) {
-    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(String(key))) {
-      s.push('{$' + String(key) + ' = $' + String(key) + '|default:' + smartyObjectFilter(obj[key]) + '}')
+  for (var key in obj)
+  {
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(String(key)))
+    {
+      s.push('{$' + String(key) + ' = $' + String(key) + '|default:' + latteObjectFilter(obj[key]) + '}')
     }
   }
 
@@ -3126,46 +3213,64 @@ function getDefaultTags(obj) {
 
 module.exports = getDefaultTags;
 
-},{"./smartyObjectFilter":65}],60:[function(require,module,exports){
-function getNestedParts(str, open, close) {
-  if (str.length < 2) {
+},{"./latteObjectFilter":62}],60:[function(require,module,exports){
+function getNestedParts(str, open, close)
+{
+  if (str.length < 2)
+  {
     return [];
   }
 
   close = close != null ? close : open;
 
-  if (str.length === 2) {
+  if (str.length === 2)
+  {
     return str[0] === open && str[1] === close ? [str] : [];
   }
 
-  var parts = [], nestedLevels = {}, tags = [open, "'", '"', '`'], tagsPos, level = 0, escaped, currentChar;
+  var parts = [],
+      nestedLevels = {},
+      tags = [open, "'", '"', '`'],
+      tagsPos,
+      level = 0,
+      escaped,
+      currentChar;
 
-  for (var i = 0, j = 0; i < str.length; i++, j = i) {
+  for (var i = 0, j = 0; i < str.length; i++, j = i)
+  {
     currentChar = str[i];
-    escaped = false;
+    escaped     = false;
 
-    if (nestedLevels[level]) {
-      if (currentChar === nestedLevels[level].closeTag) {
-        if (level === 1 && close === nestedLevels[level].closeTag) {
+    if (nestedLevels[level])
+    {
+      if (currentChar === nestedLevels[level].closeTag)
+      {
+        if (level === 1 && close === nestedLevels[level].closeTag)
+        {
           parts.push(str.slice(nestedLevels[level].startIndex, i + 1));
         }
         delete nestedLevels[level--];
-      } else if ((tagsPos = tags.indexOf(currentChar)) > -1 && close === nestedLevels[level].closeTag) {
+      }
+      else if ((tagsPos = tags.indexOf(currentChar)) > -1 && close === nestedLevels[level].closeTag)
+      {
         nestedLevels[++level] = {
           startIndex: i,
-          closeTag: tagsPos === 0 ? close : tags[tagsPos],
+          closeTag  : tagsPos === 0 ? close : tags[tagsPos],
         };
       }
-    } else if ((tagsPos = tags.indexOf(currentChar)) > -1) {
+    }
+    else if ((tagsPos = tags.indexOf(currentChar)) > -1)
+    {
       nestedLevels[++level] = {
         startIndex: i,
-        closeTag: tagsPos === 0 ? close : tags[tagsPos],
+        closeTag  : tagsPos === 0 ? close : tags[tagsPos],
       };
     }
 
   }
 
-  if (Object.keys(nestedLevels).length > 0) {
+  if (Object.keys(nestedLevels).length > 0)
+  {
     parts.push(str.slice(nestedLevels[1].startIndex));
   }
 
@@ -3175,130 +3280,41 @@ function getNestedParts(str, open, close) {
 module.exports = getNestedParts;
 
 },{}],61:[function(require,module,exports){
-function nAttributesFilter(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  var re = new RegExp('(n:[A-Za-z0-9 ]+=[\\s]*)(["\'])(' + ldelim + '?)((?:(?!\\2)[^}])*)(' + rdelim + '?)(\\2)', 'img');
-  return s.replace(re, "$1$2" + ldelim + "$4" + rdelim + "$2");
-}
-
-module.exports = nAttributesFilter;
-
-},{}],62:[function(require,module,exports){
-function replaceDelims(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), '__ldelim__');
-  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), '__rdelim__');
-
-  return s;
-}
-
-function returnDelims(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  s = s.replace(new RegExp('__ldelim__', 'g'), ldelim + 'l' + rdelim);
-  s = s.replace(new RegExp('__rdelim__', 'g'), ldelim + 'r' + rdelim);
-
-  return s;
-}
-
-function processDelims(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), ldelim);
-  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), rdelim);
-
-  return s;
-};
-
-
-module.exports.replaceDelims = replaceDelims;
-
-module.exports.returnDelims = returnDelims;
-
-module.exports.processDelims = processDelims;
-
-},{}],63:[function(require,module,exports){
-var getiUID = require('es5-util/js/getUID').getiUID;
-
-function replaceParts(str, parts, length, getUID) {
-  getUID = getUID != null ? getUID : getiUID;
-
-  var reference = new Map();
-
-  function returnParts(newStr, newParts) {
-    var counter = 0;
-    reference.forEach(function (part, id) {
-      var replacePart = newParts != null ? newParts[counter++] : part;
-      newStr = newStr.replace(id, replacePart)
-    });
-
-    return newStr;
-  }
-
-  function getId() {
-    var id;
-
-    do {
-      id = getUID(length);
-    } while (reference.has(id));
-
-    return id;
-  }
-
-  parts.forEach(function (part) {
-    var id = getId();
-
-    reference.set(id, part);
-
-    str = str.replace(part, id);
-  });
-
-  return {
-    s: str,
-    returnParts: returnParts,
-  };
-}
-
-module.exports = replaceParts;
-
-},{"es5-util/js/getUID":2}],64:[function(require,module,exports){
 var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('es5-util/js/toArray');
-var implode = require('es5-util/js/toString');
+var replaceParts   = require('./replaceParts');
+var explode        = require('es5-util/js/toArray');
+var implode        = require('es5-util/js/toString');
 
-function smartyFilter(s, ldelim, rdelim) {
+function latteFilter(s, ldelim, rdelim)
+{
   //  force comma after template name
   s = s.replace(/({include ["']{1}[A-Za-z0-9]+["']{1})(,?)/g, "$1,");
 
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}(include){1}\\s[^' + rdelim + ']*?' + rdelim + '{1}', 'img');
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}(include){1}\\s[^' + rdelim + ']*?' + rdelim + '{1}', 'img');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
+  found.forEach(function (foundItem, i)
+  {
     var foundItemInner = foundItem.slice(ldelim.length, -ldelim.length);
-    var foundParts = explode(foundItemInner, ',');
-    var replacedParts = [];
+    var foundParts     = explode(foundItemInner, ',');
+    var replacedParts  = [];
 
-
-    foundParts.forEach(function (foundPart) {
+    foundParts.forEach(function (foundPart)
+    {
       foundPart = foundPart.replace('=>', '=').trim();
-      if (foundPart.length > 0) {
+      if (foundPart.length > 0)
+      {
         replacedParts.push(foundPart);
       }
     });
@@ -3311,20 +3327,24 @@ function smartyFilter(s, ldelim, rdelim) {
   return es.decode(ep.returnParts(ep.s, replace));
 }
 
-module.exports = smartyFilter;
+module.exports = latteFilter;
 
-},{"./encodeTemplate":57,"./replaceParts":63,"es5-util/js/toArray":16,"es5-util/js/toString":20}],65:[function(require,module,exports){
+},{"./encodeTemplate":57,"./replaceParts":65,"es5-util/js/toArray":16,"es5-util/js/toString":20}],62:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
-var isObject = require('es5-util/js/isObject');
+var isObject          = require('es5-util/js/isObject');
 
-function smartyObjectFilter(input) {
-  if (!isObject(input)) {
-    if (input == null) {
+function latteObjectFilter(input)
+{
+  if (!isObject(input))
+  {
+    if (input == null)
+    {
       return '""';
     }
 
     var noStringify = '!ns ';
-    if (typeof input === 'string' && input.substring(0, noStringify.length) === noStringify) {
+    if (typeof input === 'string' && input.substring(0, noStringify.length) === noStringify)
+    {
       return input.slice(noStringify.length);
     }
 
@@ -3333,75 +3353,198 @@ function smartyObjectFilter(input) {
 
   var items = [];
 
-  for (var key in input) {
-    if (input.hasOwnProperty(key) || typeof input[key] !== 'function') {
-      items.push((isArrayLikeObject(input) ? '' : '"' + key + '"=>') + smartyObjectFilter(input[key]));
+  for (var key in input)
+  {
+    if (input.hasOwnProperty(key) || typeof input[key] !== 'function')
+    {
+      items.push((isArrayLikeObject(input) ? '' : '"' + key + '"=>') + latteObjectFilter(input[key]));
     }
   }
 
   return '[' + items.join(',') + ']';
 }
 
-module.exports = smartyObjectFilter;
+module.exports = latteObjectFilter;
 
-},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],66:[function(require,module,exports){
-var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('locutus/php/strings/explode');
-
-function ternaryFilter(s, ldelim, rdelim) {
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],63:[function(require,module,exports){
+function nAttributesFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}([^?' + rdelim + ']+?)\\?([^:?' + rdelim + ']*?)[:?]{1}([^' + rdelim + ']*?)' + rdelim + '{1}', 'mg');
+  var re = new RegExp('(n:[A-Za-z0-9 ]+=[\\s]*)(["\'])(' + ldelim + '?)((?:(?!\\2)[^}])*)(' + rdelim + '?)(\\2)', 'img');
+  return s.replace(re, "$1$2" + ldelim + "$4" + rdelim + "$2");
+}
+
+module.exports = nAttributesFilter;
+
+},{}],64:[function(require,module,exports){
+function replaceDelims(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), '__ldelim__');
+  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), '__rdelim__');
+
+  return s;
+}
+
+function returnDelims(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp('__ldelim__', 'g'), ldelim + 'l' + rdelim);
+  s = s.replace(new RegExp('__rdelim__', 'g'), ldelim + 'r' + rdelim);
+
+  return s;
+}
+
+function processDelims(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), ldelim);
+  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), rdelim);
+
+  return s;
+};
+
+module.exports.replaceDelims = replaceDelims;
+
+module.exports.returnDelims = returnDelims;
+
+module.exports.processDelims = processDelims;
+
+},{}],65:[function(require,module,exports){
+var getiUID = require('es5-util/js/getUID').getiUID;
+
+function replaceParts(str, parts, length, getUID)
+{
+  getUID = getUID != null ? getUID : getiUID;
+
+  var reference = new Map();
+
+  function returnParts(newStr, newParts)
+  {
+    var counter = 0;
+    reference.forEach(function (part, id)
+    {
+      var replacePart = newParts != null ? newParts[counter++] : part;
+      newStr          = newStr.replace(id, replacePart)
+    });
+
+    return newStr;
+  }
+
+  function getId()
+  {
+    var id;
+
+    do
+    {
+      id = getUID(length);
+    }
+    while (reference.has(id));
+
+    return id;
+  }
+
+  parts.forEach(function (part)
+  {
+    var id = getId();
+
+    reference.set(id, part);
+
+    str = str.replace(part, id);
+  });
+
+  return {
+    s          : str,
+    returnParts: returnParts,
+  };
+}
+
+module.exports = replaceParts;
+
+},{"es5-util/js/getUID":2}],66:[function(require,module,exports){
+var encodeTemplate = require('./encodeTemplate');
+var replaceParts   = require('./replaceParts');
+var explode        = require('locutus/php/strings/explode');
+
+function ternaryFilter(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}([^?' + rdelim + ']+?)\\?([^:?' + rdelim + ']*?)[:?]{1}([^' + rdelim + ']*?)' + rdelim + '{1}', 'mg');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
-    var variable = null, condition, truthy, falsy, parts;
+  found.forEach(function (foundItem, i)
+  {
+    var variable = null,
+        condition,
+        truthy,
+        falsy,
+        parts;
 
     condition = foundItem.slice(ldelim.length, -ldelim.length);
-    parts = explode(' = ', condition, 2);
+    parts     = explode(' = ', condition, 2);
 
-    if (parts.length === 2) {
-      variable = parts[0].trim();
+    if (parts.length === 2)
+    {
+      variable  = parts[0].trim();
       condition = parts[1].trim();
     }
 
-    if ((parts = explode(' ?? ', condition, 2)).length === 2) {
-      truthy = parts[0].trim();
-      falsy = parts[1].trim();
+    if ((parts = explode(' ?? ', condition, 2)).length === 2)
+    {
+      truthy    = parts[0].trim();
+      falsy     = parts[1].trim();
       condition = truthy + ' !== ' + "''";
-    } else if ((parts = explode(' ?: ', condition, 2)).length === 2) {
+    }
+    else if ((parts = explode(' ?: ', condition, 2)).length === 2)
+    {
       condition = truthy = parts[0].trim();
-      falsy = parts[1].trim();
-    } else {
-      if ((parts = explode(' ? ', condition, 2)).length < 2) {
+      falsy     = parts[1].trim();
+    }
+    else
+    {
+      if ((parts = explode(' ? ', condition, 2)).length < 2)
+      {
         return replace[i] = foundItem;
       }
 
-      if (parts.length === 2) {
+      if (parts.length === 2)
+      {
         condition = parts[0].trim();
-        truthy = parts[1].trim();
+        truthy    = parts[1].trim();
       }
 
-      if ((parts = explode(' : ', truthy, 2)).length < 2) {
+      if ((parts = explode(' : ', truthy, 2)).length < 2)
+      {
         return replace[i] = foundItem;
       }
 
-      if (parts.length === 2) {
+      if (parts.length === 2)
+      {
         truthy = parts[0].trim();
-        falsy = parts[1].trim();
+        falsy  = parts[1].trim();
       }
     }
 
-    if (!variable) {
+    if (!variable)
+    {
       return replace[i] = '{if ' + condition + '}{' + truthy + '}{else}{' + falsy + '}{/if}';
     }
 
@@ -3415,14 +3558,17 @@ function ternaryFilter(s, ldelim, rdelim) {
 
 module.exports = ternaryFilter;
 
-},{"./encodeTemplate":57,"./replaceParts":63,"locutus/php/strings/explode":28}],67:[function(require,module,exports){
-function varFilter(s, ldelim, rdelim) {
+},{"./encodeTemplate":57,"./replaceParts":65,"locutus/php/strings/explode":28}],67:[function(require,module,exports){
+function varFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var prev = '', re = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
+  var prev = '',
+      re = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
 
-  while (prev !== s) {
+  while (prev !== s)
+  {
     s = (prev = s).replace(re, "$1$4$5");
   }
 
@@ -3434,7 +3580,8 @@ module.exports = varFilter;
 },{}],68:[function(require,module,exports){
 var defaultFilter = require('./../helpers/defaultFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return defaultFilter(s);
 });
 
@@ -3444,113 +3591,139 @@ var processDelims = require('./../helpers/replaceDelims').processDelims;
 Latte.prototype.registerPlugin(
   'function',
   'l',
-  function (params, data) {
-    return Latte.prototype.left_delimiter || data.smarty.ldelim;
+  function (params, data)
+  {
+    return Latte.prototype.left_delimiter || data.latte.ldelim;
   }
 );
 
 Latte.prototype.registerPlugin(
   'function',
   'r',
-  function (params, data) {
-    return Latte.prototype.right_delimiter || data.smarty.rdelim;
+  function (params, data)
+  {
+    return Latte.prototype.right_delimiter || data.latte.rdelim;
   }
 );
 
-Latte.prototype.registerFilter('post', function (s) {
-  return processDelims(s, this.smarty.ldelim, this.smarty.rdelim);
+Latte.prototype.registerFilter('post', function (s)
+{
+  return processDelims(s, this.latte.ldelim, this.latte.rdelim);
 });
 
-},{"./../helpers/replaceDelims":62}],70:[function(require,module,exports){
+},{"./../helpers/replaceDelims":64}],70:[function(require,module,exports){
 var hasKeys = require('es5-util/js/hasKeys');
 
-if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params')) {
-	Latte.prototype.registerFilter('params', function (actualParams) {
-		if (actualParams.hasOwnProperty('expand') && typeof actualParams.expand === 'object') {
-			for (var prop in actualParams.expand) {
-				actualParams[prop] = actualParams.expand[prop];
-			}
-		}
+if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params'))
+{
+  Latte.prototype.registerFilter('params', function (actualParams)
+  {
+    if (actualParams.hasOwnProperty('expand') && typeof actualParams.expand === 'object')
+    {
+      for (var prop in actualParams.expand)
+      {
+        actualParams[prop] = actualParams.expand[prop];
+      }
+    }
 
-		return actualParams;
-	});
+    return actualParams;
+  });
 }
 
-Latte.prototype.registerFilter('pre', function (s) {
-	return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
+Latte.prototype.registerFilter('pre', function (s)
+{
+  return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
 });
 
 },{"es5-util/js/hasKeys":3}],71:[function(require,module,exports){
 var forFilter = require('./../helpers/forFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return forFilter(s);
 });
 
 },{"./../helpers/forFilter":58}],72:[function(require,module,exports){
-var smartyFilter = require('./../helpers/smartyFilter');
+var latteFilter = require('./../helpers/latteFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
-  return smartyFilter(s);
+Latte.prototype.registerFilter('pre', function (s)
+{
+  return latteFilter(s);
 });
 
-},{"./../helpers/smartyFilter":64}],73:[function(require,module,exports){
-Latte.prototype.registerFilter('pre', function (s) {
+},{"./../helpers/latteFilter":61}],73:[function(require,module,exports){
+Latte.prototype.registerFilter('pre', function (s)
+{
   return s.replace(new RegExp('\\$iterator->', 'g'), '$iterator@');
 });
 
 },{}],74:[function(require,module,exports){
 var nAttributesFilter = require('./../helpers/nAttributesFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return nAttributesFilter(s, Latte.prototype.left_delimiter || this.ldelim || '{', Latte.prototype.right_delimiter || this.rdelim || '}');
 });
 
-},{"./../helpers/nAttributesFilter":61}],75:[function(require,module,exports){
-var isEmptyLoose = require('es5-util/js/isEmptyLoose');
+},{"./../helpers/nAttributesFilter":63}],75:[function(require,module,exports){
+var isEmptyLoose    = require('es5-util/js/isEmptyLoose');
 var isNotEmptyLoose = require('es5-util/js/isNotEmptyLoose');
-var isNotSetTag = require('es5-util/js/isNotSetTag');
-var isSetTag = require('es5-util/js/isSetTag');
+var isNotSetTag     = require('es5-util/js/isNotSetTag');
+var isSetTag        = require('es5-util/js/isSetTag');
 
-Latte.postProcess = function (htmlString) {
-  if (typeof $ !== 'function') {
+Latte.postProcess = function (htmlString)
+{
+  if (typeof $ !== 'function')
+  {
     return htmlString;
   }
 
   var $dom = $($.parseHTML('<div>' + htmlString + '</div>'));
 
-  $dom.find('[n\\:tag-if]').each(function (index, el) {
-    var $el = $(el), attr = 'n:tag-if';
+  $dom.find('[n\\:tag-if]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:tag-if';
 
     isSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.replaceWith($el.html());
   });
 
-  $dom.find('[n\\:ifcontent]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifcontent';
+  $dom.find('[n\\:ifcontent]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifcontent';
 
     isSetTag($el.html().trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifset]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifset';
+  $dom.find('[n\\:ifset]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifset';
 
     isSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifnotset]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifnotset';
+  $dom.find('[n\\:ifnotset]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifnotset';
 
     isNotSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifempty]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifempty';
+  $dom.find('[n\\:ifempty]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifempty';
 
     isEmptyLoose($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifnotempty]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifnotempty';
+  $dom.find('[n\\:ifnotempty]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifnotempty';
 
     isNotEmptyLoose($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
@@ -3560,27 +3733,31 @@ Latte.postProcess = function (htmlString) {
 
 },{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":13}],76:[function(require,module,exports){
 Latte.prototype.registerPlugin(
-	'block',
-	'spaceless',
-	function (params, content, data, repeat) {
-		if (repeat.value) {
-			return '';
-		}
-		return content.replace(/[ \t]*[\r\n]+[ \t]*/g, '');
-	}
+  'block',
+  'spaceless',
+  function (params, content, data, repeat)
+  {
+    if (repeat.value)
+    {
+      return '';
+    }
+    return content.replace(/[ \t]*[\r\n]+[ \t]*/g, '');
+  }
 );
 
 },{}],77:[function(require,module,exports){
 var ternaryFilter = require('./../helpers/ternaryFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return ternaryFilter(s);
 });
 
 },{"./../helpers/ternaryFilter":66}],78:[function(require,module,exports){
 var varFilter = require('./../helpers/varFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return varFilter(s);
 });
 

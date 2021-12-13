@@ -9,7 +9,7 @@ define(['Latte'], function (Latte) {
       tpl = "{capture name='simple'}"
       tpl += 'captured it'
       tpl += '{/capture}'
-      tpl += '{$smarty.capture.simple}'
+      tpl += '{$latte.capture.simple}'
       output = 'captured it'
       t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
@@ -18,7 +18,7 @@ define(['Latte'], function (Latte) {
       tpl = "{capture 'withData'}"
       tpl += 'yo, my name is {$myName}.'
       tpl += '{/capture}'
-      tpl += '{$smarty.capture.withData}'
+      tpl += '{$latte.capture.withData}'
       output = 'yo, my name is Pallavi.'
       t = new Latte(tpl)
       expect(t.fetch({myName: 'Pallavi'})).toBe(output)
@@ -40,7 +40,7 @@ define(['Latte'], function (Latte) {
       tpl = '{capture}'
       tpl += 'captured it for default'
       tpl += '{/capture}'
-      tpl += '{$smarty.capture.default}'
+      tpl += '{$latte.capture.default}'
       output = 'captured it for default'
       t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
@@ -53,7 +53,7 @@ define(['Latte'], function (Latte) {
       tpl += '{capture name="t3"}'
       tpl += 't3 {/capture}'
       tpl += '{/capture}'
-      tpl += '{$smarty.capture.t2} {$smarty.capture.t3}'
+      tpl += '{$latte.capture.t2} {$latte.capture.t3}'
       output = 't2 t3 '
       t = new Latte(tpl)
       expect(t.fetch()).toBe(output)
@@ -65,7 +65,7 @@ define(['Latte'], function (Latte) {
       tpl += '{capture name="t1"}'
       tpl += '{$item} '
       tpl += '{/capture}'
-      tpl += '{$smarty.capture.t1}'
+      tpl += '{$latte.capture.t1}'
       tpl += '{/foreach}'
       output = '1 2 3 '
       t = new Latte(tpl)

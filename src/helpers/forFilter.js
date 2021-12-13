@@ -1,26 +1,35 @@
 var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('locutus/php/strings/explode');
+var replaceParts   = require('./replaceParts');
+var explode        = require('locutus/php/strings/explode');
 
-function forFilter(s, ldelim, rdelim) {
+function forFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}(?:for ){1}([^};]*?);{1}([^};]*?);{1}([^}]*?)' + rdelim + '{1}', 'mg');
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}(?:for ){1}([^};]*?);{1}([^};]*?);{1}([^}]*?)' + rdelim + '{1}', 'mg');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
-    var parts, expr1, expr2, expr3, variable, step = '1';
+  found.forEach(function (foundItem, i)
+  {
+    var parts,
+        expr1,
+        expr2,
+        expr3,
+        variable,
+        step  = '1';
     foundItem = foundItem.slice(ldelim.length + 'for '.length, -ldelim.length);
 
-    if ((parts = explode(';', foundItem, 3)).length !== 3) {
+    if ((parts = explode(';', foundItem, 3)).length !== 3)
+    {
       return replace[i] = foundItem;
     }
 
@@ -29,19 +38,22 @@ function forFilter(s, ldelim, rdelim) {
     expr3 = parts[2].trim();
 
     var expr3match = expr3.match(/([+-]{1})([+-=]{1})([^, ;}]*)/) || [];
-    if (expr3match[2] === '=') {
+    if (expr3match[2] === '=')
+    {
       step = expr3match[3] || '1';
     }
-    if (expr3match[1] === '-') {
+    if (expr3match[1] === '-')
+    {
       step = '-' + step;
     }
 
     var expr2match = expr2.match(/([<>]{1})(=?) *(.*)/) || [];
-    var glt = expr2match[1] || '<';
-    var glte = expr2match[2] || '';
-    var condition = expr2match[3] || '2';
+    var glt        = expr2match[1] || '<';
+    var glte       = expr2match[2] || '';
+    var condition  = expr2match[3] || '2';
 
-    if (glte !== '=') {
+    if (glte !== '=')
+    {
       condition += glt === '<' ? '-1' : '+1';
     }
 

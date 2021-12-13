@@ -8,7 +8,7 @@ define(['Latte'], function (Latte) {
     var month = allMonths[d.getMonth()]
 
     it('test date_format', function () {
-      tpl = '{$smarty.now|date_format}'
+      tpl = '{$latte.now|date_format}'
       var da = d.getDate()
       if ((da + '').length < 2) {
         da = ' ' + da
@@ -20,7 +20,7 @@ define(['Latte'], function (Latte) {
     })
 
     it('test date_format', function () {
-      tpl = '{$smarty.now|date_format:"%D"}'
+      tpl = '{$latte.now|date_format:"%D"}'
       var m = d.getMonth()
       m++
       if ((m + '').length < 2) {

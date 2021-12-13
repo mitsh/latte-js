@@ -1,4 +1,4 @@
-define(['Latte', 'text!./templates/functions.latte', 'text!./output/functions.latte'], function (Latte, smartyTpl, outputTpl) {
+define(['Latte', 'text!./templates/functions.latte', 'text!./output/functions.latte'], function (Latte, latteTpl, outputTpl) {
   describe('Test Functions', function () {
     Latte.prototype.registerPlugin(
       'function',
@@ -56,7 +56,7 @@ define(['Latte', 'text!./templates/functions.latte', 'text!./output/functions.la
 
     it('test complex template', function () {
       // Insert complex statements in the template and test them.
-      var t = new Latte(smartyTpl)
+      var t = new Latte(latteTpl)
       expect(t.fetch(getData())).toBe(outputTpl)
     })
   })

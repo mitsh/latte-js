@@ -68,7 +68,7 @@ define(['Latte'], function (Latte) {
     it('test child block', function () {
       parent = '<b>'
       parent += 'wow '
-      parent += '{block name="t"} ** {$smarty.block.child} ** {/block}'
+      parent += '{block name="t"} ** {$latte.block.child} ** {/block}'
       parent += '</b>'
 
       child = "ignore this {extends file='parent'}"
@@ -93,7 +93,7 @@ define(['Latte'], function (Latte) {
 
       child = "ignore this {extends file='parent'}"
       child += '{block name="t" append}'
-      child += '** {$smarty.block.parent} **'
+      child += '** {$latte.block.parent} **'
       child += '{/block}  see if it ignores this.. should be'
 
       Latte.prototype.getTemplate = function () {

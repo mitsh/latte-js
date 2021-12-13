@@ -1,5 +1,5 @@
 .idea
-test/smarty
+test/latte
 test/templates_c/*
 node_modules
 cache

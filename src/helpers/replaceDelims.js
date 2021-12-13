@@ -1,4 +1,5 @@
-function replaceDelims(s, ldelim, rdelim) {
+function replaceDelims(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
@@ -8,7 +9,8 @@ function replaceDelims(s, ldelim, rdelim) {
   return s;
 }
 
-function returnDelims(s, ldelim, rdelim) {
+function returnDelims(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
@@ -18,7 +20,8 @@ function returnDelims(s, ldelim, rdelim) {
   return s;
 }
 
-function processDelims(s, ldelim, rdelim) {
+function processDelims(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
@@ -27,7 +30,6 @@ function processDelims(s, ldelim, rdelim) {
 
   return s;
 };
-
 
 module.exports.replaceDelims = replaceDelims;
 

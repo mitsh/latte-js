@@ -1,4 +1,4 @@
-const smartyFilter = require('./../../src/helpers/smartyFilter');
+const latteFilter = require('./../../src/helpers/latteFilter');
 
 const table = [
   // Nette Latte
@@ -91,8 +91,8 @@ const table = [
 ];
 
 test.each(table)(
-  'smartyFilter(%s)',
+  'latteFilter(%s)',
   (str, expected = null) => {
-    expect(smartyFilter(str)).toStrictEqual(expected || str);
+    expect(latteFilter(str)).toStrictEqual(expected || str);
   },
 );

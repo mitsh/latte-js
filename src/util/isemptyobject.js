@@ -1,4 +1,5 @@
-define(function () {
+define(function ()
+{
   'use strict'
 
   /**
@@ -8,9 +9,12 @@ define(function () {
    *
    * @return boolean
    */
-  function isEmptyObject (hash) {
-    for (var i in hash) {
-      if (hash.hasOwnProperty(i)) {
+  function isEmptyObject(hash)
+  {
+    for (var i in hash)
+    {
+      if (hash.hasOwnProperty(i))
+      {
         return false
       }
     }

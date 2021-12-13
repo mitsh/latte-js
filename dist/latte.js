@@ -4,36 +4,46 @@
  *
  * https://opensource.org/licenses/MIT
  *
- * Date: 2019-11-03T01:32Z
+ * Date: 2021-12-13T04:11Z
  */
-(function (factory) {
+(function (factory)
+{
   'use strict'
 
-  if (typeof module === 'object' && module && typeof module.exports === 'object') {
+  if (typeof module === 'object' && module && typeof module.exports === 'object')
+  {
     // Node.js like environment. Export Latte
     module.exports = factory()
-  } else {
-    if (typeof window === 'object' && window.document) {
+  }
+  else
+  {
+    if (typeof window === 'object' && window.document)
+    {
       // Assign to browser window if window is present.
       window.Latte = factory()
     }
 
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === 'function' && define.amd)
+    {
       // Require js is present? Lets define module.
       define('Latte', [], factory)
     }
   }
 
-// Pass this if window is not defined yet
-})(function () {
+  // Pass this if window is not defined yet
+})(function ()
+{
   'use strict'
 
   
 
 
-  function objectMerge (ob1, ob2 /* , ... */) {
-    for (var i = 1; i < arguments.length; ++i) {
-      for (var name in arguments[i]) {
+  function objectMerge(ob1, ob2 /* , ... */)
+  {
+    for (var i = 1; i < arguments.length; ++i)
+    {
+      for (var name in arguments[i])
+      {
         ob1[name] = arguments[i][name]
       }
     }
@@ -41,24 +51,30 @@
   }
 
 
-  function evalString (s) {
+  function evalString(s)
+  {
     return s.replace(/\\t/, '\t').replace(/\\n/, '\n').replace(/\\(['"\\])/g, '$1')
   }
 
 
   // Trim all quotes.
-  function trimAllQuotes (s) {
+  function trimAllQuotes(s)
+  {
     return evalString(s.replace(/^['"](.*)['"]$/, '$1')).replace(/^\s+|\s+$/g, '')
   }
 
 
   // Find in array.
-  function findInArray (arr, val) {
-    if (Array.prototype.indexOf) {
+  function findInArray(arr, val)
+  {
+    if (Array.prototype.indexOf)
+    {
       return arr.indexOf(val)
     }
-    for (var i = 0; i < arr.length; ++i) {
-      if (arr[i] === val) {
+    for (var i = 0; i < arr.length; ++i)
+    {
+      if (arr[i] === val)
+      {
         return i
       }
     }
@@ -93,27 +109,31 @@
 
     blocks: {},
 
-    getTemplate: function (name) {
+    getTemplate: function (name)
+    {
       throw new Error('no getTemplate function defined.')
     },
 
-    getConfig: function () {
+    getConfig: function ()
+    {
       throw new Error('no getConfig function defined.')
     },
 
-    clear: function () {
+    clear: function ()
+    {
       // Clean up config, specific for this parsing.
       this.runTimePlugins = {}
-      this.preFilters = []
-      this.autoLiteral = true
-      this.plugins = {}
-      this.ldelim = '{'
-      this.rdelim = '}'
-      this.blocks = {}
-      this.outerBlocks = {}
+      this.preFilters     = []
+      this.autoLiteral    = true
+      this.plugins        = {}
+      this.ldelim         = '{'
+      this.rdelim         = '}'
+      this.blocks         = {}
+      this.outerBlocks    = {}
     },
 
-    getTree: function (template) {
+    getTree: function (template)
+    {
       var tree
       // Remove comments, we never want them.
       template = this.removeComments(template)
@@ -127,13 +147,18 @@
       // Parse the template and get the output.
       tree = this.parse(template)
 
-      if (tree.usedExtends > 0) {
+      if (tree.usedExtends > 0)
+      {
         var tmpTree = []
         // Now in the tree remove anything other than block after extends
-        for (var i = 0; i < tree.length; i++) {
-          if (i < tree.usedExtends) {
+        for (var i = 0; i < tree.length; i++)
+        {
+          if (i < tree.usedExtends)
+          {
             tmpTree.push(tree[i])
-          } else if (tree[i].type === 'build-in' && (tree[i].name === 'block')) {
+          }
+          else if (tree[i].type === 'build-in' && (tree[i].name === 'block'))
+          {
             tmpTree.push(tree[i])
           }
         }
@@ -144,7 +169,8 @@
     },
 
     // Parse the template and return the data.
-    getParsed: function (template) {
+    getParsed: function (template)
+    {
       var tree = this.getTree(template)
       var runTimePlugins
 
@@ -160,16 +186,17 @@
       // Refactor to maintain cache. Until that keep commented.
       // this.files = {};
       return {
-        tree: tree,
+        tree          : tree,
         runTimePlugins: runTimePlugins,
-        blocks: blocks,
-        outerBlocks: outerBlocks
+        blocks        : blocks,
+        outerBlocks   : outerBlocks
       }
     },
 
     // Parse the template and generate tree.
-    parse: function (tpl) {
-      var tree = []
+    parse: function (tpl)
+    {
+      var tree        = []
       var openTag
       var tag
       var name
@@ -178,70 +205,94 @@
       var closeTag
       var usedExtends = 0
 
-      for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl)) {
-        if (openTag.index) {
+      for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl))
+      {
+        if (openTag.index)
+        {
           tree = tree.concat(this.parseText(tpl.slice(0, openTag.index)))
         }
         tpl = tpl.slice((openTag.index + openTag[0].length))
         tag = openTag[1].match(/^\s*(\w+)(.*)$/)
-        if (tag) {
+        if (tag)
+        {
           // Function?!
-          name = tag[1]
+          name     = tag[1]
           paramStr = (tag.length > 2) ? tag[2].replace(/^\s+|\s+$/g, '') : ''
-          if (name in this.buildInFunctions) {
+          if (name in this.buildInFunctions)
+          {
             var buildIn = this.buildInFunctions[name]
-            var params = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr)
-            if (buildIn.type === 'block') {
+            var params  = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr)
+            if (buildIn.type === 'block')
+            {
               // Remove new line after block open tag (like in Latte)
-              tpl = tpl.replace(/^\n/, '')
-              closeTag = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
+              tpl              = tpl.replace(/^\n/, '')
+              closeTag         = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
               var functionTree = buildIn.parse.call(this, params, tpl.slice(0, closeTag.index))
-              if (functionTree) {
+              if (functionTree)
+              {
                 // Some functions return false like {php} and {function}
                 tree = tree.concat(functionTree)
               }
               tpl = tpl.slice(closeTag.index + closeTag[0].length)
-            } else {
-              if (name === 'extends') {
+            }
+            else
+            {
+              if (name === 'extends')
+              {
                 // Anything before {extends} should be stripped.
                 tree.splice(0, tree.length)
               }
               tree = tree.concat(buildIn.parse.call(this, params))
-              if (name === 'extends') {
+              if (name === 'extends')
+              {
                 usedExtends = tree.length
               }
             }
             tpl = tpl.replace(/^\n/, '')
-          } else if (name in this.runTimePlugins) {
+          }
+          else if (name in this.runTimePlugins)
+          {
             // Possible it is function name. give it a priority before plugin.
             tree = tree.concat(this.parsePluginFunc(name, this.parseParams(paramStr)))
-          } else if (name in this.plugins) {
+          }
+          else if (name in this.plugins)
+          {
             var plugin = this.plugins[name]
-            if (plugin.type === 'block') {
+            if (plugin.type === 'block')
+            {
               closeTag = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
-              tree = tree.concat(this.parsePluginBlock(name, this.parseParams(paramStr), tpl.slice(0, closeTag.index)))
-              tpl = tpl.slice(closeTag.index + closeTag[0].length)
-            } else if (plugin.type === 'function') {
+              tree     = tree.concat(this.parsePluginBlock(name, this.parseParams(paramStr), tpl.slice(0, closeTag.index)))
+              tpl      = tpl.slice(closeTag.index + closeTag[0].length)
+            }
+            else if (plugin.type === 'function')
+            {
               tree = tree.concat(this.parsePluginFunc(name, this.parseParams(paramStr)))
             }
-            if (name === 'append' || name === 'assign' || name === 'capture' || name === 'eval' || name === 'include') {
+            if (name === 'append' || name === 'assign' || name === 'capture' || name === 'eval' || name === 'include')
+            {
               tpl = tpl.replace(/^\n/, '')
             }
-          } else {
+          }
+          else
+          {
             // Variable.
             node = this.buildInFunctions.expression.parse.call(this, openTag[1])
             tree.push(node)
           }
-        } else {
+        }
+        else
+        {
           // Variable.
           node = this.buildInFunctions.expression.parse.call(this, openTag[1])
-          if (node.expression.type === 'build-in' && node.expression.name === 'operator' && node.expression.op === '=') {
+          if (node.expression.type === 'build-in' && node.expression.name === 'operator' && node.expression.op === '=')
+          {
             tpl = tpl.replace(/^\n/, '')
           }
           tree.push(node)
         }
       }
-      if (tpl) {
+      if (tpl)
+      {
         tree = tree.concat(this.parseText(tpl))
       }
       tree.usedExtends = usedExtends
@@ -249,43 +300,54 @@
     },
 
     // Find a first {tag} in the string.
-    findTag: function (expression, s) {
-      var openCount = 0
-      var offset = 0
+    findTag: function (expression, s)
+    {
+      var openCount        = 0
+      var offset           = 0
       var i
-      var ldelim = this.ldelim
-      var rdelim = this.rdelim
+      var ldelim           = this.ldelim
+      var rdelim           = this.rdelim
       var skipInWhitespace = this.autoLiteral
-      var expressionAny = /^\s*(.+)\s*$/i
-      var expressionTag = expression ? new RegExp('^\\s*(' + expression + ')\\s*$', 'i') : expressionAny
+      var expressionAny    = /^\s*(.+)\s*$/i
+      var expressionTag    = expression ? new RegExp('^\\s*(' + expression + ')\\s*$', 'i') : expressionAny
       var sTag
       var found
 
-      for (i = 0; i < s.length; ++i) {
-        if (s.substr(i, ldelim.length) === ldelim) {
-          if (skipInWhitespace && (i + 1) < s.length && s.substr((i + 1), 1).match(/\s/)) {
+      for (i = 0; i < s.length; ++i)
+      {
+        if (s.substr(i, ldelim.length) === ldelim)
+        {
+          if (skipInWhitespace && (i + 1) < s.length && s.substr((i + 1), 1).match(/\s/))
+          {
             continue
           }
-          if (!openCount) {
+          if (!openCount)
+          {
             s = s.slice(i)
             offset += parseInt(i)
             i = 0
           }
           ++openCount
-        } else if (s.substr(i, rdelim.length) === rdelim) {
-          if (skipInWhitespace && (i - 1) >= 0 && s.substr((i - 1), 1).match(/\s/)) {
+        }
+        else if (s.substr(i, rdelim.length) === rdelim)
+        {
+          if (skipInWhitespace && (i - 1) >= 0 && s.substr((i - 1), 1).match(/\s/))
+          {
             continue
           }
-          if (!--openCount) {
-            sTag = s.slice(ldelim.length, i).replace(/[\r\n]/g, ' ')
+          if (!--openCount)
+          {
+            sTag  = s.slice(ldelim.length, i).replace(/[\r\n]/g, ' ')
             found = sTag.match(expressionTag)
-            if (found) {
+            if (found)
+            {
               found.index = offset
-              found[0] = s.slice(0, (i + rdelim.length))
+              found[0]    = s.slice(0, (i + rdelim.length))
               return found
             }
           }
-          if (openCount < 0) {
+          if (openCount < 0)
+          {
             // Ignore any number of unmatched right delimiters.
             openCount = 0
           }
@@ -294,19 +356,24 @@
       return null
     },
 
-    findElseTag: function (reOpen, reClose, reElse, s) {
+    findElseTag: function (reOpen, reClose, reElse, s)
+    {
       var offset = 0
 
-      for (var elseTag = this.findTag(reElse, s); elseTag; elseTag = this.findTag(reElse, s)) {
+      for (var elseTag = this.findTag(reElse, s); elseTag; elseTag = this.findTag(reElse, s))
+      {
         var openTag = this.findTag(reOpen, s)
-        if (!openTag || openTag.index > elseTag.index) {
+        if (!openTag || openTag.index > elseTag.index)
+        {
           elseTag.index += offset
           return elseTag
-        } else {
-          s = s.slice(openTag.index + openTag[0].length)
+        }
+        else
+        {
+          s            = s.slice(openTag.index + openTag[0].length)
           offset += openTag.index + openTag[0].length
           var closeTag = this.findCloseTag(reClose, reOpen, s)
-          s = s.slice(closeTag.index + closeTag[0].length)
+          s            = s.slice(closeTag.index + closeTag[0].length)
           offset += closeTag.index + closeTag[0].length
         }
       }
@@ -314,41 +381,52 @@
     },
 
     // Find closing tag which matches. expressionClose.
-    findCloseTag: function (expressionClose, expressionOpen, s) {
-      var sInner = ''
-      var closeTag = null
-      var openTag = null
+    findCloseTag: function (expressionClose, expressionOpen, s)
+    {
+      var sInner    = ''
+      var closeTag  = null
+      var openTag   = null
       var findIndex = 0
 
-      do {
-        if (closeTag) {
+      do
+      {
+        if (closeTag)
+        {
           findIndex += closeTag[0].length
         }
         closeTag = this.findTag(expressionClose, s)
-        if (!closeTag) {
+        if (!closeTag)
+        {
           throw new Error('Unclosed ' + this.ldelim + expressionOpen + this.rdelim)
         }
         sInner += s.slice(0, closeTag.index)
         findIndex += closeTag.index
-        s = s.slice((closeTag.index + closeTag[0].length))
+        s       = s.slice((closeTag.index + closeTag[0].length))
         openTag = this.findTag(expressionOpen, sInner)
-        if (openTag) {
+        if (openTag)
+        {
           sInner = sInner.slice((openTag.index + openTag[0].length))
         }
-      } while (openTag)
+      }
+      while (openTag)
 
       closeTag.index = findIndex
       return closeTag
     },
 
-    bundleOp: function (i, tree, precedence) {
+    bundleOp: function (i, tree, precedence)
+    {
       var op = tree[i]
-      if (op.name === 'operator' && op.precedence === precedence && !op.params.__parsed) {
-        if (op.optype === 'binary') {
+      if (op.name === 'operator' && op.precedence === precedence && !op.params.__parsed)
+      {
+        if (op.optype === 'binary')
+        {
           op.params.__parsed = [tree[(i - 1)], tree[(i + 1)]]
           tree.splice((i - 1), 3, op)
           return [true, tree]
-        } else if (op.optype === 'post-unary') {
+        }
+        else if (op.optype === 'post-unary')
+        {
           op.params.__parsed = [tree[(i - 1)]]
           tree.splice((i - 1), 2, op)
           return [true, tree]
@@ -360,25 +438,34 @@
       return [false, tree]
     },
 
-    composeExpression: function (tree) {
+    composeExpression: function (tree)
+    {
       var i = 0
       var data
 
-      for (i = 0; i < tree.length; ++i) {
-        if (tree[i] instanceof Array) {
+      for (i = 0; i < tree.length; ++i)
+      {
+        if (tree[i] instanceof Array)
+        {
           tree[i] = this.composeExpression(tree[i])
         }
       }
 
-      for (var precedence = 1; precedence < 14; ++precedence) {
-        if (precedence === 2 || precedence === 10) {
-          for (i = tree.length; i > 0; --i) {
+      for (var precedence = 1; precedence < 14; ++precedence)
+      {
+        if (precedence === 2 || precedence === 10)
+        {
+          for (i = tree.length; i > 0; --i)
+          {
             data = this.bundleOp(i - 1, tree, precedence)
             i -= data[0]
             tree = data[1]
           }
-        } else {
-          for (i = 0; i < tree.length; ++i) {
+        }
+        else
+        {
+          for (i = 0; i < tree.length; ++i)
+          {
             data = this.bundleOp(i, tree, precedence)
             i -= data[0]
             tree = data[1]
@@ -389,66 +476,88 @@
       return tree[0]
     },
 
-    getMatchingToken: function (s) {
-      for (var i = 0; i < this.tokens.length; ++i) {
-        if (s.match(this.tokens[i].regex)) {
+    getMatchingToken: function (s)
+    {
+      for (var i = 0; i < this.tokens.length; ++i)
+      {
+        if (s.match(this.tokens[i].regex))
+        {
           return i
         }
       }
       return false
     },
 
-    parseVar: function (s, name, token) {
+    parseVar: function (s, name, token)
+    {
       var expression = /^(?:\.|\s*->\s*|\[\s*)/
       var op
-      var data = {value: '', tree: []}
+      var data       = {value: '', tree: []}
       var lookUpData
-      var value = ''
-      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|counter|odd|even|first|last|empty|show|total)/gi, '$1__$2')}]
-      var rootName = token
+      var value      = ''
+      var parts      = [
+        {
+          type: 'text',
+          data: name.replace(/^(\w+)@(key|index|iteration|counter|odd|even|first|last|empty|show|total)/gi, '$1__$2')
+        }
+      ]
+      var rootName   = token
 
-      if (!token) {
-        token = name
+      if (!token)
+      {
+        token    = name
         rootName = token
       }
-      for (op = s.match(expression); op; op = s.match(expression)) {
+      for (op = s.match(expression); op; op = s.match(expression))
+      {
         token += op[0]
         s = s.slice(op[0].length)
-        if (op[0].match(/\[/)) {
+        if (op[0].match(/\[/))
+        {
           data = this.parseExpression(s, true)
-          if (data.tree) {
+          if (data.tree)
+          {
             token += data.value
             parts.push(data.tree)
             s = s.slice(data.value.length)
           }
           var closeOp = s.match(/\s*\]/)
-          if (closeOp) {
+          if (closeOp)
+          {
             token += closeOp[0]
             s = s.slice(closeOp[0].length)
           }
-        } else {
-          var parseMod = this.parseModifiersStop
+        }
+        else
+        {
+          var parseMod            = this.parseModifiersStop
           this.parseModifiersStop = true
-          lookUpData = this.lookUp(s, '')
-          if (lookUpData) {
-            data.tree = [].concat(data.tree, lookUpData.tree)
+          lookUpData              = this.lookUp(s, '')
+          if (lookUpData)
+          {
+            data.tree  = [].concat(data.tree, lookUpData.tree)
             data.value = lookUpData.value
             token += lookUpData.value
 
-            if (lookUpData.ret) {
+            if (lookUpData.ret)
+            {
               var part = data.tree[(data.tree.length - 1)]
-              if (part.type === 'plugin' && part.name === '__func') {
+              if (part.type === 'plugin' && part.name === '__func')
+              {
                 part.hasOwner = true
               }
               parts.push(part)
               s = s.slice(data.value.length)
-            } else {
+            }
+            else
+            {
               data = false
             }
           }
           this.parseModifiersStop = parseMod
         }
-        if (!data) {
+        if (!data)
+        {
           parts.push({type: 'text', data: ''})
         }
       }
@@ -457,70 +566,87 @@
       return {s: s, token: token, tree: [{type: 'var', parts: parts}], value: value}
     },
 
-    parseFunc: function (name, params, tree) {
+    parseFunc: function (name, params, tree)
+    {
       params.__parsed.name = this.parseText(name, [])[0]
       tree.push({
-        type: 'plugin',
-        name: '__func',
+        type  : 'plugin',
+        name  : '__func',
         params: params
       })
       return tree
     },
 
-    parseOperator: function (op, type, precedence) {
-      return [{
-        type: 'build-in',
-        name: 'operator',
-        op: op,
-        optype: type,
-        precedence: precedence,
-        params: {}
-      }]
+    parseOperator: function (op, type, precedence)
+    {
+      return [
+        {
+          type      : 'build-in',
+          name      : 'operator',
+          op        : op,
+          optype    : type,
+          precedence: precedence,
+          params    : {}
+        }
+      ]
     },
 
-    parsePluginBlock: function (name, params, content) {
-      return [{
-        type: 'plugin',
-        name: name,
-        params: params,
-        subTree: this.parse(content, [])
-      }]
+    parsePluginBlock: function (name, params, content)
+    {
+      return [
+        {
+          type   : 'plugin',
+          name   : name,
+          params : params,
+          subTree: this.parse(content, [])
+        }
+      ]
     },
 
-    parsePluginFunc: function (name, params) {
-      return [{
-        type: 'plugin',
-        name: name,
-        params: params
-      }]
+    parsePluginFunc: function (name, params)
+    {
+      return [
+        {
+          type  : 'plugin',
+          name  : name,
+          params: params
+        }
+      ]
     },
 
-    parseModifiers: function (s, tree) {
+    parseModifiers: function (s, tree)
+    {
       var modifier = s.match(/^\|(\w+)/)
-      var value = ''
+      var value    = ''
       var funcName
-      if (this.parseModifiersStop) {
+      if (this.parseModifiersStop)
+      {
         return
       }
-      if (!modifier) {
+      if (!modifier)
+      {
         return
       }
       value += modifier[0]
 
       funcName = ((modifier[1] === 'default') ? 'defaultValue' : modifier[1])
-      s = s.slice(modifier[0].length).replace(/^\s+/, '')
+      s        = s.slice(modifier[0].length).replace(/^\s+/, '')
 
       this.parseModifiersStop = true
-      var params = []
-      for (var colon = s.match(/^\s*:\s*/); colon; colon = s.match(/^\s*:\s*/)) {
+      var params              = []
+      for (var colon = s.match(/^\s*:\s*/); colon; colon = s.match(/^\s*:\s*/))
+      {
         value += s.slice(0, colon[0].length)
-        s = s.slice(colon[0].length)
+        s              = s.slice(colon[0].length)
         var lookUpData = this.lookUp(s, '')
-        if (lookUpData.ret) {
+        if (lookUpData.ret)
+        {
           value += lookUpData.value
           params.push(lookUpData.tree[0])
           s = s.slice(lookUpData.value.length)
-        } else {
+        }
+        else
+        {
           params.push(this.parseText(''))
         }
       }
@@ -534,55 +660,68 @@
       // Modifiers can be combined.
       var selfData = this.parseModifiers(s, tree)
       // If data is returned merge the current tree and tree we got.
-      if (selfData) {
+      if (selfData)
+      {
         tree = tree.concat(selfData.tree)
       }
       return {value: value, tree: tree}
     },
 
-    parseParams: function (paramsStr, regexDelim, regexName) {
-      var s = paramsStr.replace(/\n/g, ' ').replace(/^\s+|\s+$/g, '')
+    parseParams: function (paramsStr, regexDelim, regexName)
+    {
+      var s      = paramsStr.replace(/\n/g, ' ').replace(/^\s+|\s+$/g, '')
       var params = []
-      paramsStr = ''
+      paramsStr  = ''
 
       params.__parsed = []
 
-      if (!s) {
+      if (!s)
+      {
         return params
       }
 
-      if (!regexDelim) {
+      if (!regexDelim)
+      {
         regexDelim = /^\s+/
-        regexName = /^(\w+)\s*=\s*/
+        regexName  = /^(\w+)\s*=\s*/
       }
 
-      while (s) {
+      while (s)
+      {
         var name = null
-        if (regexName) {
+        if (regexName)
+        {
           var foundName = s.match(regexName)
-          if (foundName) {
+          if (foundName)
+          {
             var firstChar = foundName[1].charAt(0).match(/^\d+/)
-            if (foundName[1] === 'true' || foundName[1] === 'false' || foundName[1] === 'null') {
+            if (foundName[1] === 'true' || foundName[1] === 'false' || foundName[1] === 'null')
+            {
               firstChar = true
             }
 
-            if (!firstChar) {
+            if (!firstChar)
+            {
               name = trimAllQuotes(foundName[1])
               paramsStr += s.slice(0, foundName[0].length)
-              s = s.slice(foundName[0].length)
+              s    = s.slice(foundName[0].length)
             }
           }
         }
 
         var param = this.parseExpression(s)
-        if (!param) {
+        if (!param)
+        {
           break
         }
 
-        if (name) {
-          params[name] = param.value
+        if (name)
+        {
+          params[name]          = param.value
           params.__parsed[name] = param.tree
-        } else {
+        }
+        else
+        {
           params.push(param.value)
           params.__parsed.push(param.tree)
         }
@@ -591,34 +730,43 @@
         s = s.slice(param.value.length)
 
         var foundDelim = s.match(regexDelim)
-        if (foundDelim) {
+        if (foundDelim)
+        {
           paramsStr += s.slice(0, foundDelim[0].length)
           s = s.slice(foundDelim[0].length)
-        } else {
+        }
+        else
+        {
           break
         }
       }
-      params.toString = function () {
+      params.toString = function ()
+      {
         return paramsStr
       }
       return params
     },
 
-    lookUp: function (s, value) {
+    lookUp: function (s, value)
+    {
       var tree = []
       var tag
 
-      if (!s) {
+      if (!s)
+      {
         return false
       }
-      if (s.substr(0, this.ldelim.length) === this.ldelim) {
+      if (s.substr(0, this.ldelim.length) === this.ldelim)
+      {
         tag = this.findTag('', s)
         value += tag[0]
-        if (tag) {
-          var t = this.parse(tag[0])
-          tree = tree.concat(t)
+        if (tag)
+        {
+          var t       = this.parse(tag[0])
+          tree        = tree.concat(t)
           var modData = this.parseModifiers(s.slice(value.length), tree)
-          if (modData) {
+          if (modData)
+          {
             return {ret: true, tree: modData.tree, value: modData.value}
           }
           return {ret: true, tree: tree, value: value}
@@ -626,26 +774,39 @@
       }
 
       var anyMatchingToken = this.getMatchingToken(s)
-      if (anyMatchingToken !== false) {
+      if (anyMatchingToken !== false)
+      {
         value += RegExp.lastMatch
-        var newTree = this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length), {tree: tree, token: RegExp.lastMatch})
+        var newTree = this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length), {
+          tree : tree,
+          token: RegExp.lastMatch
+        })
 
-        if (typeof newTree === 'string') {
-          if (newTree === 'parenStart') {
+        if (typeof newTree === 'string')
+        {
+          if (newTree === 'parenStart')
+          {
             var blankTree = []
             tree.push(blankTree)
             blankTree.parent = tree
-            tree = blankTree
-          } else if (newTree === 'parenEnd') {
-            if (tree.parent) {
+            tree             = blankTree
+          }
+          else if (newTree === 'parenEnd')
+          {
+            if (tree.parent)
+            {
               tree = tree.parent
             }
           }
-        } else if ((!!newTree) && (newTree.constructor === Object)) {
+        }
+        else if ((!!newTree) && (newTree.constructor === Object))
+        {
           value += newTree.value
           newTree = newTree.tree
-          tree = tree.concat(newTree)
-        } else {
+          tree    = tree.concat(newTree)
+        }
+        else
+        {
           tree = tree.concat(newTree)
         }
         return {ret: true, tree: tree, value: value}
@@ -654,27 +815,34 @@
     },
 
     // Parse expression.
-    parseExpression: function (s) {
-      var tree = []
+    parseExpression: function (s)
+    {
+      var tree  = []
       var value = ''
       var data
 
       // TODO Refactor, to get this removed.
       this.lastTreeInExpression = tree
-      while (true) {
+      while (true)
+      {
         data = this.lookUp(s.slice(value.length), value)
-        if (data) {
-          tree = tree.concat(data.tree)
-          value = data.value
+        if (data)
+        {
+          tree                      = tree.concat(data.tree)
+          value                     = data.value
           this.lastTreeInExpression = tree
-          if (!data.ret) {
+          if (!data.ret)
+          {
             break
           }
-        } else {
+        }
+        else
+        {
           break
         }
       }
-      if (tree.length) {
+      if (tree.length)
+      {
         tree = this.composeExpression(tree)
       }
 
@@ -682,17 +850,21 @@
     },
 
     // Parse boolean.
-    parseBool: function (boolVal) {
+    parseBool: function (boolVal)
+    {
       return [{type: 'boolean', data: boolVal}]
     },
 
     // Parse text.
-    parseText: function (text) {
+    parseText: function (text)
+    {
       var tree = []
 
-      if (this.parseEmbeddedVars) {
+      if (this.parseEmbeddedVars)
+      {
         var re = /([$][\w@]+)|`([^`]*)`/
-        for (var found = re.exec(text); found; found = re.exec(text)) {
+        for (var found = re.exec(text); found; found = re.exec(text))
+        {
           tree.push({type: 'text', data: text.slice(0, found.index)})
           var d = this.parseExpression(found[1] ? found[1] : found[2])
           tree.push(d.tree)
@@ -703,32 +875,40 @@
       return tree
     },
 
-    loadTemplate: function (name, nocache) {
+    loadTemplate: function (name, nocache)
+    {
       var tree = []
-      if (nocache || !(name in this.files)) {
+      if (nocache || !(name in this.files))
+      {
         var tpl = this.getTemplate(name)
-        if (typeof tpl !== 'string') {
+        if (typeof tpl !== 'string')
+        {
           throw new Error('No template for ' + name)
         }
-        tree = this.getTree(tpl)
+        tree             = this.getTree(tpl)
         this.files[name] = tree
-      } else {
+      }
+      else
+      {
         tree = this.files[name]
       }
       return tree
     },
 
     // Remove comments. We do not want to parse them anyway.
-    removeComments: function (tpl) {
+    removeComments: function (tpl)
+    {
       var ldelim = new RegExp(this.ldelim + '\\*')
       var rdelim = new RegExp('\\*' + this.rdelim)
       var newTpl = ''
 
-      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {
+      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim))
+      {
         newTpl += tpl.slice(0, openTag.index)
-        tpl = tpl.slice(openTag.index + openTag[0].length)
+        tpl          = tpl.slice(openTag.index + openTag[0].length)
         var closeTag = tpl.match(rdelim)
-        if (!closeTag) {
+        if (!closeTag)
+        {
           throw new Error('Unclosed ' + ldelim + '*')
         }
         tpl = tpl.slice(closeTag.index + closeTag[0].length)
@@ -738,14 +918,17 @@
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters) {
+    applyFilters: function (filters)
+    {
       var args = []
 
-      for (var j = 1; j < arguments.length; j++) {
+      for (var j = 1; j < arguments.length; j++)
+      {
         args[j - 1] = arguments[j]
       }
 
-      for (var i = 0; i < filters.length; ++i) {
+      for (var i = 0; i < filters.length; ++i)
+      {
         args[0] = filters[i].apply(this, args)
       }
 
@@ -753,14 +936,16 @@
     },
 
     // Tokens to indentify data inside template.
-    tokens: [
+    tokens          : [
       {
         // Token for variable.
         'regex': /^\$([\w@]+)/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var dataVar = this.parseVar(s, RegExp.$1, RegExp.$1)
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
-          if (dataMod) {
+          if (dataMod)
+          {
             dataVar.value += dataMod.value
             return dataMod
           }
@@ -770,8 +955,10 @@
       {
         // Token for boolean.
         'regex': /^(true|false)/i,
-        parse: function (s, data) {
-          if (data.token.match(/true/i)) {
+        parse  : function (s, data)
+        {
+          if (data.token.match(/true/i))
+          {
             return this.parseBool(true)
           }
           return this.parseBool(false)
@@ -780,12 +967,14 @@
       {
         // Token for to grab data inside single quotes.
         'regex': /^'([^'\\]*(?:\\.[^'\\]*)*)'/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           // Data inside single quote is like string, we do not parse it.
           var regexStr = evalString(RegExp.$1)
           var textTree = this.parseText(regexStr)
-          var dataMod = this.parseModifiers(s, textTree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s, textTree)
+          if (dataMod)
+          {
             return dataMod
           }
           return textTree
@@ -795,25 +984,29 @@
         // Token for to grab data inside double quotes.
         // We parse data inside double quotes.
         'regex': /^"([^"\\]*(?:\\.[^"\\]*)*)"/,
-        parse: function (s, data) {
-          var v = evalString(RegExp.$1)
+        parse  : function (s, data)
+        {
+          var v     = evalString(RegExp.$1)
           var isVar = v.match(this.tokens[0]['regex'])
-          if (isVar) {
+          if (isVar)
+          {
             var newData = this.parseVar(v, isVar[1], isVar[0])
-            if (newData.token.length === v.length) {
+            if (newData.token.length === v.length)
+            {
               return [newData.tree[0]]
             }
           }
           this.parseEmbeddedVars = true
-          var tree = []
+          var tree               = []
           tree.push({
-            type: 'plugin',
-            name: '__quoted',
+            type  : 'plugin',
+            name  : '__quoted',
             params: {__parsed: this.parse(v, [])}
           })
           this.parseEmbeddedVars = false
-          var modData = this.parseModifiers(s, tree)
-          if (modData) {
+          var modData            = this.parseModifiers(s, tree)
+          if (modData)
+          {
             return modData
           }
           return tree
@@ -822,14 +1015,16 @@
       {
         // Token for func().
         'regex': /^(\w+)\s*[(]([)]?)/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var funcName = RegExp.$1
-          var noArgs = RegExp.$2
-          var params = this.parseParams(((noArgs) ? '' : s), /^\s*,\s*/)
-          var tree = this.parseFunc(funcName, params, [])
+          var noArgs   = RegExp.$2
+          var params   = this.parseParams(((noArgs) ? '' : s), /^\s*,\s*/)
+          var tree     = this.parseFunc(funcName, params, [])
           // var value += params.toString();
-          var dataMod = this.parseModifiers(s.slice(params.toString().length), tree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s.slice(params.toString().length), tree)
+          if (dataMod)
+          {
             return dataMod
           }
           return tree
@@ -838,7 +1033,8 @@
       {
         // Token for expression in parentheses.
         'regex': /^\s*\(\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           // We do not know way of manupilating the tree here.
           return 'parenStart'
         }
@@ -846,7 +1042,8 @@
       {
         // Token for end of func() or (expr).
         'regex': /^\s*\)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           // We do not know way of manupilating the tree here.
           return 'parenEnd'
         }
@@ -854,10 +1051,14 @@
       {
         // Token for increment operator.
         'regex': /^\s*(\+\+|--)\s*/,
-        parse: function (s, data) {
-          if (this.lastTreeInExpression.length && this.lastTreeInExpression[this.lastTreeInExpression.length - 1].type === 'var') {
+        parse  : function (s, data)
+        {
+          if (this.lastTreeInExpression.length && this.lastTreeInExpression[this.lastTreeInExpression.length - 1].type === 'var')
+          {
             return this.parseOperator(RegExp.$1, 'post-unary', 1)
-          } else {
+          }
+          else
+          {
             return this.parseOperator(RegExp.$1, 'pre-unary', 1)
           }
         }
@@ -865,14 +1066,16 @@
       {
         // Regex for strict equal, strict not equal, equal and not equal operator.
         'regex': /^\s*(===|!==|==|!=)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 6)
         }
       },
       {
         // Regex for equal, not equal operator.
         'regex': /^\s+(eq|ne|neq)\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var op = RegExp.$1.replace(/ne(q)?/, '!=').replace(/eq/, '==')
           return this.parseOperator(op, 'binary', 6)
         }
@@ -880,45 +1083,54 @@
       {
         // Regex for NOT operator.
         'regex': /^\s*!\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('!', 'pre-unary', 2)
         }
       },
       {
         // Regex for NOT operator.
         'regex': /^\s+not\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('!', 'pre-unary', 2)
         }
       },
       {
         // Regex for =, +=, *=, /=, %= operator.
         'regex': /^\s*(=|\+=|-=|\*=|\/=|%=)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 10)
         }
       },
       {
         // Regex for *, /, % binary operator.
         'regex': /^\s*(\*|\/|%)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 3)
         }
       },
       {
         // Regex for mod operator.
         'regex': /^\s+mod\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('%', 'binary', 3)
         }
       },
       {
         // Regex for +/- operator.
         'regex': /^\s*(\+|-)\s*/,
-        parse: function (s, data) {
-          if (!this.lastTreeInExpression.length || this.lastTreeInExpression[this.lastTreeInExpression.length - 1].name === 'operator') {
+        parse  : function (s, data)
+        {
+          if (!this.lastTreeInExpression.length || this.lastTreeInExpression[this.lastTreeInExpression.length - 1].name === 'operator')
+          {
             return this.parseOperator(RegExp.$1, 'pre-unary', 4)
-          } else {
+          }
+          else
+          {
             return this.parseOperator(RegExp.$1, 'binary', 4)
           }
         }
@@ -926,14 +1138,16 @@
       {
         // Regex for less than, greater than, less than equal, reather than equal.
         'regex': /^\s*(<=|>=|<>|<|>)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1.replace(/<>/, '!='), 'binary', 5)
         }
       },
       {
         // Regex for less than, greater than, less than equal, reather than equal.
         'regex': /^\s+(lt|lte|le|gt|gte|ge)\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var op = RegExp.$1.replace(/l(t)?e/, '<').replace(/lt/, '<=').replace(/g(t)?e/, '>').replace(/gt/, '>=')
           return this.parseOperator(op, 'binary', 5)
         }
@@ -941,17 +1155,20 @@
       {
         // Regex for short hand "is (not) div by".
         'regex': /^\s+(is\s+(not\s+)?div\s+by)\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$2 ? 'div_not' : 'div', 'binary', 7)
         }
       },
       {
         // Regex for short hand "is (not) even/odd by".
         'regex': /^\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/i,
-        parse: function (s, data) {
-          var op = RegExp.$1 ? ((RegExp.$2 === 'odd') ? 'even' : 'even_not') : ((RegExp.$2 === 'odd') ? 'even_not' : 'even')
+        parse  : function (s, data)
+        {
+          var op   = RegExp.$1 ? ((RegExp.$2 === 'odd') ? 'even' : 'even_not') : ((RegExp.$2 === 'odd') ? 'even_not' : 'even')
           var tree = this.parseOperator(op, 'binary', 7)
-          if (!RegExp.$3) {
+          if (!RegExp.$3)
+          {
             return tree.concat(this.parseText('1', tree))
           }
           return tree
@@ -960,45 +1177,52 @@
       {
         // Regex for AND operator.
         'regex': /^\s*(&&)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 8)
         }
       },
       {
         // Regex for OR operator.
         'regex': /^\s*(\|\|)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 9)
         }
       },
       {
         // Regex for AND operator.
         'regex': /^\s+and\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('&&', 'binary', 11)
         }
       },
       {
         // Regex for XOR operator.
         'regex': /^\s+xor\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('xor', 'binary', 12)
         }
       },
       {
         // Regex for OR operator.
         'regex': /^\s+or\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('||', 'binary', 13)
         }
       },
       {
         // Regex for config variable.
         'regex': /^#(\w+)#/,
-        parse: function (s, data) {
-          var dataVar = this.parseVar('.config.' + RegExp.$1, 'smarty', '$smarty')
+        parse  : function (s, data)
+        {
+          var dataVar = this.parseVar('.config.' + RegExp.$1, 'latte', '$latte')
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
-          if (dataMod) {
+          if (dataMod)
+          {
             dataVar.value += dataMod.value
             return dataMod
           }
@@ -1008,12 +1232,14 @@
       {
         // Regex for array.
         'regex': /^\s*\[\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var params = this.parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/)
-          var tree = this.parsePluginFunc('__array', params)
-          var value = params.toString()
-          var paren = s.slice(params.toString().length).match(/\s*\]/)
-          if (paren) {
+          var tree   = this.parsePluginFunc('__array', params)
+          var value  = params.toString()
+          var paren  = s.slice(params.toString().length).match(/\s*\]/)
+          if (paren)
+          {
             value += paren[0]
           }
           return {tree: tree, value: value}
@@ -1022,15 +1248,20 @@
       {
         // Regex for number.
         'regex': /^[\d.]+/,
-        parse: function (s, data) {
-          if (data.token.indexOf('.') > -1) {
+        parse  : function (s, data)
+        {
+          if (data.token.indexOf('.') > -1)
+          {
             data.token = parseFloat(data.token)
-          } else {
+          }
+          else
+          {
             data.token = parseInt(data.token, 10)
           }
           var textTree = this.parseText(data.token)
-          var dataMod = this.parseModifiers(s, textTree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s, textTree)
+          if (dataMod)
+          {
             return dataMod
           }
           return textTree
@@ -1039,10 +1270,12 @@
       {
         // Regex for static.
         'regex': /^\w+/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var textTree = this.parseText(data.token)
-          var dataMod = this.parseModifiers(s, textTree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s, textTree)
+          if (dataMod)
+          {
             return dataMod
           }
           return textTree
@@ -1051,7 +1284,8 @@
     ],
     buildInFunctions: {
       expression: {
-        parse: function (s) {
+        parse: function (s)
+        {
           var data = this.parseExpression(s)
 
           return {
@@ -1059,43 +1293,49 @@
             name: 'expression',
             // Expression expanded inside this sub tree.
             expression: data.tree,
-            params: this.parseParams(s.slice(data.value.length).replace(/^\s+|\s+$/g, ''))
+            params    : this.parseParams(s.slice(data.value.length).replace(/^\s+|\s+$/g, ''))
           }
         }
       },
-      section: {
-        type: 'block',
-        parse: function (params, content) {
-          var subTree = []
+      section   : {
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTree     = []
           var subTreeElse = []
 
           var findElse = this.findElseTag('section [^}]+', '/section', 'sectionelse', content)
-          if (findElse) {
-            subTree = this.parse(content.slice(0, findElse.index))
+          if (findElse)
+          {
+            subTree     = this.parse(content.slice(0, findElse.index))
             subTreeElse = this.parse(content.slice(findElse.index + findElse[0].length).replace(/^[\r\n]/, ''))
-          } else {
+          }
+          else
+          {
             subTree = this.parse(content)
           }
           return {
-            type: 'build-in',
-            name: 'section',
-            params: params,
-            subTree: subTree,
+            type       : 'build-in',
+            name       : 'section',
+            params     : params,
+            subTree    : subTree,
             subTreeElse: subTreeElse
           }
         }
       },
 
       setfilter: {
-        type: 'block',
-        parseParams: function (paramStr) {
+        type       : 'block',
+        parseParams: function (paramStr)
+        {
           return [this.parseExpression('__t()|' + paramStr).tree]
         },
-        parse: function (params, content) {
+        parse      : function (params, content)
+        {
           return {
-            type: 'build-in',
-            name: 'setfilter',
-            params: params,
+            type   : 'build-in',
+            name   : 'setfilter',
+            params : params,
             subTree: this.parse(content)
           }
         }
@@ -1103,15 +1343,16 @@
 
       config_load: {
         'type': 'function',
-        parse: function (params) {
-          var file = trimAllQuotes(params.file ? params.file : params[0])
+        parse : function (params)
+        {
+          var file    = trimAllQuotes(params.file ? params.file : params[0])
           var content = this.getConfig(file)
           var section = trimAllQuotes(params.section ? params.section : (params[1] ? params[1] : ''))
 
           return {
-            type: 'build-in',
-            name: 'config_load',
-            params: params,
+            type   : 'build-in',
+            name   : 'config_load',
+            params : params,
             content: content,
             section: section
           }
@@ -1120,10 +1361,11 @@
 
       append: {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'append',
+            type  : 'build-in',
+            name  : 'append',
             params: params
           }
         }
@@ -1131,10 +1373,11 @@
 
       assign: {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'assign',
+            type  : 'build-in',
+            name  : 'assign',
             params: params
           }
         }
@@ -1142,10 +1385,11 @@
 
       'break': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'break',
+            type  : 'build-in',
+            name  : 'break',
             params: params
           }
         }
@@ -1153,10 +1397,11 @@
 
       'continue': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'continue',
+            type  : 'build-in',
+            name  : 'continue',
             params: params
           }
         }
@@ -1164,10 +1409,11 @@
 
       'call': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'call',
+            type  : 'build-in',
+            name  : 'call',
             params: params
           }
         }
@@ -1175,12 +1421,13 @@
 
       capture: {
         'type': 'block',
-        parse: function (params, content) {
+        parse : function (params, content)
+        {
           var tree = this.parse(content)
           return {
-            type: 'build-in',
-            name: 'capture',
-            params: params,
+            type   : 'build-in',
+            name   : 'capture',
+            params : params,
             subTree: tree
           }
         }
@@ -1188,12 +1435,13 @@
 
       nocache: {
         'type': 'block',
-        parse: function (params, content) {
+        parse : function (params, content)
+        {
           var tree = this.parse(content)
           return {
-            type: 'build-in',
-            name: 'nocache',
-            params: params,
+            type   : 'build-in',
+            name   : 'nocache',
+            params : params,
             subTree: tree
           }
         }
@@ -1201,238 +1449,299 @@
 
       'eval': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return this.parsePluginFunc('eval', params)
         }
       },
 
       include: {
         'type': 'function',
-        parse: function (params) {
-          var file = trimAllQuotes(params.file ? params.file : params[0])
+        parse : function (params)
+        {
+          var file    = trimAllQuotes(params.file ? params.file : params[0])
           var nocache = (findInArray(params, 'nocache') >= 0)
-          var tree = this.loadTemplate(file, nocache)
+          var tree    = this.loadTemplate(file, nocache)
 
           return {
-            type: 'build-in',
-            name: 'include',
-            params: params,
+            type   : 'build-in',
+            name   : 'include',
+            params : params,
             subTree: tree
           }
         }
       },
 
       'for': {
-        type: 'block',
-        parseParams: function (paramStr) {
+        type       : 'block',
+        parseParams: function (paramStr)
+        {
           var res = paramStr.match(/^\s*\$(\w+)\s*=\s*([^\s]+)\s*to\s*([^\s]+)\s*(?:step\s*([^\s]+))?\s*(.*)$/)
-          if (!res) {
+          if (!res)
+          {
             throw new Error('Invalid {for} parameters: ' + paramStr)
           }
           return this.parseParams("varName='" + res[1] + "' from=" + res[2] + ' to=' + res[3] + ' step=' + (res[4] ? res[4] : '1') + ' ' + res[5])
         },
-        parse: function (params, content) {
-          var subTree = []
+        parse      : function (params, content)
+        {
+          var subTree     = []
           var subTreeElse = []
 
           var findElse = this.findElseTag('for\\s[^}]+', '/for', 'forelse', content)
-          if (findElse) {
-            subTree = this.parse(content.slice(0, findElse.index))
+          if (findElse)
+          {
+            subTree     = this.parse(content.slice(0, findElse.index))
             subTreeElse = this.parse(content.slice(findElse.index + findElse[0].length))
-          } else {
+          }
+          else
+          {
             subTree = this.parse(content)
           }
           return {
-            type: 'build-in',
-            name: 'for',
-            params: params,
-            subTree: subTree,
+            type       : 'build-in',
+            name       : 'for',
+            params     : params,
+            subTree    : subTree,
             subTreeElse: subTreeElse
           }
         }
       },
 
       'if': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('if\\s+[^}]+', '/if', 'else[^}]*', content)
+          var findElse    = this.findElseTag('if\\s+[^}]+', '/if', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*if(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['if'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'if',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'if',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifempty': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifempty\\s+[^}]+', '/ifempty', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifempty\\s+[^}]+', '/ifempty', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifempty(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifempty',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifempty',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifnotempty': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifnotempty\\s+[^}]+', '/ifnotempty', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifnotempty\\s+[^}]+', '/ifnotempty', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifnotempty(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifnotempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifnotempty',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifnotempty',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifset': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifset\\s+[^}]+', '/ifset', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifset\\s+[^}]+', '/ifset', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifset(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifset',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifset',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifnotset': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifnotset\\s+[^}]+', '/ifnotset', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifnotset\\s+[^}]+', '/ifnotset', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifnotset(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifnotset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifnotset',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifnotset',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'foreach': {
-        type: 'block',
-        parseParams: function (paramStr) {
+        type       : 'block',
+        parseParams: function (paramStr)
+        {
           var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i)
-          if (res) {
+          if (res)
+          {
             paramStr = 'from=' + res[1] + ' item=' + (res[4] || res[2])
-            if (res[4]) {
+            if (res[4])
+            {
               paramStr += ' key=' + res[2]
             }
           }
           return this.parseParams(paramStr)
         },
-        parse: function (params, content) {
-          var subTree = []
+        parse      : function (params, content)
+        {
+          var subTree     = []
           var subTreeElse = []
 
           var findElse = this.findElseTag('foreach\\s[^}]+', '/foreach', 'foreachelse', content)
-          if (findElse) {
-            subTree = this.parse(content.slice(0, findElse.index))
+          if (findElse)
+          {
+            subTree     = this.parse(content.slice(0, findElse.index))
             subTreeElse = this.parse(content.slice(findElse.index + findElse[0].length).replace(/^[\r\n]/, ''))
-          } else {
+          }
+          else
+          {
             subTree = this.parse(content)
           }
           return {
-            type: 'build-in',
-            name: 'foreach',
-            params: params,
-            subTree: subTree,
+            type       : 'build-in',
+            name       : 'foreach',
+            params     : params,
+            subTree    : subTree,
             subTreeElse: subTreeElse
           }
         }
       },
 
       'function': {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           /* It is the case where we generate tree and keep it aside
            to be used when called.
            Keep it as runtime plugin is a better choice.
@@ -1447,7 +1756,7 @@
           // Let us store it as local plugin and end of parsing
           // we pass it to original Latte object.
           this.runTimePlugins[trimAllQuotes(params.name ? params.name : params[0])] = {
-            tree: tree,
+            tree         : tree,
             defaultParams: params
           }
           // Do not take this in tree. Skip it.
@@ -1456,89 +1765,101 @@
       },
 
       'extends': {
-        type: 'function',
-        parse: function (params) {
+        type : 'function',
+        parse: function (params)
+        {
           return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
         }
       },
 
       block: {
-        type: 'block',
-        parse: function (params, content) {
-          params.append = findInArray(params, 'append') >= 0
+        type : 'block',
+        parse: function (params, content)
+        {
+          params.append  = findInArray(params, 'append') >= 0
           params.prepend = findInArray(params, 'prepend') >= 0
-          params.hide = findInArray(params, 'hide') >= 0
+          params.hide    = findInArray(params, 'hide') >= 0
 
           var match
-          var tree = this.parse(content, [])
+          var tree      = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
-          if (!(blockName in this.blocks)) {
+          if (!(blockName in this.blocks))
+          {
             // This is block inside extends as it gets call first
             // when the extends is processed?!
             this.blocks[blockName] = []
             this.blocks[blockName] = {tree: tree, params: params}
-            location = 'inner'
-            match = content.match(/smarty.block.child/)
-            params.needChild = false
-            if (match) {
+            location               = 'inner'
+            match                  = content.match(/latte.block.child/)
+            params.needChild       = false
+            if (match)
+            {
               params.needChild = true
             }
-          } else {
+          }
+          else
+          {
             // this.blocks has this block, means this outer block after extends
             this.outerBlocks[blockName] = []
             this.outerBlocks[blockName] = {tree: tree, params: params}
-            location = 'outer'
-            match = content.match(/smarty.block.parent/)
-            params.needParent = false
-            if (match) {
+            location                    = 'outer'
+            match                       = content.match(/latte.block.parent/)
+            params.needParent           = false
+            if (match)
+            {
               params.needParent = true
             }
           }
           return {
-            type: 'build-in',
-            name: 'block',
-            params: params,
+            type    : 'build-in',
+            name    : 'block',
+            params  : params,
             location: location
           }
         }
       },
 
       strip: {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           return this.parse(content.replace(/[ \t]*[\r\n]+[ \t]*/g, ''))
         }
       },
 
       literal: {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           return this.parseText(content)
         }
       },
 
       ldelim: {
-        type: 'function',
-        parse: function (params) {
+        type : 'function',
+        parse: function (params)
+        {
           return this.parseText(this.ldelim)
         }
       },
 
       rdelim: {
-        type: 'function',
-        parse: function (params) {
+        type : 'function',
+        parse: function (params)
+        {
           return this.parseText(this.rdelim)
         }
       },
 
       'while': {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           return {
-            type: 'build-in',
-            name: 'while',
-            params: params,
+            type   : 'build-in',
+            name   : 'while',
+            params : params,
             subTree: this.parse(content)
           }
         }
@@ -1554,9 +1875,12 @@
    *
    * @return boolean
    */
-  function isEmptyObject (hash) {
-    for (var i in hash) {
-      if (hash.hasOwnProperty(i)) {
+  function isEmptyObject(hash)
+  {
+    for (var i in hash)
+    {
+      if (hash.hasOwnProperty(i))
+      {
         return false
       }
     }
@@ -1564,10 +1888,13 @@
   }
 
 
-  function countProperties (ob) {
+  function countProperties(ob)
+  {
     var count = 0
-    for (var name in ob) {
-      if (ob.hasOwnProperty(name)) {
+    for (var name in ob)
+    {
+      if (ob.hasOwnProperty(name))
+      {
         count++
       }
     }
@@ -1606,10 +1933,14 @@
     // If user wants to debug.
     debugging: false,
 
-    isEmptyStrict: function (value) {
-      if (typeof value === 'object') {
-        for (var key in value) {
-          if (value.hasOwnProperty(key) || typeof value[key] !== 'function') {
+    isEmptyStrict: function (value)
+    {
+      if (typeof value === 'object')
+      {
+        for (var key in value)
+        {
+          if (value.hasOwnProperty(key) || typeof value[key] !== 'function')
+          {
             return false
           }
         }
@@ -1619,123 +1950,157 @@
       return [undefined, false, 0, '0', ''].indexOf(value) > -1
     },
 
-    isEmptyLoose: function (value) {
-      if (this.isEmptyStrict(value)) {
+    isEmptyLoose: function (value)
+    {
+      if (this.isEmptyStrict(value))
+      {
         return true
       }
 
       return ['undefined', 'null', 'false'].indexOf(String(value)) > -1
     },
 
-    isNotEmptyLoose: function (value) {
+    isNotEmptyLoose: function (value)
+    {
       return !this.isEmptyLoose(value)
     },
 
-    isSetLoose: function (value) {
+    isSetLoose: function (value)
+    {
       return ['undefined', 'null'].indexOf(String(value)) === -1
     },
 
-    isNotSetLoose: function (value) {
+    isNotSetLoose: function (value)
+    {
       return !this.isSetLoose(value)
     },
 
-    isSetTag: function (value) {
+    isSetTag: function (value)
+    {
       return ['undefined', 'null'].indexOf(String(value)) === -1 && value !== ''
     },
 
-    isNotSetTag: function (value) {
+    isNotSetTag: function (value)
+    {
       return !this.isSetTag(value)
     },
 
-    startsWith: function (s, search, rawPos) {
+    startsWith: function (s, search, rawPos)
+    {
       var pos = rawPos > 0 ? rawPos | 0 : 0
       return s.substring(pos, pos + search.length) === search
     },
 
-    clear: function () {
+    clear: function ()
+    {
       // Clean up config, specific for this processing.
-      this.runTimePlugins = {}
-      this.variableFilters = []
-      this.escapeHtml = false
-      this.defaultModifiers = {}
-      this.modifiers = {}
-      this.plugins = {}
-      this.blocks = {}
-      this.outerBlocks = {}
-      this.debugging = false
+      this.runTimePlugins    = {}
+      this.variableFilters   = []
+      this.escapeHtml        = false
+      this.defaultModifiers  = {}
+      this.modifiers         = {}
+      this.plugins           = {}
+      this.blocks            = {}
+      this.outerBlocks       = {}
+      this.debugging         = false
       this.includedTemplates = []
     },
 
     // Process the tree and return the data.
-    getProcessed: function (tree, data) {
+    getProcessed: function (tree, data)
+    {
       // Process the tree and get the output.
       var output = this.process(tree, data)
-      if (this.debugging) {
+      if (this.debugging)
+      {
         this.plugins.debug.process([], {
           includedTemplates: this.includedTemplates,
-          assignedVars: data
+          assignedVars     : data
         })
       }
       this.clear()
 
       return {
         output: output.tpl,
-        smarty: output.smarty
+        latte: output.latte
       }
     },
 
     // Process the tree and apply data.
-    process: function (tree, data) {
+    process: function (tree, data)
+    {
       var res = ''
       var s
       var node
       var tmp
       var plugin
 
-      for (var i = 0; i < tree.length; ++i) {
+      for (var i = 0; i < tree.length; ++i)
+      {
         node = tree[i]
-        s = ''
+        s    = ''
 
-        if (node.type === 'text') {
+        if (node.type === 'text')
+        {
           s = node.data
-        } else if (node.type === 'var') {
+        }
+        else if (node.type === 'var')
+        {
           s = this.getVarValue(node, data)
-        } else if (node.type === 'boolean') {
+        }
+        else if (node.type === 'boolean')
+        {
           s = !!node.data
-        } else if (node.type === 'build-in') {
+        }
+        else if (node.type === 'build-in')
+        {
           tmp = this.buildInFunctions[node.name].process.call(this, node, data)
-          if (typeof tmp.tpl !== 'undefined') {
+          if (typeof tmp.tpl !== 'undefined')
+          {
             // If tmp is object, which means it has modified, data also
             // so copy it back to data.
-            s = tmp.tpl
+            s    = tmp.tpl
             data = tmp.data
-          } else {
+          }
+          else
+          {
             // If tmp is string means it has not modified data.
             s = tmp
           }
-        } else if (node.type === 'plugin') {
-          if (this.runTimePlugins[node.name]) {
+        }
+        else if (node.type === 'plugin')
+        {
+          if (this.runTimePlugins[node.name])
+          {
             // Thats call for {function}.
             tmp = this.buildInFunctions['function'].process.call(this, node, data)
-            if (typeof tmp.tpl !== 'undefined') {
+            if (typeof tmp.tpl !== 'undefined')
+            {
               // If tmp is object, which means it has modified, data also
               // so copy it back to data.
-              s = tmp.tpl
+              s    = tmp.tpl
               data = tmp.data
-            } else {
+            }
+            else
+            {
               // If tmp is string means it has not modified data.
               s = tmp
             }
-          } else {
+          }
+          else
+          {
             plugin = this.plugins[node.name]
-            if (plugin.type === 'block') {
+            if (plugin.type === 'block')
+            {
               var repeat = {value: true}
-              while (repeat.value) {
+              while (repeat.value)
+              {
                 repeat.value = false
-                tmp = this.process(node.subTree, data)
-                if (typeof tmp.tpl !== 'undefined') {
+                tmp          = this.process(node.subTree, data)
+                if (typeof tmp.tpl !== 'undefined')
+                {
                   data = tmp.data
-                  tmp = tmp.tpl
+                  tmp  = tmp.tpl
                 }
                 s += plugin.process.call(
                   this,
@@ -1745,80 +2110,106 @@
                   repeat
                 )
               }
-            } else if (plugin.type === 'function') {
+            }
+            else if (plugin.type === 'function')
+            {
               s = plugin.process.call(this, this.getActualParamValues(node.params, data), data)
             }
           }
         }
-        if (typeof s === 'boolean' && tree.length !== 1) {
+        if (typeof s === 'boolean' && tree.length !== 1)
+        {
           s = s ? '1' : ''
         }
-        if (s === null || s === undefined) {
+        if (s === null || s === undefined)
+        {
           s = ''
         }
-        if (tree.length === 1) {
+        if (tree.length === 1)
+        {
           return {tpl: s, data: data}
         }
         res += ((s !== null) ? s : '')
 
-        if (data.smarty.continue || data.smarty.break) {
+        if (data.latte.continue || data.latte.break)
+        {
           return {tpl: res, data: data}
         }
       }
       return {tpl: res, data: data}
     },
 
-    configLoad: function (content, section, data) {
-      var s = content.replace(/\r\n/g, '\n').replace(/^\s+|\s+$/g, '')
-      var regex = /^\s*(?:\[([^\]]+)\]|(?:(\w+)[ \t]*=[ \t]*("""|'[^'\\\n]*(?:\\.[^'\\\n]*)*'|"[^"\\\n]*(?:\\.[^"\\\n]*)*"|[^\n]*)))/m
+    configLoad: function (content, section, data)
+    {
+      var s        = content.replace(/\r\n/g, '\n').replace(/^\s+|\s+$/g, '')
+      var regex    = /^\s*(?:\[([^\]]+)\]|(?:(\w+)[ \t]*=[ \t]*("""|'[^'\\\n]*(?:\\.[^'\\\n]*)*'|"[^"\\\n]*(?:\\.[^"\\\n]*)*"|[^\n]*)))/m
       var triple
       var currSect = ''
-      for (var f = s.match(regex); f; f = s.match(regex)) {
+      for (var f = s.match(regex); f; f = s.match(regex))
+      {
         s = s.slice(f.index + f[0].length)
-        if (f[1]) {
+        if (f[1])
+        {
           currSect = f[1]
-        } else if ((!currSect || currSect === section) && currSect.substr(0, 1) !== '.') {
-          if (f[3] === '"""') {
+        }
+        else if ((!currSect || currSect === section) && currSect.substr(0, 1) !== '.')
+        {
+          if (f[3] === '"""')
+          {
             triple = s.match(/"""/)
-            if (triple) {
-              data.smarty.config[f[2]] = s.slice(0, triple.index)
-              s = s.slice(triple.index + triple[0].length)
+            if (triple)
+            {
+              data.latte.config[f[2]] = s.slice(0, triple.index)
+              s                        = s.slice(triple.index + triple[0].length)
             }
-          } else {
-            data.smarty.config[f[2]] = trimAllQuotes(f[3])
+          }
+          else
+          {
+            data.latte.config[f[2]] = trimAllQuotes(f[3])
           }
         }
         var newln = s.match(/\n+/)
-        if (newln) {
+        if (newln)
+        {
           s = s.slice(newln.index + newln[0].length)
-        } else {
+        }
+        else
+        {
           break
         }
       }
       return data
     },
 
-    getActualParamValues: function (params, data) {
+    getActualParamValues: function (params, data)
+    {
       var actualParams = []
       var v
-      for (var name in params.__parsed) {
-        if (params.__parsed.hasOwnProperty(name)) {
+      for (var name in params.__parsed)
+      {
+        if (params.__parsed.hasOwnProperty(name))
+        {
           v = this.process([params.__parsed[name]], data)
-          if (typeof v !== 'undefined') {
+          if (typeof v !== 'undefined')
+          {
             data = v.data
-            v = v.tpl
+            v    = v.tpl
           }
           actualParams[name] = v
         }
       }
-      actualParams.__get = function (name, defVal, id) {
-        if (name in actualParams && typeof actualParams[name] !== 'undefined') {
+      actualParams.__get = function (name, defVal, id)
+      {
+        if (name in actualParams && typeof actualParams[name] !== 'undefined')
+        {
           return actualParams[name]
         }
-        if (typeof id !== 'undefined' && typeof actualParams[id] !== 'undefined') {
+        if (typeof id !== 'undefined' && typeof actualParams[id] !== 'undefined')
+        {
           return actualParams[id]
         }
-        if (defVal === null) {
+        if (defVal === null)
+        {
           throw new Error('The required attribute "' + name + '" is missing')
         }
         return defVal
@@ -1826,57 +2217,72 @@
       return this.runFilters(actualParams, data, params)
     },
 
-    getVarValue: function (node, data, value) {
-      var v = data
+    getVarValue: function (node, data, value)
+    {
+      var v    = data
       var name = ''
       var i
       var part
 
-      for (i = 0; i < node.parts.length; ++i) {
+      for (i = 0; i < node.parts.length; ++i)
+      {
         part = node.parts[i]
-        if (part.type === 'plugin' && part.name === '__func' && part.hasOwner) {
+        if (part.type === 'plugin' && part.name === '__func' && part.hasOwner)
+        {
           data.__owner = v
-          v = this.process([node.parts[i]], data)
-          if (typeof v.tpl !== 'undefined') {
+          v            = this.process([node.parts[i]], data)
+          if (typeof v.tpl !== 'undefined')
+          {
             data = v.data
-            v = v.tpl
+            v    = v.tpl
           }
           delete data.__owner
-        } else {
+        }
+        else
+        {
           name = this.process([part], data)
-          if (typeof name !== 'undefined') {
+          if (typeof name !== 'undefined')
+          {
             data = name.data
             name = name.tpl
           }
 
           // Section Name.
           var processOutput = this.process([node.parts[0]], data)
-          if (typeof processOutput !== 'undefined') {
-            data = processOutput.data
+          if (typeof processOutput !== 'undefined')
+          {
+            data          = processOutput.data
             processOutput = processOutput.tpl
           }
-          if (name in data.smarty.section && part.type === 'text' && (processOutput !== 'smarty')) {
-            name = data.smarty.section[name].index
+          if (name in data.latte.section && part.type === 'text' && (processOutput !== 'latte'))
+          {
+            name = data.latte.section[name].index
           }
 
           // Add to array
-          if (!name && typeof value !== 'undefined' && v instanceof Array) {
+          if (!name && typeof value !== 'undefined' && v instanceof Array)
+          {
             name = v.length
           }
 
           // Set new value.
-          if (typeof value !== 'undefined' && i === (node.parts.length - 1)) {
+          if (typeof value !== 'undefined' && i === (node.parts.length - 1))
+          {
             v[name] = value
           }
 
-          if (typeof v === 'object' && v !== null && name in v) {
+          if (typeof v === 'object' && v !== null && name in v)
+          {
             v = v[name]
-          } else {
-            if (typeof value === 'undefined') {
+          }
+          else
+          {
+            if (typeof value === 'undefined')
+            {
               return value
             }
             v[name] = {}
-            v = v[name]
+            v       = v[name]
           }
         }
       }
@@ -1885,25 +2291,32 @@
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters, val) {
+    applyFilters: function (filters, val)
+    {
       var args = []
 
-      for (var j = 1; j < arguments.length; j++) {
+      for (var j = 1; j < arguments.length; j++)
+      {
         args[j - 1] = arguments[j]
       }
 
-      for (var i = 0; i < filters.length; ++i) {
+      for (var i = 0; i < filters.length; ++i)
+      {
         args[0] = filters[i].apply(this, args)
       }
 
       return args[0]
     },
 
-    assignVar: function (name, value, data) {
-      if (name.match(/\[\]$/)) {
+    assignVar: function (name, value, data)
+    {
+      if (name.match(/\[\]$/))
+      {
         // ar[] =
         data[name.replace(/\[\]$/, '')].push(value)
-      } else {
+      }
+      else
+      {
         data[name] = value
       }
       return data
@@ -1911,40 +2324,51 @@
 
     buildInFunctions: {
       expression: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var params = this.getActualParamValues(node.params, data)
-          var res = this.process([node.expression], data)
+          var res    = this.process([node.expression], data)
 
-          if (typeof res !== 'undefined') {
+          if (typeof res !== 'undefined')
+          {
             data = res.data
-            res = res.tpl
+            res  = res.tpl
           }
-          if (findInArray(params, 'nofilter') < 0) {
-            for (var i = 0; i < this.defaultModifiers.length; ++i) {
-              var m = this.defaultModifiers[i]
+          if (findInArray(params, 'nofilter') < 0)
+          {
+            for (var i = 0; i < this.defaultModifiers.length; ++i)
+            {
+              var m                = this.defaultModifiers[i]
               m.params.__parsed[0] = {type: 'text', data: res}
-              res = this.process([m], data)
-              if (typeof res !== 'undefined') {
+              res                  = this.process([m], data)
+              if (typeof res !== 'undefined')
+              {
                 data = res.data
-                res = res.tpl
+                res  = res.tpl
               }
             }
-            if (this.escapeHtml) {
+            if (this.escapeHtml)
+            {
               res = this.modifiers.escape(res)
             }
             res = this.applyFilters(this.variableFilters, res)
-            if (this.tplModifiers.length) {
+            if (this.tplModifiers.length)
+            {
               // Write in global scope __t() function is called, it works.
-              if (typeof window === 'object' && window.document) {
+              if (typeof window === 'object' && window.document)
+              {
                 window.__t = function () { return res }
-              } else {
+              }
+              else
+              {
                 // Node.js like environment?!
                 global['__t'] = function () { return res }
               }
               res = this.process(this.tplModifiers[this.tplModifiers.length - 1], data)
-              if (typeof res !== 'undefined') {
+              if (typeof res !== 'undefined')
+              {
                 data = res.data
-                res = res.tpl
+                res  = res.tpl
               }
             }
           }
@@ -1953,17 +2377,22 @@
       },
 
       append: {
-        process: function (node, data) {
-          var params = this.getActualParamValues(node.params, data)
+        process: function (node, data)
+        {
+          var params  = this.getActualParamValues(node.params, data)
           var varName = params.__get('var', null, 0)
-          if (!(varName in data) || !(data[varName] instanceof Array)) {
+          if (!(varName in data) || !(data[varName] instanceof Array))
+          {
             data[varName] = []
           }
           var index = params.__get('index', false)
-          var val = params.__get('value', null, 1)
-          if (index === false) {
+          var val   = params.__get('value', null, 1)
+          if (index === false)
+          {
             data[varName].push(val)
-          } else {
+          }
+          else
+          {
             data[varName][index] = val
           }
           return {tpl: '', data: data}
@@ -1971,42 +2400,52 @@
       },
 
       assign: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var params = this.getActualParamValues(node.params, data)
           return {tpl: '', data: this.assignVar(params.__get('var', null, 0), params.__get('value', null, 1), data)}
         }
       },
 
       config_load: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           data = this.configLoad(node.content, node.section, data)
           return {
-            tpl: '',
+            tpl : '',
             data: data
           }
         }
       },
 
       capture: {
-        process: function (node, data) {
-          var params = this.getActualParamValues(node.params, data)
+        process: function (node, data)
+        {
+          var params  = this.getActualParamValues(node.params, data)
           var content = this.process(node.subTree, data)
-          if (typeof content !== 'undefined') {
-            data = content.data
+          if (typeof content !== 'undefined')
+          {
+            data    = content.data
             content = content.tpl
           }
-          content = content.replace(/^\n/, '')
-          data.smarty.capture[params.__get('name', 'default', 0)] = content
-          if ('assign' in params) {
+          content                                                 = content.replace(/^\n/, '')
+          data.latte.capture[params.__get('name', 'default', 0)] = content
+          if ('assign' in params)
+          {
             data = this.assignVar(params.assign, content, data)
           }
           var append = params.__get('append', false)
-          if (append) {
-            if (append in data) {
-              if (data[append] instanceof Array) {
+          if (append)
+          {
+            if (append in data)
+            {
+              if (data[append] instanceof Array)
+              {
                 data[append].push(content)
               }
-            } else {
+            }
+            else
+            {
               data[append] = [content]
             }
           }
@@ -2015,132 +2454,181 @@
       },
 
       operator: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var params = this.getActualParamValues(node.params, data)
-          var arg1 = params[0]
+          var arg1   = params[0]
           var arg2
           var isVar
 
-          if (node.optype === 'binary') {
+          if (node.optype === 'binary')
+          {
             arg2 = params[1]
-            if (node.op === '=') {
+            if (node.op === '=')
+            {
               // Var value is returned, but also set inside data.
               // we use the data and override ours.
               this.getVarValue(node.params.__parsed[0], data, arg2)
               return {tpl: '', data: data}
-            } else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/)) {
+            }
+            else if (node.op.match(/(\+=|-=|\*=|\/=|%=)/))
+            {
               arg1 = this.getVarValue(node.params.__parsed[0], data)
-              switch (node.op) {
-                case '+=': {
+              switch (node.op)
+              {
+                case '+=':
+                {
                   arg1 += arg2
                   break
                 }
-                case '-=': {
+                case '-=':
+                {
                   arg1 -= arg2
                   break
                 }
-                case '*=': {
+                case '*=':
+                {
                   arg1 *= arg2
                   break
                 }
-                case '/=': {
+                case '/=':
+                {
                   arg1 /= arg2
                   break
                 }
-                case '%=': {
+                case '%=':
+                {
                   arg1 %= arg2
                   break
                 }
               }
               return this.getVarValue(node.params.__parsed[0], data, arg1)
-            } else if (node.op.match(/div/)) {
+            }
+            else if (node.op.match(/div/))
+            {
               return (node.op !== 'div') ^ (arg1 % arg2 === 0)
-            } else if (node.op.match(/even/)) {
+            }
+            else if (node.op.match(/even/))
+            {
               return (node.op !== 'even') ^ ((arg1 / arg2) % 2 === 0)
-            } else if (node.op.match(/xor/)) {
+            }
+            else if (node.op.match(/xor/))
+            {
               return (arg1 || arg2) && !(arg1 && arg2)
             }
 
-            switch (node.op) {
-              case '==': {
+            switch (node.op)
+            {
+              case '==':
+              {
                 return arg1 == arg2 // eslint-disable-line eqeqeq
               }
-              case '!=': {
+              case '!=':
+              {
                 return arg1 != arg2 // eslint-disable-line eqeqeq
               }
-              case '+': {
+              case '+':
+              {
                 return Number(arg1) + Number(arg2)
               }
-              case '-': {
+              case '-':
+              {
                 return Number(arg1) - Number(arg2)
               }
-              case '*': {
+              case '*':
+              {
                 return Number(arg1) * Number(arg2)
               }
-              case '/': {
+              case '/':
+              {
                 return Number(arg1) / Number(arg2)
               }
-              case '%': {
+              case '%':
+              {
                 return Number(arg1) % Number(arg2)
               }
-              case '&&': {
+              case '&&':
+              {
                 return arg1 && arg2
               }
-              case '||': {
+              case '||':
+              {
                 return arg1 || arg2
               }
-              case '<': {
+              case '<':
+              {
                 return arg1 < arg2
               }
-              case '<=': {
+              case '<=':
+              {
                 return arg1 <= arg2
               }
-              case '>': {
+              case '>':
+              {
                 return arg1 > arg2
               }
-              case '===': {
+              case '===':
+              {
                 return arg1 === arg2
               }
-              case '>=': {
+              case '>=':
+              {
                 return arg1 >= arg2
               }
-              case '!==': {
+              case '!==':
+              {
                 return arg1 !== arg2
               }
             }
-          } else if (node.op === '!') {
+          }
+          else if (node.op === '!')
+          {
             return !arg1
-          } else {
+          }
+          else
+          {
             isVar = node.params.__parsed[0].type === 'var'
-            if (isVar) {
+            if (isVar)
+            {
               arg1 = this.getVarValue(node.params.__parsed[0], data)
             }
             var v = arg1
-            if (node.optype === 'pre-unary') {
-              switch (node.op) {
-                case '-': {
+            if (node.optype === 'pre-unary')
+            {
+              switch (node.op)
+              {
+                case '-':
+                {
                   v = -arg1
                   break
                 }
-                case '++': {
+                case '++':
+                {
                   v = ++arg1
                   break
                 }
-                case '--': {
+                case '--':
+                {
                   v = --arg1
                   break
                 }
               }
-              if (isVar) {
+              if (isVar)
+              {
                 this.getVarValue(node.params.__parsed[0], data, arg1)
               }
-            } else {
-              switch (node.op) {
-                case '++': {
+            }
+            else
+            {
+              switch (node.op)
+              {
+                case '++':
+                {
                   arg1++
                   break
                 }
-                case '--': {
+                case '--':
+                {
                   arg1--
                   break
                 }
@@ -2153,69 +2641,80 @@
       },
 
       section: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var params = this.getActualParamValues(node.params, data)
-          var props = {}
-          var show = params.__get('show', true)
+          var props  = {}
+          var show   = params.__get('show', true)
 
-          data.smarty.section[params.__get('name', null, 0)] = props
-          props.show = show
+          data.latte.section[params.__get('name', null, 0)] = props
+          props.show                                         = show
 
-          if (!show) {
+          if (!show)
+          {
             return this.process(node.subTreeElse, data)
           }
 
           var from = parseInt(params.__get('start', 0), 10)
-          var to = (params.loop instanceof Object) ? countProperties(params.loop) : isNaN(params.loop) ? 0 : parseInt(params.loop)
+          var to   = (params.loop instanceof Object) ? countProperties(params.loop) : isNaN(params.loop) ? 0 : parseInt(params.loop)
           var step = parseInt(params.__get('step', 1), 10)
-          var max = parseInt(params.__get('max'), 10)
-          if (isNaN(max)) {
+          var max  = parseInt(params.__get('max'), 10)
+          if (isNaN(max))
+          {
             max = Number.MAX_VALUE
           }
 
-          if (from < 0) {
+          if (from < 0)
+          {
             from += to
-            if (from < 0) {
+            if (from < 0)
+            {
               from = 0
             }
-          } else if (from >= to) {
+          }
+          else if (from >= to)
+          {
             from = to ? to - 1 : 0
           }
 
           var count = 0
-          var i = from
+          var i     = from
 
           count = 0
           var s = ''
-          for (i = from; i >= 0 && i < to && count < max; i += step, ++count) {
-            if (data.smarty.break) {
+          for (i = from; i >= 0 && i < to && count < max; i += step, ++count)
+          {
+            if (data.latte.break)
+            {
               break
             }
 
-            props.first = (i === from)
-            props.last = ((i + step) < 0 || (i + step) >= to)
-            props.index = i
+            props.first      = (i === from)
+            props.last       = ((i + step) < 0 || (i + step) >= to)
+            props.index      = i
             props.index_prev = i - step
             props.index_next = i + step
-            props.iteration = props.rownum = count + 1
-            props.total = count
+            props.iteration  = props.rownum = count + 1
+            props.total      = count
             // ? - because it is so in Latte
-            props.loop = count
+            props.loop       = count
 
             var tmp = this.process(node.subTree, data)
-            if (typeof tmp !== 'undefined') {
+            if (typeof tmp !== 'undefined')
+            {
               data = tmp.data
               s += tmp.tpl
             }
-            data.smarty.continue = false
+            data.latte.continue = false
           }
           props.total = count
           // ? - because it is so in Latte
-          props.loop = count
+          props.loop  = count
 
-          data.smarty.break = false
+          data.latte.break = false
 
-          if (count) {
+          if (count)
+          {
             return {tpl: s, data: data}
           }
           return this.process(node.subTreeElse, data)
@@ -2223,12 +2722,14 @@
       },
 
       setfilter: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           this.tplModifiers.push(node.params)
           var s = this.process(node.subTree, data)
-          if (typeof s !== 'undefined') {
+          if (typeof s !== 'undefined')
+          {
             data = s.data
-            s = s.tpl
+            s    = s.tpl
           }
           this.tplModifiers.pop()
           return {tpl: s, data: data}
@@ -2236,42 +2737,50 @@
       },
 
       'for': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var params = this.getActualParamValues(node.params, data)
-          var from = parseInt(params.__get('from'), 10)
-          var to = parseInt(params.__get('to'), 10)
-          var step = parseInt(params.__get('step'), 10)
-          if (isNaN(step)) {
+          var from   = parseInt(params.__get('from'), 10)
+          var to     = parseInt(params.__get('to'), 10)
+          var step   = parseInt(params.__get('step'), 10)
+          if (isNaN(step))
+          {
             step = 1
           }
           var max = parseInt(params.__get('max'), 10)
-          if (isNaN(max)) {
+          if (isNaN(max))
+          {
             max = Number.MAX_VALUE
           }
 
           var count = 0
-          var s = ''
+          var s     = ''
           var total = Math.min(Math.ceil(((step > 0 ? to - from : from - to) + 1) / Math.abs(step)), max)
 
-          for (var i = parseInt(params.from, 10); count < total; i += step, ++count) {
-            if (data.smarty.break) {
+          for (var i = parseInt(params.from, 10); count < total; i += step, ++count)
+          {
+            if (data.latte.break)
+            {
               break
             }
             data[params.varName] = i
-            var tmp = this.process(node.subTree, data)
-            if (typeof tmp !== 'undefined') {
+            var tmp              = this.process(node.subTree, data)
+            if (typeof tmp !== 'undefined')
+            {
               data = tmp.data
               s += tmp.tpl
             }
-            data.smarty.continue = false
+            data.latte.continue = false
           }
-          data.smarty.break = false
+          data.latte.break = false
 
-          if (!count) {
+          if (!count)
+          {
             var tmp2 = this.process(node.subTreeElse, data)
-            if (typeof tmp2 !== 'undefined') {
+            if (typeof tmp2 !== 'undefined')
+            {
               data = tmp2.data
-              s = tmp2.tpl
+              s    = tmp2.tpl
             }
           }
           return {tpl: s, data: data}
@@ -2279,142 +2788,177 @@
       },
 
       'if': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var value = this.getActualParamValues(node.params, data)[0]
           // Zero length arrays or empty associative arrays are false in PHP.
           if (value && !((value instanceof Array && value.length === 0) ||
             (typeof value === 'object' && isEmptyObject(value)))
-          ) {
+          )
+          {
             return this.process(node.subTreeIf, data)
-          } else {
+          }
+          else
+          {
             return this.process(node.subTreeElse, data)
           }
         }
       },
 
       'ifempty': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var value = this.getActualParamValues(node.params, data)[0]
-          if (this.isEmptyLoose(value)) {
+          if (this.isEmptyLoose(value))
+          {
             return this.process(node.subTreeIf, data)
-          } else {
+          }
+          else
+          {
             return this.process(node.subTreeElse, data)
           }
         }
       },
 
       'ifnotempty': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var value = this.getActualParamValues(node.params, data)[0]
-          if (this.isNotEmptyLoose(value)) {
+          if (this.isNotEmptyLoose(value))
+          {
             return this.process(node.subTreeIf, data)
-          } else {
+          }
+          else
+          {
             return this.process(node.subTreeElse, data)
           }
         }
       },
 
       'ifset': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var value = this.getActualParamValues(node.params, data)[0]
-          if (this.isSetTag(value)) {
+          if (this.isSetTag(value))
+          {
             return this.process(node.subTreeIf, data)
-          } else {
+          }
+          else
+          {
             return this.process(node.subTreeElse, data)
           }
         }
       },
 
       'ifnotset': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var value = this.getActualParamValues(node.params, data)[0]
-          if (this.isNotSetTag(value)) {
+          if (this.isNotSetTag(value))
+          {
             return this.process(node.subTreeIf, data)
-          } else {
+          }
+          else
+          {
             return this.process(node.subTreeElse, data)
           }
         }
       },
 
       nocache: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           return this.process(node.subTree, data)
         }
       },
 
       'foreach': {
-        process: function (node, data) {
-          var params = this.getActualParamValues(node.params, data)
-          var a = params.from
+        process: function (node, data)
+        {
+          var params                    = this.getActualParamValues(node.params, data)
+          var a                         = params.from
           data[params.item + '__empty'] = data['iterator__empty'] = this.isEmptyLoose(a)
-          data[params.item + '__show'] = data['iterator__show'] = this.isNotEmptyLoose(a)
-          if (typeof a === 'undefined' || a === '') {
+          data[params.item + '__show']  = data['iterator__show'] = this.isNotEmptyLoose(a)
+          if (typeof a === 'undefined' || a === '')
+          {
             a = []
           }
-          if (typeof a !== 'object') {
+          if (typeof a !== 'object')
+          {
             a = [a]
           }
 
           var total = countProperties(a)
 
           data[params.item + '__total'] = data['iterator__total'] = total
-          if ('name' in params) {
-            data.smarty.foreach[params.name] = {}
-            data.smarty.foreach[params.name].total = total
+          if ('name' in params)
+          {
+            data.latte.foreach[params.name]       = {}
+            data.latte.foreach[params.name].total = total
           }
 
           var s = ''
           var i = 0
-          for (var key in a) {
-            if (!a.hasOwnProperty(key)) {
+          for (var key in a)
+          {
+            if (!a.hasOwnProperty(key))
+            {
               continue
             }
 
-            if (data.smarty.break) {
+            if (data.latte.break)
+            {
               break
             }
 
             data[params.item + '__key'] = isNaN(key) ? key : parseInt(key, 10)
-            if ('key' in params) {
+            if ('key' in params)
+            {
               data[params.key] = data[params.item + '__key']
             }
-            data[params.item] = a[key]
-            data[params.item + '__index'] = parseInt(i, 10)
+            data[params.item]                 = a[key]
+            data[params.item + '__index']     = parseInt(i, 10)
             data[params.item + '__iteration'] = parseInt(i + 1, 10)
-            data[params.item + '__counter'] = data[params.item + '__iteration']
-            data[params.item + '__odd'] = parseInt(i + 1, 10) % 2 === 1
-            data[params.item + '__even'] = parseInt(i + 1, 10) % 2 === 0
-            data[params.item + '__first'] = (i === 0)
-            data[params.item + '__last'] = (i === total - 1)
+            data[params.item + '__counter']   = data[params.item + '__iteration']
+            data[params.item + '__odd']       = parseInt(i + 1, 10) % 2 === 1
+            data[params.item + '__even']      = parseInt(i + 1, 10) % 2 === 0
+            data[params.item + '__first']     = (i === 0)
+            data[params.item + '__last']      = (i === total - 1)
 
-            if ('name' in params) {
-              data.smarty.foreach[params.name].index = parseInt(i, 10)
-              data.smarty.foreach[params.name].iteration = parseInt(i + 1, 10)
-              data.smarty.foreach[params.name].first = (i === 0) ? 1 : ''
-              data.smarty.foreach[params.name].last = (i === total - 1) ? 1 : ''
+            if ('name' in params)
+            {
+              data.latte.foreach[params.name].index     = parseInt(i, 10)
+              data.latte.foreach[params.name].iteration = parseInt(i + 1, 10)
+              data.latte.foreach[params.name].first     = (i === 0) ? 1 : ''
+              data.latte.foreach[params.name].last      = (i === total - 1) ? 1 : ''
             }
 
             ++i
 
-            for (var datakey in data) {
-              if (data.hasOwnProperty(datakey) && this.startsWith(datakey, params.item + '__')) {
+            for (var datakey in data)
+            {
+              if (data.hasOwnProperty(datakey) && this.startsWith(datakey, params.item + '__'))
+              {
                 data[datakey.replace(params.item, 'iterator')] = data[datakey]
               }
             }
 
             var tmp2 = this.process(node.subTree, data)
-            if (typeof tmp2 !== 'undefined') {
+            if (typeof tmp2 !== 'undefined')
+            {
               data = tmp2.data
               s += tmp2.tpl
             }
-            data.smarty.continue = false
+            data.latte.continue = false
           }
-          data.smarty.break = false
+          data.latte.break = false
 
-          if (params.name) {
-            data.smarty.foreach[params.name].show = (i > 0) ? 1 : ''
+          if (params.name)
+          {
+            data.latte.foreach[params.name].show = (i > 0) ? 1 : ''
           }
-          if (i > 0) {
+          if (i > 0)
+          {
             return s
           }
           return this.process(node.subTreeElse, data)
@@ -2422,75 +2966,96 @@
       },
 
       'break': {
-        process: function (node, data) {
-          data.smarty.break = true
+        process: function (node, data)
+        {
+          data.latte.break = true
           return {
-            tpl: '',
+            tpl : '',
             data: data
           }
         }
       },
 
       'continue': {
-        process: function (node, data) {
-          data.smarty.continue = true
+        process: function (node, data)
+        {
+          data.latte.continue = true
           return {
-            tpl: '',
+            tpl : '',
             data: data
           }
         }
       },
 
       block: {
-        process: function (node, data) {
-          var blockName = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
+        process: function (node, data)
+        {
+          var blockName  = trimAllQuotes(node.params.name ? node.params.name : node.params[0])
           var innerBlock = this.blocks[blockName]
           var innerBlockContent
           var outerBlock = this.outerBlocks[blockName]
           var outerBlockContent
           var output
 
-          if (node.location === 'inner') {
-            if (innerBlock.params.needChild) {
+          if (node.location === 'inner')
+          {
+            if (innerBlock.params.needChild)
+            {
               outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
+              if (typeof outerBlockContent.tpl !== 'undefined')
+              {
                 outerBlockContent = outerBlockContent.tpl
               }
-              data.smarty.block.child = outerBlockContent
-              innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
+              data.latte.block.child = outerBlockContent
+              innerBlockContent       = this.process(innerBlock.tree, data)
+              if (typeof innerBlockContent.tpl !== 'undefined')
+              {
                 innerBlockContent = innerBlockContent.tpl
               }
               output = innerBlockContent
-            } else if (outerBlock.params.needParent) {
+            }
+            else if (outerBlock.params.needParent)
+            {
               innerBlockContent = this.process(innerBlock.tree, data)
-              if (typeof innerBlockContent.tpl !== 'undefined') {
+              if (typeof innerBlockContent.tpl !== 'undefined')
+              {
                 innerBlockContent = innerBlockContent.tpl
               }
-              data.smarty.block.parent = innerBlockContent
-              outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
+              data.latte.block.parent = innerBlockContent
+              outerBlockContent        = this.process(outerBlock.tree, data)
+              if (typeof outerBlockContent.tpl !== 'undefined')
+              {
                 outerBlockContent = outerBlockContent.tpl
               }
               output = outerBlockContent
-            } else {
+            }
+            else
+            {
               outerBlockContent = this.process(outerBlock.tree, data)
-              if (typeof outerBlockContent.tpl !== 'undefined') {
+              if (typeof outerBlockContent.tpl !== 'undefined')
+              {
                 outerBlockContent = outerBlockContent.tpl
               }
-              if (outerBlock.params.append) {
+              if (outerBlock.params.append)
+              {
                 innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
+                if (typeof innerBlockContent.tpl !== 'undefined')
+                {
                   innerBlockContent = innerBlockContent.tpl
                 }
                 output = outerBlockContent + innerBlockContent
-              } else if (outerBlock.params.prepend) {
+              }
+              else if (outerBlock.params.prepend)
+              {
                 innerBlockContent = this.process(innerBlock.tree, data)
-                if (typeof innerBlockContent.tpl !== 'undefined') {
+                if (typeof innerBlockContent.tpl !== 'undefined')
+                {
                   innerBlockContent = innerBlockContent.tpl
                 }
                 output = innerBlockContent + outerBlockContent
-              } else {
+              }
+              else
+              {
                 output = outerBlockContent
               }
             }
@@ -2503,44 +3068,54 @@
       },
 
       'call': {
-        process: function (node, data) {
-          var params = this.getActualParamValues(node.params, data)
-          var name = params.__get('name') ? params.__get('name') : params.__get('0')
-          var newNode = {name: name, params: node.params}
-          var s = this.buildInFunctions['function'].process.call(this, newNode, data)
+        process: function (node, data)
+        {
+          var params   = this.getActualParamValues(node.params, data)
+          var name     = params.__get('name') ? params.__get('name') : params.__get('0')
+          var newNode  = {name: name, params: node.params}
+          var s        = this.buildInFunctions['function'].process.call(this, newNode, data)
           var assignTo = params.__get('assign', false)
-          if (assignTo) {
+          if (assignTo)
+          {
             return {tpl: '', data: this.assignVar(assignTo, s, data)}
-          } else {
+          }
+          else
+          {
             return s
           }
         }
       },
 
       include: {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var params = this.getActualParamValues(node.params, data)
-          var file = params.__get('file', null, 0)
+          var file   = params.__get('file', null, 0)
           this.includedTemplates.push(file)
-          var incData = objectMerge({}, data, params)
-          incData.smarty.template = file
-          var content = this.process(node.subTree, incData)
-          if (typeof content !== 'undefined') {
+          var incData             = objectMerge({}, data, params)
+          incData.latte.template = file
+          var content             = this.process(node.subTree, incData)
+          if (typeof content !== 'undefined')
+          {
             // We do not copy data from child template, to the parent. Child
             // template can use parent data blocks, but does send it back to
             // parent. data = content.data;
             content = content.tpl
           }
-          if (params.assign) {
+          if (params.assign)
+          {
             return {tpl: '', data: this.assignVar(params.assign, content, data)}
-          } else {
+          }
+          else
+          {
             return content
           }
         }
       },
 
       'function': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var funcData = this.runTimePlugins[node.name]
           var defaults = this.getActualParamValues(funcData.defaultParams, data)
           delete defaults.name
@@ -2556,20 +3131,24 @@
       },
 
       'while': {
-        process: function (node, data) {
+        process: function (node, data)
+        {
           var s = ''
-          while (this.getActualParamValues(node.params, data)[0]) {
-            if (data.smarty.break) {
+          while (this.getActualParamValues(node.params, data)[0])
+          {
+            if (data.latte.break)
+            {
               break
             }
             var tmp2 = this.process(node.subTree, data)
-            if (typeof tmp2 !== 'undefined') {
+            if (typeof tmp2 !== 'undefined')
+            {
               data = tmp2.data
               s += tmp2.tpl
             }
-            data.smarty.continue = false
+            data.latte.continue = false
           }
-          data.smarty.break = false
+          data.latte.break = false
           return {tpl: s, data: data}
         }
       }
@@ -2579,25 +3158,26 @@ var version = '4.4.0'
 
   /*
    Define LatteJS constructor. Latte object just stores,
-   tree, $smarty block and some intialization methods.
+   tree, $latte block and some intialization methods.
    We keep Latte object light weight as one page or program
    might contain to many Latte objects.
    Keep parser and processor outside of Latte objects, help
    us not to store, same parser and processor methods in all
    Latte object.
   */
-  var Latte = function (template, options) {
+  var Latte = function (template, options)
+  {
     // Latte object which has version, delimiters, config, current directory
     // and all blocks like Nette's Latte.
-    this.smarty = {
+    this.latte = {
 
-      // Blocks in the current smarty object.
+      // Blocks in the current latte object.
       block: {},
 
       // Used to store state of break;
       'break': false,
 
-      // All the capture blocks in the current smarty object.
+      // All the capture blocks in the current latte object.
       capture: {},
 
       // Used to store state of continue
@@ -2609,16 +3189,16 @@ var version = '4.4.0'
       // Use by {cycle} custom function to store array and cycle info.
       cycle: {},
 
-      // All the foreach blocks in the current smarty object.
+      // All the foreach blocks in the current latte object.
       'foreach': {},
 
-      // All the section blocks in the current smarty object.
+      // All the section blocks in the current latte object.
       section: {},
 
       // Current timestamp, when the object is created.
       now: Math.floor(((new Date()).getTime() / 1000)),
 
-      // All the constants defined the current smarty object.
+      // All the constants defined the current latte object.
       'const': {},
 
       // Current configuration.
@@ -2684,23 +3264,23 @@ var version = '4.4.0'
     // Filters which are applied after processing whole template are in 'post'.
     filters: {
       'variable': [],
-      'params': [],
-      'post': []
+      'params'  : [],
+      'post'    : []
     },
 
     // Global filters. pre, post and variable. All of them.
     filtersGlobal: {
-      'pre': [],
+      'pre'     : [],
       'variable': [],
-      'params': [],
-      'post': []
+      'params'  : [],
+      'post'    : []
     },
 
     // Cached value for all default and global variable filters.
     // Only for variable.
     globalAndDefaultFilters: [],
 
-    // Build in functions of the smarty.
+    // Build in functions of the latte.
     buildInFunctions: {},
 
     // Plugins of the functions.
@@ -2711,51 +3291,72 @@ var version = '4.4.0'
     runTimePlugins: {},
 
     // Initialize, Latte, set settings and parse the template.
-    parse: function (template, options) {
+    parse: function (template, options)
+    {
       var parsedTemplate
-      if (!options) {
+      if (!options)
+      {
         options = {}
       }
-      if (options.rdelim) {
+      if (options.rdelim)
+      {
         // If delimiters are passed locally take them.
-        this.smarty.rdelim = options.rdelim
-      } else if (Latte.prototype.right_delimiter) {
-        // Backward compatible. Old way to set via prototype.
-        this.smarty.rdelim = Latte.prototype.right_delimiter
-      } else {
-        // Otherwise default delimiters
-        this.smarty.rdelim = '}'
+        this.latte.rdelim = options.rdelim
       }
-      if (options.ldelim) {
+      else if (Latte.prototype.right_delimiter)
+      {
+        // Backward compatible. Old way to set via prototype.
+        this.latte.rdelim = Latte.prototype.right_delimiter
+      }
+      else
+      {
+        // Otherwise default delimiters
+        this.latte.rdelim = '}'
+      }
+      if (options.ldelim)
+      {
         // If delimiters are passed locally take them.
-        this.smarty.ldelim = options.ldelim
-      } else if (Latte.prototype.left_delimiter) {
-        // Backward compatible. Old way to set via prototype.
-        this.smarty.ldelim = Latte.prototype.left_delimiter
-      } else {
-        // Otherwise default delimiters
-        this.smarty.ldelim = '{'
+        this.latte.ldelim = options.ldelim
       }
-      if (options.autoLiteral !== undefined) {
+      else if (Latte.prototype.left_delimiter)
+      {
+        // Backward compatible. Old way to set via prototype.
+        this.latte.ldelim = Latte.prototype.left_delimiter
+      }
+      else
+      {
+        // Otherwise default delimiters
+        this.latte.ldelim = '{'
+      }
+      if (options.autoLiteral !== undefined)
+      {
         // If autoLiteral is passed locally, take it.
         this.autoLiteral = options.autoLiteral
-      } else if (Latte.prototype.auto_literal !== undefined) {
+      }
+      else if (Latte.prototype.auto_literal !== undefined)
+      {
         // Backward compatible. Old way to set via prototype.
         this.autoLiteral = Latte.prototype.auto_literal
       }
 
-      if (options.debugging !== undefined) {
+      if (options.debugging !== undefined)
+      {
         // If debugging is passed locally, take it.
         this.debugging = options.debugging
-      } else if (Latte.prototype.debugging !== undefined) {
+      }
+      else if (Latte.prototype.debugging !== undefined)
+      {
         // Backward compatible. Old way to set via prototype.
         this.debugging = Latte.prototype.debugging
       }
 
-      if (options.escapeHtml !== undefined) {
+      if (options.escapeHtml !== undefined)
+      {
         // If escapeHtml is passed locally, take it.
         this.escapeHtml = options.escapeHtml
-      } else if (Latte.prototype.escape_html !== undefined) {
+      }
+      else if (Latte.prototype.escape_html !== undefined)
+      {
         // Backward compatible. Old way to set via prototype.
         this.escapeHtml = Latte.prototype.escape_html
       }
@@ -2766,32 +3367,34 @@ var version = '4.4.0'
       // Generate the tree. We pass delimiters and many config values
       // which are needed by parser to parse like delimiters.
       LatteParser.clear()
-      LatteParser.rdelim = this.smarty.rdelim
-      LatteParser.ldelim = this.smarty.ldelim
+      LatteParser.rdelim      = this.latte.rdelim
+      LatteParser.ldelim      = this.latte.ldelim
       LatteParser.getTemplate = this.getTemplate
-      LatteParser.getConfig = this.getConfig
+      LatteParser.getConfig   = this.getConfig
       LatteParser.autoLiteral = this.autoLiteral
-      LatteParser.plugins = this.plugins
-      LatteParser.preFilters = this.filtersGlobal.pre
+      LatteParser.plugins     = this.plugins
+      LatteParser.preFilters  = this.filtersGlobal.pre
       // Above parser config are set, lets parse.
-      parsedTemplate = LatteParser.getParsed(template)
-      this.tree = parsedTemplate.tree
-      this.runTimePlugins = parsedTemplate.runTimePlugins
-      this.blocks = parsedTemplate.blocks
-      this.outerBlocks = parsedTemplate.outerBlocks
+      parsedTemplate          = LatteParser.getParsed(template)
+      this.tree               = parsedTemplate.tree
+      this.runTimePlugins     = parsedTemplate.runTimePlugins
+      this.blocks             = parsedTemplate.blocks
+      this.outerBlocks        = parsedTemplate.outerBlocks
     },
 
     // Process the generated tree.
-    fetch: function (data) {
+    fetch: function (data)
+    {
       var outputData = ''
-      if (!(typeof data === 'object')) {
+      if (!(typeof data === 'object'))
+      {
         data = {}
       }
 
-      // Define smarty inside data and copy smarty vars, so one can use $smarty
+      // Define latte inside data and copy latte vars, so one can use $latte
       // vars inside templates.
-      data.smarty = {}
-      objectMerge(data.smarty, this.smarty)
+      data.latte = {}
+      objectMerge(data.latte, this.latte)
 
       // Take default global modifiers, add with local default modifiers.
       // Merge them and keep them cached.
@@ -2802,34 +3405,37 @@ var version = '4.4.0'
       this.globalAndDefaultFilters = Latte.prototype.filtersGlobal.variable.concat(this.filters.variable)
 
       LatteProcessor.clear()
-      LatteProcessor.plugins = this.plugins
-      LatteProcessor.modifiers = this.modifiers
+      LatteProcessor.plugins          = this.plugins
+      LatteProcessor.modifiers        = this.modifiers
       LatteProcessor.defaultModifiers = this.defaultModifiers
-      LatteProcessor.escapeHtml = this.escapeHtml
-      LatteProcessor.variableFilters = this.globalAndDefaultFilters
-      LatteProcessor.runTimePlugins = this.runTimePlugins
-      LatteProcessor.blocks = this.blocks
-      LatteProcessor.outerBlocks = this.outerBlocks
-      LatteProcessor.debugging = this.debugging
+      LatteProcessor.escapeHtml       = this.escapeHtml
+      LatteProcessor.variableFilters  = this.globalAndDefaultFilters
+      LatteProcessor.runTimePlugins   = this.runTimePlugins
+      LatteProcessor.blocks           = this.blocks
+      LatteProcessor.outerBlocks      = this.outerBlocks
+      LatteProcessor.debugging        = this.debugging
 
       // Capture the output by processing the template.
-      outputData = LatteProcessor.getProcessed(this.tree, data, this.smarty)
+      outputData = LatteProcessor.getProcessed(this.tree, data, this.latte)
 
-      // Merge back smarty data returned by process to original object.
-      objectMerge(this.smarty, outputData.smarty)
+      // Merge back latte data returned by process to original object.
+      objectMerge(this.latte, outputData.latte)
       // Apply post filters to output and return the template data.
       return this.applyFilters(Latte.prototype.filtersGlobal.post.concat(this.filters.post), outputData.output)
     },
 
     // Apply the filters to template.
-    applyFilters: function (filters, val) {
+    applyFilters: function (filters, val)
+    {
       var args = []
 
-      for (var j = 1; j < arguments.length; j++) {
+      for (var j = 1; j < arguments.length; j++)
+      {
         args[j - 1] = arguments[j]
       }
 
-      for (var i = 0; i < filters.length; ++i) {
+      for (var i = 0; i < filters.length; ++i)
+      {
         args[0] = filters[i].apply(this, args)
       }
 
@@ -2837,109 +3443,141 @@ var version = '4.4.0'
     },
 
     // Print the object.
-    printR: function (toPrint, indent, indentEnd) {
-      if (!indent) {
+    printR: function (toPrint, indent, indentEnd)
+    {
+      if (!indent)
+      {
         indent = '&nbsp;&nbsp;'
       }
-      if (!indentEnd) {
+      if (!indentEnd)
+      {
         indentEnd = ''
       }
       var s = ''
       var name
-      if (toPrint instanceof Object) {
+      if (toPrint instanceof Object)
+      {
         s = 'Object (\n'
-        for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
+        for (name in toPrint)
+        {
+          if (toPrint.hasOwnProperty(name))
+          {
             s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
           }
         }
         s += indentEnd + ')\n'
         return s
-      } else if (toPrint instanceof Array) {
+      }
+      else if (toPrint instanceof Array)
+      {
         s = 'Array (\n'
-        for (name in toPrint) {
-          if (toPrint.hasOwnProperty(name)) {
+        for (name in toPrint)
+        {
+          if (toPrint.hasOwnProperty(name))
+          {
             s += indent + indent + '[' + name + '] => ' + this.printR(toPrint[name], indent + '&nbsp;&nbsp;', indent + indent)
           }
         }
         s += indentEnd + ')\n'
         return s
-      } else if (toPrint instanceof Boolean) {
+      }
+      else if (toPrint instanceof Boolean)
+      {
         var bool = 'false'
-        if (bool === true) {
+        if (bool === true)
+        {
           bool = 'true'
         }
         return bool + '\n'
-      } else {
+      }
+      else
+      {
         return (toPrint + '\n')
       }
     },
 
     // Register a plugin.
-    registerPlugin: function (type, name, callback) {
-      if (type === 'modifier') {
+    registerPlugin: function (type, name, callback)
+    {
+      if (type === 'modifier')
+      {
         this.modifiers[name] = callback
-      } else {
+      }
+      else
+      {
         this.plugins[name] = {'type': type, 'process': callback}
       }
     },
 
     // Register a filter.
-    registerFilter: function (type, callback) {
+    registerFilter: function (type, callback)
+    {
       (this.tree && this.tree.length > 0 ? this.filters : Latte.prototype.filtersGlobal)[((type === 'output') ? 'post' : type)].push(callback)
     },
 
-    addDefaultModifier: function (modifiers) {
-      if (!(modifiers instanceof Array)) {
+    addDefaultModifier: function (modifiers)
+    {
+      if (!(modifiers instanceof Array))
+      {
         modifiers = [modifiers]
       }
 
-      for (var i = 0; i < modifiers.length; ++i) {
+      for (var i = 0; i < modifiers.length; ++i)
+      {
         var data = LatteParser.parseModifiers('|' + modifiers[i], [0])
-        if (this.tree) {
+        if (this.tree)
+        {
           this.defaultModifiers.push(data.tree[0])
-        } else {
+        }
+        else
+        {
           this.defaultModifiersGlobal.push(data.tree[0])
         }
       }
     },
 
-    getTemplate: function (name) {
+    getTemplate: function (name)
+    {
       throw new Error('No template for ' + name)
     },
 
-    getFile: function (name) {
+    getFile: function (name)
+    {
       throw new Error('No file for ' + name)
     },
 
-    getJavascript: function (name) {
+    getJavascript: function (name)
+    {
       throw new Error('No Javascript for ' + name)
     },
 
-    getConfig: function (name) {
+    getConfig: function (name)
+    {
       throw new Error('No config for ' + name)
     }
   }
 
-  LatteProcessor.runFilters = function (actualParams, data, params) {
+  LatteProcessor.runFilters = function (actualParams, data, params)
+  {
     var filters = Latte.prototype.filtersGlobal.params.concat(Latte.prototype.filters.params)
     return Latte.prototype.applyFilters(filters, actualParams, data, params)
   }
 
 
   // Copied from  http://locutus.io/php/get_html_translation_table/
-  function getHtmlTranslationTable (table, quoteStyle) {
-    var entities = {}
-    var hashMap = {}
+  function getHtmlTranslationTable(table, quoteStyle)
+  {
+    var entities               = {}
+    var hashMap                = {}
     var decimal
-    var constMappingTable = {}
+    var constMappingTable      = {}
     var constMappingQuoteStyle = {}
-    var useTable = {}
-    var useQuoteStyle = {}
+    var useTable               = {}
+    var useQuoteStyle          = {}
 
     // Translate arguments
-    constMappingTable[0] = 'HTML_SPECIALCHARS'
-    constMappingTable[1] = 'HTML_ENTITIES'
+    constMappingTable[0]      = 'HTML_SPECIALCHARS'
+    constMappingTable[1]      = 'HTML_ENTITIES'
     constMappingQuoteStyle[0] = 'ENT_NOQUOTES'
     constMappingQuoteStyle[2] = 'ENT_COMPAT'
     constMappingQuoteStyle[3] = 'ENT_QUOTES'
@@ -2956,123 +3594,129 @@ var version = '4.4.0'
         ? quoteStyle.toUpperCase()
         : 'ENT_COMPAT'
 
-    if (useTable !== 'HTML_SPECIALCHARS' && useTable !== 'HTML_ENTITIES') {
+    if (useTable !== 'HTML_SPECIALCHARS' && useTable !== 'HTML_ENTITIES')
+    {
       throw new Error('Table: ' + useTable + ' not supported')
     }
 
     entities['38'] = '&amp;'
-    if (useTable === 'HTML_ENTITIES') {
-      entities['160'] = '&nbsp;'
-      entities['161'] = '&iexcl;'
-      entities['162'] = '&cent;'
-      entities['163'] = '&pound;'
-      entities['164'] = '&curren;'
-      entities['165'] = '&yen;'
-      entities['166'] = '&brvbar;'
-      entities['167'] = '&sect;'
-      entities['168'] = '&uml;'
-      entities['169'] = '&copy;'
-      entities['170'] = '&ordf;'
-      entities['171'] = '&laquo;'
-      entities['172'] = '&not;'
-      entities['173'] = '&shy;'
-      entities['174'] = '&reg;'
-      entities['175'] = '&macr;'
-      entities['176'] = '&deg;'
-      entities['177'] = '&plusmn;'
-      entities['178'] = '&sup2;'
-      entities['179'] = '&sup3;'
-      entities['180'] = '&acute;'
-      entities['181'] = '&micro;'
-      entities['182'] = '&para;'
-      entities['183'] = '&middot;'
-      entities['184'] = '&cedil;'
-      entities['185'] = '&sup1;'
-      entities['186'] = '&ordm;'
-      entities['187'] = '&raquo;'
-      entities['188'] = '&frac14;'
-      entities['189'] = '&frac12;'
-      entities['190'] = '&frac34;'
-      entities['191'] = '&iquest;'
-      entities['192'] = '&Agrave;'
-      entities['193'] = '&Aacute;'
-      entities['194'] = '&Acirc;'
-      entities['195'] = '&Atilde;'
-      entities['196'] = '&Auml;'
-      entities['197'] = '&Aring;'
-      entities['198'] = '&AElig;'
-      entities['199'] = '&Ccedil;'
-      entities['200'] = '&Egrave;'
-      entities['201'] = '&Eacute;'
-      entities['202'] = '&Ecirc;'
-      entities['203'] = '&Euml;'
-      entities['204'] = '&Igrave;'
-      entities['205'] = '&Iacute;'
-      entities['206'] = '&Icirc;'
-      entities['207'] = '&Iuml;'
-      entities['208'] = '&ETH;'
-      entities['209'] = '&Ntilde;'
-      entities['210'] = '&Ograve;'
-      entities['211'] = '&Oacute;'
-      entities['212'] = '&Ocirc;'
-      entities['213'] = '&Otilde;'
-      entities['214'] = '&Ouml;'
-      entities['215'] = '&times;'
-      entities['216'] = '&Oslash;'
-      entities['217'] = '&Ugrave;'
-      entities['218'] = '&Uacute;'
-      entities['219'] = '&Ucirc;'
-      entities['220'] = '&Uuml;'
-      entities['221'] = '&Yacute;'
-      entities['222'] = '&THORN;'
-      entities['223'] = '&szlig;'
-      entities['224'] = '&agrave;'
-      entities['225'] = '&aacute;'
-      entities['226'] = '&acirc;'
-      entities['227'] = '&atilde;'
-      entities['228'] = '&auml;'
-      entities['229'] = '&aring;'
-      entities['230'] = '&aelig;'
-      entities['231'] = '&ccedil;'
-      entities['232'] = '&egrave;'
-      entities['233'] = '&eacute;'
-      entities['234'] = '&ecirc;'
-      entities['235'] = '&euml;'
-      entities['236'] = '&igrave;'
-      entities['237'] = '&iacute;'
-      entities['238'] = '&icirc;'
-      entities['239'] = '&iuml;'
-      entities['240'] = '&eth;'
-      entities['241'] = '&ntilde;'
-      entities['242'] = '&ograve;'
-      entities['243'] = '&oacute;'
-      entities['244'] = '&ocirc;'
-      entities['245'] = '&otilde;'
-      entities['246'] = '&ouml;'
-      entities['247'] = '&divide;'
-      entities['248'] = '&oslash;'
-      entities['249'] = '&ugrave;'
-      entities['250'] = '&uacute;'
-      entities['251'] = '&ucirc;'
-      entities['252'] = '&uuml;'
-      entities['253'] = '&yacute;'
-      entities['254'] = '&thorn;'
-      entities['255'] = '&yuml;'
+    if (useTable === 'HTML_ENTITIES')
+    {
+      entities['160']  = '&nbsp;'
+      entities['161']  = '&iexcl;'
+      entities['162']  = '&cent;'
+      entities['163']  = '&pound;'
+      entities['164']  = '&curren;'
+      entities['165']  = '&yen;'
+      entities['166']  = '&brvbar;'
+      entities['167']  = '&sect;'
+      entities['168']  = '&uml;'
+      entities['169']  = '&copy;'
+      entities['170']  = '&ordf;'
+      entities['171']  = '&laquo;'
+      entities['172']  = '&not;'
+      entities['173']  = '&shy;'
+      entities['174']  = '&reg;'
+      entities['175']  = '&macr;'
+      entities['176']  = '&deg;'
+      entities['177']  = '&plusmn;'
+      entities['178']  = '&sup2;'
+      entities['179']  = '&sup3;'
+      entities['180']  = '&acute;'
+      entities['181']  = '&micro;'
+      entities['182']  = '&para;'
+      entities['183']  = '&middot;'
+      entities['184']  = '&cedil;'
+      entities['185']  = '&sup1;'
+      entities['186']  = '&ordm;'
+      entities['187']  = '&raquo;'
+      entities['188']  = '&frac14;'
+      entities['189']  = '&frac12;'
+      entities['190']  = '&frac34;'
+      entities['191']  = '&iquest;'
+      entities['192']  = '&Agrave;'
+      entities['193']  = '&Aacute;'
+      entities['194']  = '&Acirc;'
+      entities['195']  = '&Atilde;'
+      entities['196']  = '&Auml;'
+      entities['197']  = '&Aring;'
+      entities['198']  = '&AElig;'
+      entities['199']  = '&Ccedil;'
+      entities['200']  = '&Egrave;'
+      entities['201']  = '&Eacute;'
+      entities['202']  = '&Ecirc;'
+      entities['203']  = '&Euml;'
+      entities['204']  = '&Igrave;'
+      entities['205']  = '&Iacute;'
+      entities['206']  = '&Icirc;'
+      entities['207']  = '&Iuml;'
+      entities['208']  = '&ETH;'
+      entities['209']  = '&Ntilde;'
+      entities['210']  = '&Ograve;'
+      entities['211']  = '&Oacute;'
+      entities['212']  = '&Ocirc;'
+      entities['213']  = '&Otilde;'
+      entities['214']  = '&Ouml;'
+      entities['215']  = '&times;'
+      entities['216']  = '&Oslash;'
+      entities['217']  = '&Ugrave;'
+      entities['218']  = '&Uacute;'
+      entities['219']  = '&Ucirc;'
+      entities['220']  = '&Uuml;'
+      entities['221']  = '&Yacute;'
+      entities['222']  = '&THORN;'
+      entities['223']  = '&szlig;'
+      entities['224']  = '&agrave;'
+      entities['225']  = '&aacute;'
+      entities['226']  = '&acirc;'
+      entities['227']  = '&atilde;'
+      entities['228']  = '&auml;'
+      entities['229']  = '&aring;'
+      entities['230']  = '&aelig;'
+      entities['231']  = '&ccedil;'
+      entities['232']  = '&egrave;'
+      entities['233']  = '&eacute;'
+      entities['234']  = '&ecirc;'
+      entities['235']  = '&euml;'
+      entities['236']  = '&igrave;'
+      entities['237']  = '&iacute;'
+      entities['238']  = '&icirc;'
+      entities['239']  = '&iuml;'
+      entities['240']  = '&eth;'
+      entities['241']  = '&ntilde;'
+      entities['242']  = '&ograve;'
+      entities['243']  = '&oacute;'
+      entities['244']  = '&ocirc;'
+      entities['245']  = '&otilde;'
+      entities['246']  = '&ouml;'
+      entities['247']  = '&divide;'
+      entities['248']  = '&oslash;'
+      entities['249']  = '&ugrave;'
+      entities['250']  = '&uacute;'
+      entities['251']  = '&ucirc;'
+      entities['252']  = '&uuml;'
+      entities['253']  = '&yacute;'
+      entities['254']  = '&thorn;'
+      entities['255']  = '&yuml;'
       entities['8364'] = '&euro;'
     }
 
-    if (useQuoteStyle !== 'ENT_NOQUOTES') {
+    if (useQuoteStyle !== 'ENT_NOQUOTES')
+    {
       entities['34'] = '&quot;'
     }
-    if (useQuoteStyle === 'ENT_QUOTES') {
+    if (useQuoteStyle === 'ENT_QUOTES')
+    {
       entities['39'] = '&#39;'
     }
     entities['60'] = '&lt;'
     entities['62'] = '&gt;'
 
     // ascii decimals to real symbols
-    for (decimal in entities) {
-      if (entities.hasOwnProperty(decimal)) {
+    for (decimal in entities)
+    {
+      if (entities.hasOwnProperty(decimal))
+      {
         hashMap[String.fromCharCode(decimal)] = entities[decimal]
       }
     }
@@ -3083,31 +3727,37 @@ var version = '4.4.0'
 
   var phpJs = {
     // Copied from http://locutus.io/php/strings/ord/
-    ord: function (string) {
-      var str = string + ''
+    ord: function (string)
+    {
+      var str  = string + ''
       var code = str.charCodeAt(0)
-      if (code >= 0xD800 && code <= 0xDBFF) {
+      if (code >= 0xD800 && code <= 0xDBFF)
+      {
         var hi = code
-        if (str.length === 1) {
+        if (str.length === 1)
+        {
           return code
         }
         var low = str.charCodeAt(1)
         return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000
       }
-      if (code >= 0xDC00 && code <= 0xDFFF) {
+      if (code >= 0xDC00 && code <= 0xDFFF)
+      {
         return code
       }
       return code
     },
 
     // Copied from http://locutus.io/php/strings/bin2hex/
-    bin2Hex: function (s) {
+    bin2Hex: function (s)
+    {
       var i
       var l
       var o = ''
       var n
       s += ''
-      for (i = 0, l = s.length; i < l; i++) {
+      for (i = 0, l = s.length; i < l; i++)
+      {
         n = s.charCodeAt(i).toString(16)
         o += n.length < 2 ? '0' + n : n
       }
@@ -3115,17 +3765,20 @@ var version = '4.4.0'
     },
 
     // Copied from http://locutus.io/php/strings/html_entity_decode/
-    htmlEntityDecode: function (string, quoteStyle) {
-      var tmpStr = string.toString()
-      var entity = ''
-      var symbol = ''
+    htmlEntityDecode: function (string, quoteStyle)
+    {
+      var tmpStr  = string.toString()
+      var entity  = ''
+      var symbol  = ''
       var hashMap = getHtmlTranslationTable('HTML_ENTITIES', quoteStyle)
-      if (hashMap === false) {
+      if (hashMap === false)
+      {
         return false
       }
       delete (hashMap['&'])
       hashMap['&'] = '&amp;'
-      for (symbol in hashMap) {
+      for (symbol in hashMap)
+      {
         entity = hashMap[symbol]
         tmpStr = tmpStr.split(entity).join(symbol)
       }
@@ -3133,50 +3786,61 @@ var version = '4.4.0'
       return tmpStr
     },
 
-    objectKeys: function (o) {
+    objectKeys: function (o)
+    {
       var k = []
       var p
-      for (p in o) {
-        if (Object.prototype.hasOwnProperty.call(o, p)) {
+      for (p in o)
+      {
+        if (Object.prototype.hasOwnProperty.call(o, p))
+        {
           k.push(p)
         }
       }
       return k
     },
 
-    htmlEntities: function (string, quoteStyle, charset, doubleEncode) {
+    htmlEntities: function (string, quoteStyle, charset, doubleEncode)
+    {
       var hashMap = getHtmlTranslationTable('HTML_ENTITIES', quoteStyle)
       var keys
-      string = string === null ? '' : string + ''
-      if (!hashMap) {
+      string      = string === null ? '' : string + ''
+      if (!hashMap)
+      {
         return false
       }
 
-      if (quoteStyle && quoteStyle === 'ENT_QUOTES') {
+      if (quoteStyle && quoteStyle === 'ENT_QUOTES')
+      {
         hashMap["'"] = '&#039;'
       }
       doubleEncode = doubleEncode === null || !!doubleEncode
-      keys = Object.keys ? Object.keys(hashMap) : phpJs.objectKeys(hashMap)
-      var regex = new RegExp('&(?:#\\d+|#x[\\da-f]+|[a-zA-Z][\\da-z]*);|[' +
+      keys         = Object.keys ? Object.keys(hashMap) : phpJs.objectKeys(hashMap)
+      var regex    = new RegExp('&(?:#\\d+|#x[\\da-f]+|[a-zA-Z][\\da-z]*);|[' +
         keys.join('')
           .replace(/([()[\]{}\-.*+?^$|/\\])/g, '\\$1') + ']', 'g')
 
-      return string.replace(regex, function (ent) {
-        if (ent.length > 1) {
+      return string.replace(regex, function (ent)
+      {
+        if (ent.length > 1)
+        {
           return doubleEncode ? hashMap['&'] + ent.substr(1) : ent
         }
         return hashMap[ent]
       })
     },
 
-    rawUrlDecode: function (string) {
-      return decodeURIComponent((string + '').replace(/%(?![\da-f]{2})/gi, function () {
+    rawUrlDecode: function (string)
+    {
+      return decodeURIComponent((string + '').replace(/%(?![\da-f]{2})/gi, function ()
+      {
         // PHP tolerates poorly formed escape sequences
         return '%25'
       }))
     },
 
-    rawUrlEncode: function (string) {
+    rawUrlEncode: function (string)
+    {
       string = (string + '')
       return encodeURIComponent(string)
         .replace(/!/g, '%21')
@@ -3186,26 +3850,34 @@ var version = '4.4.0'
         .replace(/\*/g, '%2A')
     },
 
-    sprintf: function () {
-      var regex = /%%|%(\d+\$)?([-+'#0 ]*)(\*\d+\$|\*|\d+)?(?:\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g
-      var a = arguments
-      var i = 0
+    sprintf: function ()
+    {
+      var regex  = /%%|%(\d+\$)?([-+'#0 ]*)(\*\d+\$|\*|\d+)?(?:\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g
+      var a      = arguments
+      var i      = 0
       var format = a[i++]
 
-      var _pad = function (str, len, chr, leftJustify) {
-        if (!chr) {
+      var _pad = function (str, len, chr, leftJustify)
+      {
+        if (!chr)
+        {
           chr = ' '
         }
         var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
         return leftJustify ? str + padding : padding + str
       }
 
-      var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+      var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar)
+      {
         var diff = minWidth - value.length
-        if (diff > 0) {
-          if (leftJustify || !zeroPad) {
+        if (diff > 0)
+        {
+          if (leftJustify || !zeroPad)
+          {
             value = _pad(value, minWidth, customPadChar, leftJustify)
-          } else {
+          }
+          else
+          {
             value = [
               value.slice(0, prefix.length),
               _pad('', diff, '0', true),
@@ -3216,44 +3888,55 @@ var version = '4.4.0'
         return value
       }
 
-      var _formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
+      var _formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad)
+      {
         // Note: casts negative numbers to positive ones
         var number = value >>> 0
-        prefix = (prefix && number && {
-          '2': '0b',
-          '8': '0',
+        prefix     = (prefix && number && {
+          '2' : '0b',
+          '8' : '0',
           '16': '0x'
         }[base]) || ''
-        value = prefix + _pad(number.toString(base), precision || 0, '0', false)
+        value      = prefix + _pad(number.toString(base), precision || 0, '0', false)
         return justify(value, prefix, leftJustify, minWidth, zeroPad)
       }
 
       // _formatString()
-      var _formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
-        if (precision !== null && precision !== undefined) {
+      var _formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar)
+      {
+        if (precision !== null && precision !== undefined)
+        {
           value = value.slice(0, precision)
         }
         return justify(value, '', leftJustify, minWidth, zeroPad, customPadChar)
       }
 
       // doFormat()
-      var doFormat = function (substring, valueIndex, flags, minWidth, precision, type) {
-        var number, prefix, method, textTransform, value
+      var doFormat = function (substring, valueIndex, flags, minWidth, precision, type)
+      {
+        var number,
+            prefix,
+            method,
+            textTransform,
+            value
 
-        if (substring === '%%') {
+        if (substring === '%%')
+        {
           return '%'
         }
 
         // parse flags
-        var leftJustify = false
+        var leftJustify    = false
         var positivePrefix = ''
-        var zeroPad = false
-        var prefixBaseX = false
-        var customPadChar = ' '
-        var flagsl = flags.length
+        var zeroPad        = false
+        var prefixBaseX    = false
+        var customPadChar  = ' '
+        var flagsl         = flags.length
         var j
-        for (j = 0; j < flagsl; j++) {
-          switch (flags.charAt(j)) {
+        for (j = 0; j < flagsl; j++)
+        {
+          switch (flags.charAt(j))
+          {
             case ' ':
               positivePrefix = ' '
               break
@@ -3267,7 +3950,7 @@ var version = '4.4.0'
               customPadChar = flags.charAt(j + 1)
               break
             case '0':
-              zeroPad = true
+              zeroPad       = true
               customPadChar = '0'
               break
             case '#':
@@ -3278,40 +3961,57 @@ var version = '4.4.0'
 
         // parameters may be null, undefined, empty-string or real valued
         // we want to ignore null, undefined and empty-string values
-        if (!minWidth) {
+        if (!minWidth)
+        {
           minWidth = 0
-        } else if (minWidth === '*') {
+        }
+        else if (minWidth === '*')
+        {
           minWidth = +a[i++]
-        } else if (minWidth.charAt(0) === '*') {
+        }
+        else if (minWidth.charAt(0) === '*')
+        {
           minWidth = +a[minWidth.slice(1, -1)]
-        } else {
+        }
+        else
+        {
           minWidth = +minWidth
         }
 
         // Note: undocumented perl feature:
-        if (minWidth < 0) {
-          minWidth = -minWidth
+        if (minWidth < 0)
+        {
+          minWidth    = -minWidth
           leftJustify = true
         }
 
-        if (!isFinite(minWidth)) {
+        if (!isFinite(minWidth))
+        {
           throw new Error('sprintf: (minimum-)width must be finite')
         }
 
-        if (!precision) {
+        if (!precision)
+        {
           precision = 'fFeE'.indexOf(type) > -1 ? 6 : (type === 'd') ? 0 : undefined
-        } else if (precision === '*') {
+        }
+        else if (precision === '*')
+        {
           precision = +a[i++]
-        } else if (precision.charAt(0) === '*') {
+        }
+        else if (precision.charAt(0) === '*')
+        {
           precision = +a[precision.slice(1, -1)]
-        } else {
+        }
+        else
+        {
           precision = +precision
         }
 
         // grab value using valueIndex if required?
         value = valueIndex ? a[valueIndex.slice(0, -1)] : a[i++]
 
-        switch (type) {
+        switch (type)
+        {
           case 's':
             return _formatString(value + '', leftJustify, minWidth, precision, zeroPad, customPadChar)
           case 'c':
@@ -3332,7 +4032,7 @@ var version = '4.4.0'
             // Plain Math.round doesn't just truncate
             number = Math.round(number - number % 1)
             prefix = number < 0 ? '-' : positivePrefix
-            value = prefix + _pad(String(Math.abs(number)), precision, '0', false)
+            value  = prefix + _pad(String(Math.abs(number)), precision, '0', false)
             return justify(value, prefix, leftJustify, minWidth, zeroPad)
           case 'e':
           case 'E':
@@ -3340,11 +4040,11 @@ var version = '4.4.0'
           case 'F':
           case 'g':
           case 'G':
-            number = +value
-            prefix = number < 0 ? '-' : positivePrefix
-            method = ['toExponential', 'toFixed', 'toPrecision']['efg'.indexOf(type.toLowerCase())]
+            number        = +value
+            prefix        = number < 0 ? '-' : positivePrefix
+            method        = ['toExponential', 'toFixed', 'toPrecision']['efg'.indexOf(type.toLowerCase())]
             textTransform = ['toString', 'toUpperCase']['eEfFgG'.indexOf(type) % 2]
-            value = prefix + Math.abs(number)[method](precision)
+            value         = prefix + Math.abs(number)[method](precision)
             return phpJs.justify(value, prefix, leftJustify, minWidth, zeroPad)[textTransform]()
           default:
             return substring
@@ -3354,39 +4054,50 @@ var version = '4.4.0'
       return format.replace(regex, doFormat)
     },
 
-    makeTimeStamp: function (s) {
-      if (!s) {
+    makeTimeStamp: function (s)
+    {
+      if (!s)
+      {
         return Math.floor(new Date().getTime() / 1000)
       }
-      if (isNaN(s)) {
+      if (isNaN(s))
+      {
         var tm = phpJs.strtotime(s)
-        if (tm === -1 || tm === false) {
+        if (tm === -1 || tm === false)
+        {
           return Math.floor(new Date().getTime() / 1000)
         }
         return tm
       }
       s = s + ''
-      if (s.length === 14 && s.search(/^[\d]+$/g) !== -1) {
+      if (s.length === 14 && s.search(/^[\d]+$/g) !== -1)
+      {
         // it is mysql timestamp format of YYYYMMDDHHMMSS?
         return phpJs.mktime(s.substr(8, 2), s.substr(10, 2), s.substr(12, 2), s.substr(4, 2), s.substr(6, 2), s.substr(0, 4))
       }
       return Number(s)
     },
 
-    mktime: function () {
+    mktime: function ()
+    {
       var d = new Date()
       var r = arguments
       var i = 0
       var e = ['Hours', 'Minutes', 'Seconds', 'Month', 'Date', 'FullYear']
 
-      for (i = 0; i < e.length; i++) {
-        if (typeof r[i] === 'undefined') {
+      for (i = 0; i < e.length; i++)
+      {
+        if (typeof r[i] === 'undefined')
+        {
           r[i] = d['get' + e[i]]()
           // +1 to fix JS months.
           r[i] += (i === 3)
-        } else {
+        }
+        else
+        {
           r[i] = parseInt(r[i], 10)
-          if (isNaN(r[i])) {
+          if (isNaN(r[i]))
+          {
             return false
           }
         }
@@ -3399,20 +4110,27 @@ var version = '4.4.0'
       return (time / 1e3 >> 0) - (time < 0)
     },
 
-    _pad: function (str, len, chr, leftJustify) {
-      if (!chr) {
+    _pad: function (str, len, chr, leftJustify)
+    {
+      if (!chr)
+      {
         chr = ' '
       }
       var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
       return leftJustify ? str + padding : padding + str
     },
 
-    justify: function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+    justify: function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar)
+    {
       var diff = minWidth - value.length
-      if (diff > 0) {
-        if (leftJustify || !zeroPad) {
+      if (diff > 0)
+      {
+        if (leftJustify || !zeroPad)
+        {
           value = phpJs._pad(value, minWidth, customPadChar, leftJustify)
-        } else {
+        }
+        else
+        {
           value = [
             value.slice(0, prefix.length),
             phpJs._pad('', diff, '0', true),
@@ -3423,7 +4141,8 @@ var version = '4.4.0'
       return value
     },
 
-    strtotime: function (text, now) {
+    strtotime: function (text, now)
+    {
       var parsed
       var match
       var today
@@ -3437,7 +4156,8 @@ var version = '4.4.0'
       var i
       var fail = false
 
-      if (!text) {
+      if (!text)
+      {
         return fail
       }
 
@@ -3455,14 +4175,18 @@ var version = '4.4.0'
         '(?:\\s(\\d{1,2}):(\\d{2})?:?(\\d{2})?)?',
         '(?:\\s([A-Z]+)?)?$'
       ].join(''))
-      match = text.match(pattern)
+      match       = text.match(pattern)
 
-      if (match && match[2] === match[4]) {
-        if (match[1] > 1901) {
-          switch (match[2]) {
+      if (match && match[2] === match[4])
+      {
+        if (match[1] > 1901)
+        {
+          switch (match[2])
+          {
             case '-':
               // YYYY-M-D
-              if (match[3] > 12 || match[5] > 31) {
+              if (match[3] > 12 || match[5] > 31)
+              {
                 return fail
               }
 
@@ -3473,18 +4197,23 @@ var version = '4.4.0'
               return fail
             case '/':
               // YYYY/M/D
-              if (match[3] > 12 || match[5] > 31) {
+              if (match[3] > 12 || match[5] > 31)
+              {
                 return fail
               }
 
               return new Date(match[1], parseInt(match[3], 10) - 1, match[5],
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
           }
-        } else if (match[5] > 1901) {
-          switch (match[2]) {
+        }
+        else if (match[5] > 1901)
+        {
+          switch (match[2])
+          {
             case '-':
               // D-M-YYYY
-              if (match[3] > 12 || match[1] > 31) {
+              if (match[3] > 12 || match[1] > 31)
+              {
                 return fail
               }
 
@@ -3492,7 +4221,8 @@ var version = '4.4.0'
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case '.':
               // D.M.YYYY
-              if (match[3] > 12 || match[1] > 31) {
+              if (match[3] > 12 || match[1] > 31)
+              {
                 return fail
               }
 
@@ -3500,18 +4230,23 @@ var version = '4.4.0'
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case '/':
               // M/D/YYYY
-              if (match[1] > 12 || match[3] > 31) {
+              if (match[1] > 12 || match[3] > 31)
+              {
                 return fail
               }
 
               return new Date(match[5], parseInt(match[1], 10) - 1, match[3],
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
           }
-        } else {
-          switch (match[2]) {
+        }
+        else
+        {
+          switch (match[2])
+          {
             case '-':
               // YY-M-D
-              if (match[3] > 12 || match[5] > 31 || (match[1] < 70 && match[1] > 38)) {
+              if (match[3] > 12 || match[5] > 31 || (match[1] < 70 && match[1] > 38))
+              {
                 return fail
               }
 
@@ -3520,18 +4255,22 @@ var version = '4.4.0'
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case '.':
               // D.M.YY or H.MM.SS
-              if (match[5] >= 70) {
+              if (match[5] >= 70)
+              {
                 // D.M.YY
-                if (match[3] > 12 || match[1] > 31) {
+                if (match[3] > 12 || match[1] > 31)
+                {
                   return fail
                 }
 
                 return new Date(match[5], parseInt(match[3], 10) - 1, match[1],
                   match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
               }
-              if (match[5] < 60 && !match[6]) {
+              if (match[5] < 60 && !match[6])
+              {
                 // H.MM.SS
-                if (match[1] > 23 || match[3] > 59) {
+                if (match[1] > 23 || match[3] > 59)
+                {
                   return fail
                 }
 
@@ -3544,7 +4283,8 @@ var version = '4.4.0'
               return fail
             case '/':
               // M/D/YY
-              if (match[1] > 12 || match[3] > 31 || (match[5] < 70 && match[5] > 38)) {
+              if (match[1] > 12 || match[3] > 31 || (match[5] < 70 && match[5] > 38))
+              {
                 return fail
               }
 
@@ -3553,7 +4293,8 @@ var version = '4.4.0'
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case ':':
               // HH:MM:SS
-              if (match[1] > 23 || match[3] > 59 || match[5] > 59) {
+              if (match[1] > 23 || match[3] > 59 || match[5] > 59)
+              {
                 return fail
               }
 
@@ -3564,13 +4305,15 @@ var version = '4.4.0'
         }
       }
 
-      if (text === 'now') {
+      if (text === 'now')
+      {
         return now === null || isNaN(now)
           ? new Date().getTime() / 1000 | 0
           : now | 0
       }
 
-      if (!isNaN(parsed = Date.parse(text))) {
+      if (!isNaN(parsed = Date.parse(text)))
+      {
         return parsed / 1000 | 0
       }
 
@@ -3580,22 +4323,27 @@ var version = '4.4.0'
         '([0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?)',
         '([\\+-][0-9]{2}(:[0-9]{2})?|z)'
       ].join(''))
-      match = text.match(pattern)
-      if (match) {
+      match   = text.match(pattern)
+      if (match)
+      {
         // @todo: time zone information
-        if (match[4] === 'z') {
+        if (match[4] === 'z')
+        {
           match[4] = 'Z'
-        } else if (match[4].match(/^([+-][0-9]{2})$/)) {
+        }
+        else if (match[4].match(/^([+-][0-9]{2})$/))
+        {
           match[4] = match[4] + ':00'
         }
 
-        if (!isNaN(parsed = Date.parse(match[1] + 'T' + match[2] + match[4]))) {
+        if (!isNaN(parsed = Date.parse(match[1] + 'T' + match[2] + match[4])))
+        {
           return parsed / 1000 | 0
         }
       }
 
-      date = now ? new Date(now * 1000) : new Date()
-      days = {
+      date   = now ? new Date(now * 1000) : new Date()
+      days   = {
         'sun': 0,
         'mon': 1,
         'tue': 2,
@@ -3613,18 +4361,25 @@ var version = '4.4.0'
         'sec': 'Seconds'
       }
 
-      function lastNext (type, range, modifier) {
+      function lastNext(type, range, modifier)
+      {
         var diff
         var day = days[range]
 
-        if (typeof day !== 'undefined') {
+        if (typeof day !== 'undefined')
+        {
           diff = day - date.getDay()
 
-          if (diff === 0) {
+          if (diff === 0)
+          {
             diff = 7 * modifier
-          } else if (diff > 0 && type === 'last') {
+          }
+          else if (diff > 0 && type === 'last')
+          {
             diff -= 7
-          } else if (diff < 0 && type === 'next') {
+          }
+          else if (diff < 0 && type === 'next')
+          {
             diff += 7
           }
 
@@ -3632,29 +4387,36 @@ var version = '4.4.0'
         }
       }
 
-      function process (val) {
-        var splt = val.split(' ')
-        var type = splt[0]
-        var range = splt[1].substring(0, 3)
+      function process(val)
+      {
+        var splt         = val.split(' ')
+        var type         = splt[0]
+        var range        = splt[1].substring(0, 3)
         var typeIsNumber = /\d+/.test(type)
-        var ago = splt[2] === 'ago'
-        var num = (type === 'last' ? -1 : 1) * (ago ? -1 : 1)
+        var ago          = splt[2] === 'ago'
+        var num          = (type === 'last' ? -1 : 1) * (ago ? -1 : 1)
 
-        if (typeIsNumber) {
+        if (typeIsNumber)
+        {
           num *= parseInt(type, 10)
         }
 
-        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i)) {
+        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i))
+        {
           return date['set' + ranges[range]](date['get' + ranges[range]]() + num)
         }
 
-        if (range === 'wee') {
+        if (range === 'wee')
+        {
           return date.setDate(date.getDate() + (num * 7))
         }
 
-        if (type === 'next' || type === 'last') {
+        if (type === 'next' || type === 'last')
+        {
           lastNext(type, range, num)
-        } else if (!typeIsNumber) {
+        }
+        else if (!typeIsNumber)
+        {
           return false
         }
 
@@ -3667,12 +4429,15 @@ var version = '4.4.0'
       regex = '([+-]?\\d+\\s' + times + '|' + '(last|next)\\s' + times + ')(\\sago)?'
 
       match = text.match(new RegExp(regex, 'gi'))
-      if (!match) {
+      if (!match)
+      {
         return fail
       }
 
-      for (i = 0, len = match.length; i < len; i++) {
-        if (!process(match[i])) {
+      for (i = 0, len = match.length; i < len; i++)
+      {
+        if (!process(match[i]))
+        {
           return fail
         }
       }
@@ -3680,12 +4445,16 @@ var version = '4.4.0'
       return (date.getTime() / 1000)
     },
 
-    strftime: function (fmt, timestamp) {
-      var _xPad = function (x, pad, r) {
-        if (typeof r === 'undefined') {
+    strftime: function (fmt, timestamp)
+    {
+      var _xPad = function (x, pad, r)
+      {
+        if (typeof r === 'undefined')
+        {
           r = 10
         }
-        for (; parseInt(x, 10) < r && r > 1; r /= 10) {
+        for (; parseInt(x, 10) < r && r > 1; r /= 10)
+        {
           x = pad.toString() + x
         }
         return x.toString()
@@ -3699,7 +4468,8 @@ var version = '4.4.0'
         // DAY_
         b: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         // ABMON_
-        B: ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+        B: [
+          'January', 'February', 'March', 'April', 'May', 'June', 'July',
           'August', 'September', 'October',
           'November', 'December'
         ],
@@ -3719,53 +4489,65 @@ var version = '4.4.0'
         // Following are from nl_langinfo() or http://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
         alt_digits: '',
         // e.g., ordinal
-        ERA: '',
-        ERA_YEAR: '',
+        ERA        : '',
+        ERA_YEAR   : '',
         ERA_D_T_FMT: '',
-        ERA_D_FMT: '',
-        ERA_T_FMT: ''
+        ERA_D_FMT  : '',
+        ERA_T_FMT  : ''
       }
 
       var _formats = {
-        a: function (d) {
+        a: function (d)
+        {
           return lcTime.a[d.getDay()]
         },
-        A: function (d) {
+        A: function (d)
+        {
           return lcTime.A[d.getDay()]
         },
-        b: function (d) {
+        b: function (d)
+        {
           return lcTime.b[d.getMonth()]
         },
-        B: function (d) {
+        B: function (d)
+        {
           return lcTime.B[d.getMonth()]
         },
-        C: function (d) {
+        C: function (d)
+        {
           return _xPad(parseInt(d.getFullYear() / 100, 10), 0)
         },
         d: ['getDate', '0'],
         e: ['getDate', ' '],
-        g: function (d) {
+        g: function (d)
+        {
           return _xPad(parseInt(this.G(d) / 100, 10), 0) // eslint-disable-line new-cap
         },
-        G: function (d) {
+        G: function (d)
+        {
           var y = d.getFullYear()
           var V = parseInt(_formats.V(d), 10) // eslint-disable-line new-cap
           var W = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
 
-          if (W > V) {
+          if (W > V)
+          {
             y++
-          } else if (W === 0 && V >= 52) {
+          }
+          else if (W === 0 && V >= 52)
+          {
             y--
           }
 
           return y
         },
         H: ['getHours', '0'],
-        I: function (d) {
+        I: function (d)
+        {
           var I = d.getHours() % 12
           return _xPad(I === 0 ? 12 : I, 0)
         },
-        j: function (d) {
+        j: function (d)
+        {
           var ms = d - new Date('' + d.getFullYear() + '/1/1 GMT')
           // Line differs from Yahoo implementation which would be
           // equivalent to replacing it here with:
@@ -3775,37 +4557,45 @@ var version = '4.4.0'
         },
         k: ['getHours', '0'],
         // not in PHP, but implemented here (as in Yahoo)
-        l: function (d) {
+        l  : function (d)
+        {
           var l = d.getHours() % 12
           return _xPad(l === 0 ? 12 : l, ' ')
         },
-        m: function (d) {
+        m  : function (d)
+        {
           return _xPad(d.getMonth() + 1, 0)
         },
-        M: ['getMinutes', '0'],
-        p: function (d) {
+        M  : ['getMinutes', '0'],
+        p  : function (d)
+        {
           return lcTime.p[d.getHours() >= 12 ? 1 : 0]
         },
-        P: function (d) {
+        P  : function (d)
+        {
           return lcTime.P[d.getHours() >= 12 ? 1 : 0]
         },
-        s: function (d) {
+        s  : function (d)
+        {
           // Yahoo uses return parseInt(d.getTime()/1000, 10);
           return Date.parse(d) / 1000
         },
-        S: ['getSeconds', '0'],
-        u: function (d) {
+        S  : ['getSeconds', '0'],
+        u  : function (d)
+        {
           var dow = d.getDay()
           return ((dow === 0) ? 7 : dow)
         },
-        U: function (d) {
-          var doy = parseInt(_formats.j(d), 10)
+        U  : function (d)
+        {
+          var doy  = parseInt(_formats.j(d), 10)
           var rdow = 6 - d.getDay()
-          var woy = parseInt((doy + rdow) / 7, 10)
+          var woy  = parseInt((doy + rdow) / 7, 10)
           return _xPad(woy, 0)
         },
-        V: function (d) {
-          var woy = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
+        V  : function (d)
+        {
+          var woy   = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
           var dow11 = (new Date('' + d.getFullYear() + '/1/1')).getDay()
           // First week is 01 and not 00 as in the case of %U and %W,
           // so we add 1 to the final result except if day 1 of the year
@@ -3813,34 +4603,42 @@ var version = '4.4.0'
           // We also need to subtract 1 if the day 1 of the year is
           // Friday-Sunday, so the resulting equation becomes:
           var idow = woy + (dow11 > 4 || dow11 <= 1 ? 0 : 1)
-          if (idow === 53 && (new Date('' + d.getFullYear() + '/12/31')).getDay() < 4) {
+          if (idow === 53 && (new Date('' + d.getFullYear() + '/12/31')).getDay() < 4)
+          {
             idow = 1
-          } else if (idow === 0) {
+          }
+          else if (idow === 0)
+          {
             idow = _formats.V(new Date('' + (d.getFullYear() - 1) + '/12/31')) // eslint-disable-line new-cap
           }
           return _xPad(idow, 0)
         },
-        w: 'getDay',
-        W: function (d) {
-          var doy = parseInt(_formats.j(d), 10)
+        w  : 'getDay',
+        W  : function (d)
+        {
+          var doy  = parseInt(_formats.j(d), 10)
           var rdow = 7 - _formats.u(d)
-          var woy = parseInt((doy + rdow) / 7, 10)
+          var woy  = parseInt((doy + rdow) / 7, 10)
           return _xPad(woy, 0, 10)
         },
-        y: function (d) {
+        y  : function (d)
+        {
           return _xPad(d.getFullYear() % 100, 0)
         },
-        Y: 'getFullYear',
-        z: function (d) {
+        Y  : 'getFullYear',
+        z  : function (d)
+        {
           var o = d.getTimezoneOffset()
           var H = _xPad(parseInt(Math.abs(o / 60), 10), 0)
           var M = _xPad(o % 60, 0)
           return (o > 0 ? '-' : '+') + H + M
         },
-        Z: function (d) {
+        Z  : function (d)
+        {
           return d.toString().replace(/^.*\(([^)]+)\)$/, '$1')
         },
-        '%': function (d) {
+        '%': function (d)
+        {
           return '%'
         }
       }
@@ -3866,23 +4664,33 @@ var version = '4.4.0'
       }
 
       // First replace aggregates (run in a loop because an agg may be made up of other aggs)
-      while (fmt.match(/%[cDFhnrRtTxX]/)) {
-        fmt = fmt.replace(/%([cDFhnrRtTxX])/g, function (m0, m1) {
+      while (fmt.match(/%[cDFhnrRtTxX]/))
+      {
+        fmt = fmt.replace(/%([cDFhnrRtTxX])/g, function (m0, m1)
+        {
           var f = _aggregates[m1]
           return (f === 'locale' ? lcTime[m1] : f)
         })
       }
 
       // Now replace formats - we need a closure so that the date object gets passed through
-      var str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, function (m0, m1) {
+      var str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, function (m0, m1)
+      {
         var f = _formats[m1]
-        if (typeof f === 'string') {
+        if (typeof f === 'string')
+        {
           return _date[f]()
-        } else if (typeof f === 'function') {
+        }
+        else if (typeof f === 'function')
+        {
           return f(_date)
-        } else if (typeof f === 'object' && typeof f[0] === 'string') {
+        }
+        else if (typeof f === 'object' && typeof f[0] === 'string')
+        {
           return _xPad(_date[f[0]](), f[1])
-        } else {
+        }
+        else
+        {
           // Shouldn't reach here
           return m1
         }
@@ -3896,28 +4704,36 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'capitalize',
-    function (s, upDigits, lcRest) {
-      if (typeof s !== 'string') {
+    function (s, upDigits, lcRest)
+    {
+      if (typeof s !== 'string')
+      {
         return s
       }
-      var re = new RegExp(upDigits ? '[^a-zA-Z_\u00E0-\u00FC]+' : '[^a-zA-Z0-9_\u00E0-\u00FC]')
+      var re    = new RegExp(upDigits ? '[^a-zA-Z_\u00E0-\u00FC]+' : '[^a-zA-Z0-9_\u00E0-\u00FC]')
       var found = null
-      var res = ''
-      if (lcRest) {
+      var res   = ''
+      if (lcRest)
+      {
         s = s.toLowerCase()
       }
       var word
-      for (found = s.match(re); found; found = s.match(re)) {
+      for (found = s.match(re); found; found = s.match(re))
+      {
         word = s.slice(0, found.index)
-        if (word.match(/\d/)) {
+        if (word.match(/\d/))
+        {
           res += word
-        } else {
+        }
+        else
+        {
           res += word.charAt(0).toUpperCase() + word.slice(1)
         }
         res += s.slice(found.index, found.index + found[0].length)
         s = s.slice(found.index + found[0].length)
       }
-      if (s.match(/\d/)) {
+      if (s.match(/\d/))
+      {
         return res + s
       }
       return res + s.charAt(0).toUpperCase() + s.slice(1)
@@ -3927,7 +4743,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'cat',
-    function (s, value) {
+    function (s, value)
+    {
       value = value || ''
       return String(s) + value
     }
@@ -3936,16 +4753,25 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'count',
-    function (a) {
-      if (a instanceof Array) {
+    function (a)
+    {
+      if (a instanceof Array)
+      {
         return a.length
-      } else if (typeof a === 'object') {
-        if (Object.keys) {
+      }
+      else if (typeof a === 'object')
+      {
+        if (Object.keys)
+        {
           return Object.keys(a).length
-        } else {
+        }
+        else
+        {
           var l = 0
-          for (var k in a) {
-            if (a.hasOwnProperty(k)) {
+          for (var k in a)
+          {
+            if (a.hasOwnProperty(k))
+            {
               ++l
             }
           }
@@ -3959,7 +4785,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'count_characters',
-    function (s, includeWhitespaces) {
+    function (s, includeWhitespaces)
+    {
       s = String(s)
       return includeWhitespaces ? s.length : s.replace(/\s/g, '').length
     }
@@ -3968,9 +4795,11 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'count_paragraphs',
-    function (s) {
+    function (s)
+    {
       var found = String(s).match(/\n+/g)
-      if (found) {
+      if (found)
+      {
         return found.length + 1
       }
       return 1
@@ -3980,10 +4809,13 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'count_sentences',
-    function (s) {
-      if (typeof s === 'string') {
+    function (s)
+    {
+      if (typeof s === 'string')
+      {
         var found = s.match(/\w[.?!](\W|$)/g)
-        if (found) {
+        if (found)
+        {
           return found.length
         }
       }
@@ -3994,10 +4826,13 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'count_words',
-    function (s) {
-      if (typeof s === 'string') {
+    function (s)
+    {
+      if (typeof s === 'string')
+      {
         var found = s.match(/\w+/g)
-        if (found) {
+        if (found)
+        {
           return found.length
         }
       }
@@ -4008,7 +4843,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'date_format',
-    function (s, fmt, defaultDate) {
+    function (s, fmt, defaultDate)
+    {
       return phpJs.strftime((fmt || '%b %e, %Y'), phpJs.makeTimeStamp((s || defaultDate)))
     }
   )
@@ -4016,23 +4852,31 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'debug_print_var',
-    function (s) {
+    function (s)
+    {
       console.log(s + '--')
       // Determining environment first. If its node, we do console.logs
       // else we open new windows for browsers.
       var env = ''
-      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+      if (typeof module === 'object' && module && typeof module.exports === 'object')
+      {
         env = 'node'
-      } else if (typeof window === 'object' && window.document) {
+      }
+      else if (typeof window === 'object' && window.document)
+      {
         env = 'browser'
       }
-      if (env === '') {
+      if (env === '')
+      {
         // We do not know env.
         return ''
       }
-      if (env === 'browser') {
+      if (env === 'browser')
+      {
         return Latte.prototype.printR(s)
-      } else {
+      }
+      else
+      {
         console.log(s)
       }
     }
@@ -4041,7 +4885,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'defaultValue',
-    function (s, value) {
+    function (s, value)
+    {
       value = value || ''
       return (s && s !== 'null' && typeof s !== 'undefined') ? s : value
     }
@@ -4050,70 +4895,91 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'escape',
-    function (s, escType, charSet, doubleEncode) {
-      s = String(s)
-      escType = escType || 'html'
-      charSet = charSet || 'UTF-8'
+    function (s, escType, charSet, doubleEncode)
+    {
+      s            = String(s)
+      escType      = escType || 'html'
+      charSet      = charSet || 'UTF-8'
       doubleEncode = (typeof doubleEncode !== 'undefined') ? Boolean(doubleEncode) : true
-      var res = ''
+      var res      = ''
       var i
 
-      switch (escType) {
-        case 'html': {
-          if (doubleEncode) {
+      switch (escType)
+      {
+        case 'html':
+        {
+          if (doubleEncode)
+          {
             s = s.replace(/&/g, '&amp;')
           }
           return s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#039;').replace(/"/g, '&quot;')
         }
-        case 'htmlall': {
+        case 'htmlall':
+        {
           return phpJs.htmlEntities(s, 3, charSet)
         }
-        case 'url': {
+        case 'url':
+        {
           return phpJs.rawUrlEncode(s)
         }
-        case 'urlpathinfo': {
+        case 'urlpathinfo':
+        {
           return phpJs.rawUrlEncode(s).replace(/%2F/g, '/')
         }
-        case 'quotes': {
+        case 'quotes':
+        {
           return s.replace(/(^|[^\\])'/g, "$1\\'")
         }
-        case 'hex': {
+        case 'hex':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             res += '%' + phpJs.bin2Hex(s.substr(i, 1)).toLowerCase()
           }
           return res
         }
-        case 'hexentity': {
+        case 'hexentity':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             res += '&#x' + phpJs.bin2Hex(s.substr(i, 1)) + ';'
           }
           return res
         }
-        case 'decentity': {
+        case 'decentity':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             res += '&#' + phpJs.ord(s.substr(i, 1)) + ';'
           }
           return res
         }
-        case 'mail': {
+        case 'mail':
+        {
           return s.replace(/@/g, ' [AT] ').replace(/[.]/g, ' [DOT] ')
         }
-        case 'nonstd': {
+        case 'nonstd':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             var _ord = phpJs.ord(s.substr(i, 1))
-            if (_ord >= 126) {
+            if (_ord >= 126)
+            {
               res += '&#' + _ord + ';'
-            } else {
+            }
+            else
+            {
               res += s.substr(i, 1)
             }
           }
           return res
         }
-        case 'javascript': {
+        case 'javascript':
+        {
           return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\//g, '</')
         }
       }
@@ -4124,7 +4990,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'from_charset',
-    function (s) {
+    function (s)
+    {
       // No implementation in JS. But modifier should not fail hencce this.
       return s
     }
@@ -4133,13 +5000,15 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'indent',
-    function (s, repeat, indentWith) {
-      s = String(s)
-      repeat = repeat || 4
+    function (s, repeat, indentWith)
+    {
+      s          = String(s)
+      repeat     = repeat || 4
       indentWith = indentWith || ' '
 
       var indentStr = ''
-      while (repeat--) {
+      while (repeat--)
+      {
         indentStr += indentWith
       }
 
@@ -4151,7 +5020,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'lower',
-    function (s) {
+    function (s)
+    {
       return (String(s)).toLowerCase()
     }
   )
@@ -4159,7 +5029,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'nl2br',
-    function (s) {
+    function (s)
+    {
       return String(s).replace(/\n/g, '<br />')
     }
   )
@@ -4169,7 +5040,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'regex_replace',
-    function (s, re, replaceWith) {
+    function (s, re, replaceWith)
+    {
       var pattern = re.match(/^ *\/(.*)\/(.*) *$/)
       return String(s).replace(new RegExp(pattern[1], 'g' + (pattern.length > 1 ? pattern[2] : '')), replaceWith)
     }
@@ -4178,16 +5050,19 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'replace',
-    function (s, search, replaceWith) {
-      if (!search) {
+    function (s, search, replaceWith)
+    {
+      if (!search)
+      {
         return s
       }
-      s = String(s)
-      search = String(search)
+      s           = String(s)
+      search      = String(search)
       replaceWith = String(replaceWith)
-      var res = ''
-      var pos = -1
-      for (pos = s.indexOf(search); pos >= 0; pos = s.indexOf(search)) {
+      var res     = ''
+      var pos     = -1
+      for (pos = s.indexOf(search); pos >= 0; pos = s.indexOf(search))
+      {
         res += s.slice(0, pos) + replaceWith
         pos += search.length
         s = s.slice(pos)
@@ -4199,8 +5074,10 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'spacify',
-    function (s, space) {
-      if (!space) {
+    function (s, space)
+    {
+      if (!space)
+      {
         space = ' '
       }
       return String(s).replace(/(\n|.)(?!$)/g, '$1' + space)
@@ -4210,7 +5087,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'string_format',
-    function (s, fmt) {
+    function (s, fmt)
+    {
       return phpJs.sprintf(fmt, s)
     }
   )
@@ -4218,7 +5096,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'strip',
-    function (s, replaceWith) {
+    function (s, replaceWith)
+    {
       replaceWith = replaceWith || ' '
       return String(s).replace(/[\s]+/g, replaceWith)
     }
@@ -4227,24 +5106,32 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'strip_tags',
-    function (s, addSpaceOrTagsToExclude, tagsToExclude) {
-      if (addSpaceOrTagsToExclude === null) {
+    function (s, addSpaceOrTagsToExclude, tagsToExclude)
+    {
+      if (addSpaceOrTagsToExclude === null)
+      {
         addSpaceOrTagsToExclude = true
       }
-      if (!tagsToExclude) {
-        if (addSpaceOrTagsToExclude !== true && addSpaceOrTagsToExclude !== false && ((addSpaceOrTagsToExclude + '').length > 0)) {
-          tagsToExclude = addSpaceOrTagsToExclude
+      if (!tagsToExclude)
+      {
+        if (addSpaceOrTagsToExclude !== true && addSpaceOrTagsToExclude !== false && ((addSpaceOrTagsToExclude + '').length > 0))
+        {
+          tagsToExclude           = addSpaceOrTagsToExclude
           addSpaceOrTagsToExclude = true
         }
       }
-      if (tagsToExclude) {
+      if (tagsToExclude)
+      {
         var filters = tagsToExclude.split('>')
         filters.splice(-1, 1)
-        s = String(s).replace(/<[^>]*?>/g, function (match, offset, contents) {
+        s = String(s).replace(/<[^>]*?>/g, function (match, offset, contents)
+        {
           var tagName = match.match(/\w+/)
-          for (var i = 0; i < filters.length; i++) {
+          for (var i = 0; i < filters.length; i++)
+          {
             var tagName2 = (filters[i] + '>').match(/\w+/)
-            if (tagName[0] === tagName2[0]) {
+            if (tagName[0] === tagName2[0])
+            {
               return match
             }
           }
@@ -4259,7 +5146,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'to_charset',
-    function (s) {
+    function (s)
+    {
       // No implementation in JS. But modifier should not fail hencce this.
       return s
     }
@@ -4268,22 +5156,26 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'truncate',
-    function (s, length, etc, breakWords, middle) {
-      s = String(s)
+    function (s, length, etc, breakWords, middle)
+    {
+      s      = String(s)
       length = length || 80
-      etc = (etc != null) ? etc : '...'
+      etc    = (etc != null) ? etc : '...'
 
-      if (s.length <= length) {
+      if (s.length <= length)
+      {
         return s
       }
 
       length -= Math.min(length, etc.length)
-      if (middle) {
+      if (middle)
+      {
         // one of floor()'s should be replaced with ceil() but it so in Latte
         return s.slice(0, Math.floor(length / 2)) + etc + s.slice(s.length - Math.floor(length / 2))
       }
 
-      if (!breakWords) {
+      if (!breakWords)
+      {
         s = s.slice(0, length + 1).replace(/\s+?(\S+)?$/, '')
       }
 
@@ -4294,22 +5186,28 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'unescape',
-    function (s, escType, charSet) {
-      s = String(s)
+    function (s, escType, charSet)
+    {
+      s       = String(s)
       escType = escType || 'html'
       charSet = charSet || 'UTF-8'
 
-      switch (escType) {
-        case 'html': {
+      switch (escType)
+      {
+        case 'html':
+        {
           return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#039;/g, "'").replace(/&quot;/g, '"')
         }
-        case 'entity': {
+        case 'entity':
+        {
           return phpJs.htmlEntityDecode(s, 1)
         }
-        case 'htmlall': {
+        case 'htmlall':
+        {
           return phpJs.htmlEntityDecode(s, 1)
         }
-        case 'url': {
+        case 'url':
+        {
           return phpJs.rawUrlDecode(s)
         }
       }
@@ -4320,7 +5218,8 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'upper',
-    function (s) {
+    function (s)
+    {
       return (String(s)).toUpperCase()
     }
   )
@@ -4328,23 +5227,28 @@ var version = '4.4.0'
   Latte.prototype.registerPlugin(
     'modifier',
     'wordwrap',
-    function (s, width, wrapWith, breakWords) {
-      width = width || 80
+    function (s, width, wrapWith, breakWords)
+    {
+      width    = width || 80
       wrapWith = wrapWith || '\n'
 
       var lines = String(s).split('\n')
-      for (var i = 0; i < lines.length; ++i) {
-        var line = lines[i]
+      for (var i = 0; i < lines.length; ++i)
+      {
+        var line  = lines[i]
         var parts = ''
-        while (line.length > width) {
-          var pos = 0
+        while (line.length > width)
+        {
+          var pos   = 0
           var found = line.slice(pos).match(/\s+/)
-          for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/)) {
+          for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/))
+          {
             pos += found.index + found[0].length
           }
           pos = (breakWords ? (width - 1) : (pos || (found ? found.index + found[0].length : line.length)))
           parts += line.slice(0, pos).replace(/\s+$/, '')
-          if (pos < line.length) {
+          if (pos < line.length)
+          {
             parts += wrapWith
           }
           line = line.slice(pos)
@@ -4357,7 +5261,8 @@ var version = '4.4.0'
 Latte.prototype.registerPlugin(
     'function',
     '__quoted',
-    function (params, data) {
+    function (params, data)
+    {
       return params.join('')
     }
   )
@@ -4366,10 +5271,13 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     '__array',
-    function (params, data) {
+    function (params, data)
+    {
       var a = []
-      for (var name in params) {
-        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function') {
+      for (var name in params)
+      {
+        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function')
+        {
           a[name] = params[name]
         }
       }
@@ -4381,42 +5289,61 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     '__func',
-    function (params, data) {
+    function (params, data)
+    {
       var paramData = []
       var i
       var fname
 
-      for (i = 0; i < params.length; ++i) {
+      for (i = 0; i < params.length; ++i)
+      {
         paramData.push(params[i])
       }
 
-      if (('__owner' in data && params.name in data.__owner)) {
+      if (('__owner' in data && params.name in data.__owner))
+      {
         fname = data['__owner']
-        if (params.length) {
+        if (params.length)
+        {
           return fname[params.name].apply(fname, params)
-        } else {
+        }
+        else
+        {
           // When function doesn't has arguments.
           return fname[params.name].apply(fname)
         }
-      } else if (Latte.prototype.modifiers.hasOwnProperty(params.name)) {
+      }
+      else if (Latte.prototype.modifiers.hasOwnProperty(params.name))
+      {
         fname = Latte.prototype.modifiers[params.name]
         return fname.apply(fname, paramData)
-      } else {
+      }
+      else
+      {
         fname = params.name
         var func
-        if (typeof module === 'object' && module && typeof module.exports === 'object') {
+        if (typeof module === 'object' && module && typeof module.exports === 'object')
+        {
           func = global[fname]
-        } else {
-          if (typeof window === 'object' && window.document) {
+        }
+        else
+        {
+          if (typeof window === 'object' && window.document)
+          {
             func = window[fname]
-          } else if (global) {
+          }
+          else if (global)
+          {
             func = global[fname]
           }
         }
 
-        if (data[fname]) {
+        if (data[fname])
+        {
           return data[fname].apply(data[fname], paramData)
-        } else if (func) {
+        }
+        else if (func)
+        {
           return func.apply(func, paramData)
         }
         // something went wrong.
@@ -4429,39 +5356,51 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'counter',
-    function (params, data) {
+    function (params, data)
+    {
       var name = params.__get('name', 'default')
-      if (name in data.smarty.counter) {
-        var counter = data.smarty.counter[name]
-        if ('start' in params) {
+      if (name in data.latte.counter)
+      {
+        var counter = data.latte.counter[name]
+        if ('start' in params)
+        {
           counter.value = parseInt(params['start'], 10)
-        } else {
+        }
+        else
+        {
           counter.value = parseInt(counter.value, 10)
-          counter.skip = parseInt(counter.skip, 10)
-          if (counter.direction === 'down') {
+          counter.skip  = parseInt(counter.skip, 10)
+          if (counter.direction === 'down')
+          {
             counter.value -= counter.skip
-          } else {
+          }
+          else
+          {
             counter.value += counter.skip
           }
         }
-        counter.skip = params.__get('skip', counter.skip)
-        counter.direction = params.__get('direction', counter.direction)
-        counter.assign = params.__get('assign', counter.assign)
-        data.smarty.counter[name] = counter
-      } else {
-        data.smarty.counter[name] = {
-          value: parseInt(params.__get('start', 1), 10),
-          skip: parseInt(params.__get('skip', 1), 10),
+        counter.skip              = params.__get('skip', counter.skip)
+        counter.direction         = params.__get('direction', counter.direction)
+        counter.assign            = params.__get('assign', counter.assign)
+        data.latte.counter[name] = counter
+      }
+      else
+      {
+        data.latte.counter[name] = {
+          value    : parseInt(params.__get('start', 1), 10),
+          skip     : parseInt(params.__get('skip', 1), 10),
           direction: params.__get('direction', 'up'),
-          assign: params.__get('assign', false)
+          assign   : params.__get('assign', false)
         }
       }
-      if (data.smarty.counter[name].assign) {
-        data[data.smarty.counter[name].assign] = data.smarty.counter[name].value
+      if (data.latte.counter[name].assign)
+      {
+        data[data.latte.counter[name].assign] = data.latte.counter[name].value
         return ''
       }
-      if (params.__get('print', true)) {
-        return data.smarty.counter[name].value
+      if (params.__get('print', true))
+      {
+        return data.latte.counter[name].value
       }
       // User didn't assign and also said, print false.
       return ''
@@ -4471,49 +5410,62 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'cycle',
-    function (params, data) {
-      var name = params.__get('name', 'default')
+    function (params, data)
+    {
+      var name  = params.__get('name', 'default')
       var reset = params.__get('reset', false)
-      if (!(name in data.smarty.cycle)) {
-        data.smarty.cycle[name] = {arr: [''], delimiter: params.__get('delimiter', ','), index: 0}
-        reset = true
+      if (!(name in data.latte.cycle))
+      {
+        data.latte.cycle[name] = {arr: [''], delimiter: params.__get('delimiter', ','), index: 0}
+        reset                   = true
       }
 
-      if (params.__get('delimiter', false)) {
-        data.smarty.cycle[name].delimiter = params.delimiter
+      if (params.__get('delimiter', false))
+      {
+        data.latte.cycle[name].delimiter = params.delimiter
       }
       var values = params.__get('values', false)
-      if (values) {
+      if (values)
+      {
         var arr = []
-        if (values instanceof Object) {
-          for (var nm in values) {
+        if (values instanceof Object)
+        {
+          for (var nm in values)
+          {
             arr.push(values[nm])
           }
-        } else {
-          arr = values.split(data.smarty.cycle[name].delimiter)
+        }
+        else
+        {
+          arr = values.split(data.latte.cycle[name].delimiter)
         }
 
-        if (arr.length !== data.smarty.cycle[name].arr.length || arr[0] !== data.smarty.cycle[name].arr[0]) {
-          data.smarty.cycle[name].arr = arr
-          data.smarty.cycle[name].index = 0
-          reset = true
+        if (arr.length !== data.latte.cycle[name].arr.length || arr[0] !== data.latte.cycle[name].arr[0])
+        {
+          data.latte.cycle[name].arr   = arr
+          data.latte.cycle[name].index = 0
+          reset                         = true
         }
       }
 
-      if (params.__get('advance', 'true')) {
-        data.smarty.cycle[name].index += 1
+      if (params.__get('advance', 'true'))
+      {
+        data.latte.cycle[name].index += 1
       }
-      if (data.smarty.cycle[name].index >= data.smarty.cycle[name].arr.length || reset) {
-        data.smarty.cycle[name].index = 0
+      if (data.latte.cycle[name].index >= data.latte.cycle[name].arr.length || reset)
+      {
+        data.latte.cycle[name].index = 0
       }
 
-      if (params.__get('assign', false)) {
-        this.assignVar(params.assign, data.smarty.cycle[name].arr[data.smarty.cycle[name].index], data)
+      if (params.__get('assign', false))
+      {
+        this.assignVar(params.assign, data.latte.cycle[name].arr[data.latte.cycle[name].index], data)
         return ''
       }
 
-      if (params.__get('print', true)) {
-        return data.smarty.cycle[name].arr[data.smarty.cycle[name].index]
+      if (params.__get('print', true))
+      {
+        return data.latte.cycle[name].arr[data.latte.cycle[name].index]
       }
 
       return ''
@@ -4523,9 +5475,11 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'eval',
-    function (params, data) {
+    function (params, data)
+    {
       var s = params.var
-      if ('assign' in params) {
+      if ('assign' in params)
+      {
         this.assignVar(params.assign, s, data)
         return ''
       }
@@ -4536,62 +5490,76 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'debug',
-    function (params, data) {
+    function (params, data)
+    {
       // Determining environment first. If its node, we do console.logs
       // else we open new windows for browsers.
       var env = ''
-      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+      if (typeof module === 'object' && module && typeof module.exports === 'object')
+      {
         env = 'node'
-      } else if (typeof window === 'object' && window.document) {
+      }
+      else if (typeof window === 'object' && window.document)
+      {
         env = 'browser'
       }
-      if (env === '') {
+      if (env === '')
+      {
         // We do not know env.
         return ''
       }
-      if (env === 'browser') {
-        if (window.latteJsDebug) {
+      if (env === 'browser')
+      {
+        if (window.latteJsDebug)
+        {
           window.latteJsDebug.close()
         }
-        window.latteJsDebug = window.open('', '', 'width=680, height=600,resizable,scrollbars=yes')
+        window.latteJsDebug   = window.open('', '', 'width=680, height=600,resizable,scrollbars=yes')
         var includedTemplates = ''
-        var assignedVars = ''
-        var i = 0
-        for (var j in data.includedTemplates) {
+        var assignedVars      = ''
+        var i                 = 0
+        for (var j in data.includedTemplates)
+        {
           includedTemplates += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>' + data.includedTemplates[j] + '</td></tr>'
         }
-        if (includedTemplates !== '') {
+        if (includedTemplates !== '')
+        {
           includedTemplates = '<h2>included templates</h2><table>' + includedTemplates + '</table><br>'
         }
         i = 0
-        for (var name in data.assignedVars) {
+        for (var name in data.assignedVars)
+        {
           assignedVars += '<tr class=' + (++i % 2 ? 'odd' : 'even') + '><td>[' + name + ']</td><td>' + Latte.prototype.printR(data.assignedVars[name]) + '</td></tr>'
         }
-        if (assignedVars !== '') {
+        if (assignedVars !== '')
+        {
           assignedVars = '<h2>assigned template variables</h2><table>' + assignedVars + '<table>'
         }
         var html = '<!DOCTYPE html>' +
-        '<html>' +
+          '<html>' +
           '<head>' +
-            '<title>LatteJS Debug Console</title>' +
-            '<style type=\'text/css\'>' +
-              'table {width: 100%;}' +
-              'td {vertical-align:top;}' +
-              '.odd td {background-color: #eee;}' +
-              '.even td {background-color: #dadada;}' +
-            '</style>' +
+          '<title>LatteJS Debug Console</title>' +
+          '<style type=\'text/css\'>' +
+          'table {width: 100%;}' +
+          'td {vertical-align:top;}' +
+          '.odd td {background-color: #eee;}' +
+          '.even td {background-color: #dadada;}' +
+          '</style>' +
           '</head>' +
           '<body>' +
-            '<h1>LatteJS Debug Console</h1><br><pre>' +
-            includedTemplates +
-            assignedVars +
+          '<h1>LatteJS Debug Console</h1><br><pre>' +
+          includedTemplates +
+          assignedVars +
           '</pre></body>' +
-        '</html>'
+          '</html>'
         window.latteJsDebug.document.write(html)
-      } else {
+      }
+      else
+      {
         // env is node.
         // we stringify because tools show updated version of object in console.
-        if (typeof console !== 'undefined') {
+        if (typeof console !== 'undefined')
+        {
           console.log('included templates:- ' + JSON.stringify(includedTemplates))
           console.log('assigned template variables:- ' + JSON.stringify(assignedVars))
         }
@@ -4603,9 +5571,11 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'fetch',
-    function (params, data) {
+    function (params, data)
+    {
       var s = Latte.prototype.getFile(params.__get('file', null, 0))
-      if ('assign' in params) {
+      if ('assign' in params)
+      {
         this.assignVar(params.assign, s, data)
         return ''
       }
@@ -4616,44 +5586,52 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'html_checkboxes',
-    function (params, data) {
-      var type = params.__get('type', 'checkbox')
-      var name = params.__get('name', type)
-      var realName = name
-      var values = params.__get('values', params.options)
-      var output = params.__get('options', [])
-      var useName = ('options' in params)
-      var selected = params.__get('selected', false)
+    function (params, data)
+    {
+      var type      = params.__get('type', 'checkbox')
+      var name      = params.__get('name', type)
+      var realName  = name
+      var values    = params.__get('values', params.options)
+      var output    = params.__get('options', [])
+      var useName   = ('options' in params)
+      var selected  = params.__get('selected', false)
       var separator = params.__get('separator', '')
-      var labels = Boolean(params.__get('labels', true))
-      var labelIds = Boolean(params.__get('label_ids', false))
+      var labels    = Boolean(params.__get('labels', true))
+      var labelIds  = Boolean(params.__get('label_ids', false))
       var p
-      var res = []
-      var i = 0
-      var s = ''
+      var res       = []
+      var i         = 0
+      var s         = ''
       var value
       var id
 
-      if (type === 'checkbox') {
+      if (type === 'checkbox')
+      {
         name += '[]'
       }
 
-      if (!useName) {
-        for (p in params.output) {
+      if (!useName)
+      {
+        for (p in params.output)
+        {
           output.push(params.output[p])
         }
       }
 
-      for (p in values) {
-        if (values.hasOwnProperty(p)) {
+      for (p in values)
+      {
+        if (values.hasOwnProperty(p))
+        {
           value = (useName ? p : values[p])
-          id = realName + '_' + value
-          s = (labels ? (labelIds ? '<label for="' + id + '">' : '<label>') : '')
+          id    = realName + '_' + value
+          s     = (labels ? (labelIds ? '<label for="' + id + '">' : '<label>') : '')
           s += '<input type="' + type + '" name="' + name + '" value="' + value + '" '
-          if (labelIds) {
+          if (labelIds)
+          {
             s += 'id="' + id + '" '
           }
-          if (selected == (useName ? p : values[p])) { // eslint-disable-line eqeqeq
+          if (selected == (useName ? p : values[p]))
+          { // eslint-disable-line eqeqeq
             s += 'checked="checked" '
           }
           s += '/>' + output[useName ? p : i++]
@@ -4663,7 +5641,8 @@ Latte.prototype.registerPlugin(
         }
       }
 
-      if ('assign' in params) {
+      if ('assign' in params)
+      {
         this.assignVar(params.assign, res, data)
         return ''
       }
@@ -4674,20 +5653,24 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'html_image',
-    function (params, data) {
-      var url = params.__get('file', null)
-      var width = params.__get('width', false)
-      var height = params.__get('height', false)
-      var alt = params.__get('alt', '')
-      var href = params.__get('href', params.__get('link', false))
+    function (params, data)
+    {
+      var url        = params.__get('file', null)
+      var width      = params.__get('width', false)
+      var height     = params.__get('height', false)
+      var alt        = params.__get('alt', '')
+      var href       = params.__get('href', params.__get('link', false))
       var pathPrefix = params.__get('path_prefix', '')
       var paramNames = {file: 1, width: 1, height: 1, alt: 1, href: 1, basedir: 1, pathPrefix: 1, link: 1}
-      var s = '<img src="' + pathPrefix + url + '"' + ' alt="' + alt + '"' + (width ? ' width="' + width + '"' : '') + (height ? ' height="' + height + '"' : '')
+      var s          = '<img src="' + pathPrefix + url + '"' + ' alt="' + alt + '"' + (width ? ' width="' + width + '"' : '') + (height ? ' height="' + height + '"' : '')
       var p
 
-      for (p in params) {
-        if (params.hasOwnProperty(p) && typeof params[p] === 'string') {
-          if (!(p in paramNames)) {
+      for (p in params)
+      {
+        if (params.hasOwnProperty(p) && typeof params[p] === 'string')
+        {
+          if (!(p in paramNames))
+          {
             s += ' ' + p + '="' + params[p] + '"'
           }
         }
@@ -4700,37 +5683,48 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'html_options',
-    function (params, data) {
-      var values = params.__get('values', params.options)
-      var output = params.__get('options', [])
+    function (params, data)
+    {
+      var values  = params.__get('values', params.options)
+      var output  = params.__get('options', [])
       var useName = ('options' in params)
       var p
-      if (!useName) {
-        for (p in params.output) {
+      if (!useName)
+      {
+        for (p in params.output)
+        {
           output.push(params.output[p])
         }
       }
       var selected = params.__get('selected', false)
-      var res = []
-      var s = ''
-      var i = 0
+      var res      = []
+      var s        = ''
+      var i        = 0
       var j
-      if (selected instanceof Array) {
+      if (selected instanceof Array)
+      {
         // We convert each value of array to string because values
         // is array of string. Otherwise comparision fails.
-        for (j in selected) {
-          if (selected.hasOwnProperty(j)) {
+        for (j in selected)
+        {
+          if (selected.hasOwnProperty(j))
+          {
             selected[j] = selected[j] + ''
           }
         }
-      } else if (typeof selected !== 'boolean') {
+      }
+      else if (typeof selected !== 'boolean')
+      {
         selected = [selected + '']
       }
 
-      for (p in values) {
-        if (values.hasOwnProperty(p)) {
+      for (p in values)
+      {
+        if (values.hasOwnProperty(p))
+        {
           s = '<option value="' + (useName ? p : values[p]) + '"'
-          if (selected && selected.indexOf((useName ? p : values[p])) !== -1) {
+          if (selected && selected.indexOf((useName ? p : values[p])) !== -1)
+          {
             s += ' selected="selected"'
           }
           s += '>' + output[useName ? p : i++] + '</option>'
@@ -4745,7 +5739,8 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'html_radios',
-    function (params, data) {
+    function (params, data)
+    {
       params.type = 'radio'
       return this.plugins.html_checkboxes.process(params, data)
     }
@@ -4754,47 +5749,69 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'html_select_date',
-    function (params, data) {
-      var prefix = params.__get('prefix', 'Date_')
-      var d = new Date()
-      var startYear = Number(params.__get('start_year', d.getFullYear()))
-      var endYear = Number(params.__get('end_year', startYear))
-      var displayDays = params.__get('display_days', true)
+    function (params, data)
+    {
+      var prefix        = params.__get('prefix', 'Date_')
+      var d             = new Date()
+      var startYear     = Number(params.__get('start_year', d.getFullYear()))
+      var endYear       = Number(params.__get('end_year', startYear))
+      var displayDays   = params.__get('display_days', true)
       var displayMonths = params.__get('display_months', true)
-      var displayYears = params.__get('display_years', true)
-      var reverseYears = params.__get('reverse_years', false)
-      var months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-      var s = '<select name="' + prefix + 'Month">\n'
-      var i = 0
+      var displayYears  = params.__get('display_years', true)
+      var reverseYears  = params.__get('reverse_years', false)
+      var months        = [
+        '',
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ]
+      var s             = '<select name="' + prefix + 'Month">\n'
+      var i             = 0
       var selected
 
-      if ((startYear > endYear && !reverseYears) || (startYear < endYear && reverseYears)) {
-        var temp = endYear
-        endYear = startYear
+      if ((startYear > endYear && !reverseYears) || (startYear < endYear && reverseYears))
+      {
+        var temp  = endYear
+        endYear   = startYear
         startYear = temp
       }
 
-      if (displayMonths) {
-        for (i = 1; i < months.length; ++i) {
+      if (displayMonths)
+      {
+        for (i = 1; i < months.length; ++i)
+        {
           selected = (i === (d.getMonth() + 1)) ? ' selected="selected"' : ''
           s += '<option value="' + i + '"' + selected + '>' + months[i] + '</option>\n'
         }
         s += '</select>\n'
       }
 
-      if (displayDays) {
+      if (displayDays)
+      {
         s += '<select name="' + prefix + 'Day">\n'
-        for (i = 1; i <= 31; ++i) {
+        for (i = 1; i <= 31; ++i)
+        {
           selected = (i === d.getDate()) ? ' selected="selected"' : ''
           s += '<option value="' + i + '"' + selected + '>' + i + '</option>\n'
         }
         s += '</select>\n'
       }
 
-      if (displayYears) {
+      if (displayYears)
+      {
         var op = startYear > endYear ? -1 : 1
         s += '<select name="' + prefix + 'Year">\n'
-        for (i = startYear; ((op > 0) ? (i <= endYear) : (i >= endYear)); i += op) {
+        for (i = startYear; ((op > 0) ? (i <= endYear) : (i >= endYear)); i += op)
+        {
           selected = (i === d.getFullYear()) ? ' selected="selected"' : ''
           s += '<option value="' + i + '"' + selected + '>' + i + '</option>\n'
         }
@@ -4808,65 +5825,83 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'html_table',
-    function (params, data) {
-      var rows = params.__get('rows', false)
-      var cols = params.__get('cols', false)
-      var inner = params.__get('inner', 'cols')
-      var caption = params.__get('caption', '')
+    function (params, data)
+    {
+      var rows      = params.__get('rows', false)
+      var cols      = params.__get('cols', false)
+      var inner     = params.__get('inner', 'cols')
+      var caption   = params.__get('caption', '')
       var tableAttr = params.__get('table_attr', 'border="1"')
-      var thAttr = params.__get('th_attr', false)
-      var trAttr = params.__get('tr_attr', false)
-      var tdAttr = params.__get('td_attr', false)
-      var trailpad = params.__get('trailpad', '&nbsp;')
-      var hdir = params.__get('hdir', 'right')
-      var vdir = params.__get('vdir', 'down')
-      var loop = []
+      var thAttr    = params.__get('th_attr', false)
+      var trAttr    = params.__get('tr_attr', false)
+      var tdAttr    = params.__get('td_attr', false)
+      var trailpad  = params.__get('trailpad', '&nbsp;')
+      var hdir      = params.__get('hdir', 'right')
+      var vdir      = params.__get('vdir', 'down')
+      var loop      = []
       var p
-      if (params.loop instanceof Array) {
+      if (params.loop instanceof Array)
+      {
         loop = params.loop
-      } else {
-        for (p in params.loop) {
-          if (params.loop.hasOwnProperty(p)) {
+      }
+      else
+      {
+        for (p in params.loop)
+        {
+          if (params.loop.hasOwnProperty(p))
+          {
             loop.push(params.loop[p])
           }
         }
       }
 
-      if (!cols) {
+      if (!cols)
+      {
         cols = rows ? Math.ceil(loop.length / rows) : 3
       }
       var colNames = []
-      if (isNaN(cols)) {
-        if (typeof cols === 'object') {
-          for (p in cols) {
-            if (cols.hasOwnProperty(p)) {
+      if (isNaN(cols))
+      {
+        if (typeof cols === 'object')
+        {
+          for (p in cols)
+          {
+            if (cols.hasOwnProperty(p))
+            {
               colNames.push(cols[p])
             }
           }
-        } else {
+        }
+        else
+        {
           colNames = cols.split(/\s*,\s*/)
         }
         cols = colNames.length
       }
       rows = rows || Math.ceil(loop.length / cols)
 
-      if (thAttr && typeof thAttr !== 'object') {
+      if (thAttr && typeof thAttr !== 'object')
+      {
         thAttr = [thAttr]
       }
 
-      if (trAttr && typeof trAttr !== 'object') {
+      if (trAttr && typeof trAttr !== 'object')
+      {
         trAttr = [trAttr]
       }
 
-      if (tdAttr && typeof tdAttr !== 'object') {
+      if (tdAttr && typeof tdAttr !== 'object')
+      {
         tdAttr = [tdAttr]
       }
 
       var s = ''
       var idx
-      for (var row = 0; row < rows; ++row) {
+      for (var row = 0; row < rows; ++row)
+      {
         s += '<tr' + (trAttr ? ' ' + trAttr[row % trAttr.length] : '') + '>\n'
-        for (var col = 0; col < cols; ++col) {
+        for (var col = 0; col < cols; ++col)
+        {
           idx = (inner === 'cols') ? ((vdir === 'down' ? row : rows - 1 - row) * cols + (hdir === 'right' ? col : cols - 1 - col)) : ((hdir === 'right' ? col : cols - 1 - col) * rows + (vdir === 'down' ? row : rows - 1 - row))
           s += '<td' + (tdAttr ? ' ' + tdAttr[col % tdAttr.length] : '') + '>' + (idx < loop.length ? loop[idx] : trailpad) + '</td>\n'
         }
@@ -4874,9 +5909,11 @@ Latte.prototype.registerPlugin(
       }
 
       var sHead = ''
-      if (colNames.length) {
+      if (colNames.length)
+      {
         sHead = '\n<thead><tr>'
-        for (var i = 0; i < colNames.length; ++i) {
+        for (var i = 0; i < colNames.length; ++i)
+        {
           sHead += '\n<th' + (thAttr ? ' ' + thAttr[i % thAttr.length] : '') + '>' + colNames[hdir === 'right' ? i : colNames.length - 1 - i] + '</th>'
         }
         sHead += '\n</tr></thead>'
@@ -4889,16 +5926,17 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'mailto',
-    function (params, data) {
-      var address = params.__get('address', null)
-      var encode = params.__get('encode', 'none')
-      var text = params.__get('text', address)
-      var cc = phpJs.rawUrlEncode(params.__get('cc', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
-      var bcc = phpJs.rawUrlEncode(params.__get('bcc', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
+    function (params, data)
+    {
+      var address    = params.__get('address', null)
+      var encode     = params.__get('encode', 'none')
+      var text       = params.__get('text', address)
+      var cc         = phpJs.rawUrlEncode(params.__get('cc', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
+      var bcc        = phpJs.rawUrlEncode(params.__get('bcc', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
       var followupto = phpJs.rawUrlEncode(params.__get('followupto', '')).replace(/%40/g, '@').replace(/%2C/g, ',')
-      var subject = phpJs.rawUrlEncode(params.__get('subject', ''))
+      var subject    = phpJs.rawUrlEncode(params.__get('subject', ''))
       var newsgroups = phpJs.rawUrlEncode(params.__get('newsgroups', ''))
-      var extra = params.__get('extra', '')
+      var extra      = params.__get('extra', '')
       var s
       var i
 
@@ -4910,34 +5948,47 @@ Latte.prototype.registerPlugin(
 
       s = '<a href="mailto:' + address + '" ' + extra + '>' + text + '</a>'
 
-      if (encode === 'javascript') {
-        s = "document.write('" + s + "');"
+      if (encode === 'javascript')
+      {
+        s            = "document.write('" + s + "');"
         var sEncoded = ''
-        for (i = 0; i < s.length; ++i) {
+        for (i = 0; i < s.length; ++i)
+        {
           sEncoded += '%' + phpJs.bin2Hex(s.substr(i, 1))
         }
         return '<script type="text/javascript">eval(unescape(\'' + sEncoded + "'))</script>"
-      } else if (encode === 'javascript_charcode') {
+      }
+      else if (encode === 'javascript_charcode')
+      {
         var codes = []
-        for (i = 0; i < s.length; ++i) {
+        for (i = 0; i < s.length; ++i)
+        {
           codes.push(phpJs.ord(s.substr(i, 1)))
         }
         return '<script type="text/javascript" language="javascript">\n<!--\n{document.write(String.fromCharCode(' + codes.join(',') + '))}\n//-->\n</script>\n'
-      } else if (encode === 'hex') {
-        if (address.match(/^.+\?.+$/)) {
+      }
+      else if (encode === 'hex')
+      {
+        if (address.match(/^.+\?.+$/))
+        {
           throw new Error('mailto: hex encoding does not work with extra attributes. Try javascript.')
         }
         var aEncoded = ''
-        for (i = 0; i < address.length; ++i) {
-          if (address.substr(i, 1).match(/\w/)) {
+        for (i = 0; i < address.length; ++i)
+        {
+          if (address.substr(i, 1).match(/\w/))
+          {
             aEncoded += '%' + phpJs.bin2Hex(address.substr(i, 1))
-          } else {
+          }
+          else
+          {
             aEncoded += address.substr(i, 1)
           }
         }
-        aEncoded = aEncoded.toLowerCase()
+        aEncoded     = aEncoded.toLowerCase()
         var tEncoded = ''
-        for (i = 0; i < text.length; ++i) {
+        for (i = 0; i < text.length; ++i)
+        {
           tEncoded += '&#x' + phpJs.bin2Hex(text.substr(i, 1)) + ';'
         }
         tEncoded = tEncoded.toLowerCase()
@@ -4950,9 +6001,10 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'function',
     'math',
-    function (params, data) {
+    function (params, data)
+    {
       var equation = params.__get('equation', null).replace(/pi\(\s*\)/g, 'PI')
-      equation = equation.replace(/ceil/g, 'Math.ceil')
+      equation     = equation.replace(/ceil/g, 'Math.ceil')
         .replace(/abs/g, 'Math.abs')
         .replace(/cos/g, 'Math.cos')
         .replace(/exp/g, 'Math.exp')
@@ -4969,35 +6021,44 @@ Latte.prototype.registerPlugin(
         .replace(/srans/g, 'Math.srans')
         .replace(/tan/g, 'Math.tan')
 
-      var words = equation.match(/\w+/g)
+      var words  = equation.match(/\w+/g)
       var i
       var j
       var tmp
-      var banned = ['ceil', 'abs', 'cos', 'exp', 'floor', 'log10', 'log',
-        'max', 'min', 'pi', 'pow', 'rand', 'round', 'sin', 'sqrt', 'srans', 'tan']
+      var banned = [
+        'ceil', 'abs', 'cos', 'exp', 'floor', 'log10', 'log',
+        'max', 'min', 'pi', 'pow', 'rand', 'round', 'sin', 'sqrt', 'srans', 'tan'
+      ]
 
-      for (i = 0; i < words.length; i++) {
-        for (j = 0; j < (words.length - 1); j++) {
-          if ((words[j] + '').length > (words[j + 1] + '').length) {
-            tmp = words[j]
-            words[j] = words[j + 1]
+      for (i = 0; i < words.length; i++)
+      {
+        for (j = 0; j < (words.length - 1); j++)
+        {
+          if ((words[j] + '').length > (words[j + 1] + '').length)
+          {
+            tmp          = words[j]
+            words[j]     = words[j + 1]
             words[j + 1] = tmp
           }
         }
       }
 
-      for (i = 0; i < words.length; i++) {
-        if (words[i] in params && banned.indexOf(words[i]) === -1) {
+      for (i = 0; i < words.length; i++)
+      {
+        if (words[i] in params && banned.indexOf(words[i]) === -1)
+        {
           equation = equation.replace(words[i], params[words[i]])
         }
       }
       var res = eval(equation) // eslint-disable-line no-eval
 
-      if ('format' in params) {
+      if ('format' in params)
+      {
         res = Number(phpJs.sprintf(params.format, res))
       }
 
-      if ('assign' in params) {
+      if ('assign' in params)
+      {
         this.assignVar(params.assign, res, data)
         return ''
       }
@@ -5008,46 +6069,54 @@ Latte.prototype.registerPlugin(
   Latte.prototype.registerPlugin(
     'block',
     'textformat',
-    function (params, content, data, repeat) {
-      if (!content) {
+    function (params, content, data, repeat)
+    {
+      if (!content)
+      {
         return ''
       }
 
       content = String(content)
 
-      var wrap = params.__get('wrap', 80)
-      var wrapChar = params.__get('wrap_char', '\n')
-      var wrapCut = params.__get('wrap_cut', false)
-      var indentChar = params.__get('indent_char', ' ')
-      var indent = params.__get('indent', 0)
-      var indentStr = (new Array(indent + 1)).join(indentChar)
-      var indentFirst = params.__get('indent_first', 0)
+      var wrap           = params.__get('wrap', 80)
+      var wrapChar       = params.__get('wrap_char', '\n')
+      var wrapCut        = params.__get('wrap_cut', false)
+      var indentChar     = params.__get('indent_char', ' ')
+      var indent         = params.__get('indent', 0)
+      var indentStr      = (new Array(indent + 1)).join(indentChar)
+      var indentFirst    = params.__get('indent_first', 0)
       var indentFirstStr = (new Array(indentFirst + 1)).join(indentChar)
 
       var style = params.__get('style', '')
 
-      if (style === 'email') {
+      if (style === 'email')
+      {
         wrap = 72
       }
 
       var paragraphs = content.split(/[\r\n]{2}/)
-      for (var i = 0; i < paragraphs.length; ++i) {
+      for (var i = 0; i < paragraphs.length; ++i)
+      {
         var p = paragraphs[i]
-        if (!p) {
+        if (!p)
+        {
           continue
         }
         p = p.replace(/^\s+|\s+$/, '').replace(/\s+/g, ' ')
-        if (indentFirst > 0) {
+        if (indentFirst > 0)
+        {
           p = indentFirstStr + p
         }
         p = this.modifiers.wordwrap(p, wrap - indent, wrapChar, wrapCut)
-        if (indent > 0) {
+        if (indent > 0)
+        {
           p = p.replace(/^/mg, indentStr)
         }
         paragraphs[i] = p
       }
       var s = paragraphs.join(wrapChar + wrapChar)
-      if ('assign' in params) {
+      if ('assign' in params)
+      {
         this.assignVar(params.assign, s, data)
         return ''
       }
@@ -5057,7 +6126,8 @@ Latte.prototype.registerPlugin(
 
 
 
-  String.prototype.fetch = function (data) { // eslint-disable-line no-extend-native
+  String.prototype.fetch = function (data)
+  { // eslint-disable-line no-extend-native
     var template = new Latte(this)
     return template.fetch(data)
   }
@@ -5391,7 +6461,1134 @@ function toString(value, glue, keyGlue) {
 
 module.exports = toString;
 },{}],21:[function(require,module,exports){
-var strtotime = require('locutus/php/datetime/strtotime');
+'use strict';
+
+var reSpace = '[ \\t]+';
+var reSpaceOpt = '[ \\t]*';
+var reMeridian = '(?:([ap])\\.?m\\.?([\\t ]|$))';
+var reHour24 = '(2[0-4]|[01]?[0-9])';
+var reHour24lz = '([01][0-9]|2[0-4])';
+var reHour12 = '(0?[1-9]|1[0-2])';
+var reMinute = '([0-5]?[0-9])';
+var reMinutelz = '([0-5][0-9])';
+var reSecond = '(60|[0-5]?[0-9])';
+var reSecondlz = '(60|[0-5][0-9])';
+var reFrac = '(?:\\.([0-9]+))';
+
+var reDayfull = 'sunday|monday|tuesday|wednesday|thursday|friday|saturday';
+var reDayabbr = 'sun|mon|tue|wed|thu|fri|sat';
+var reDaytext = reDayfull + '|' + reDayabbr + '|weekdays?';
+
+var reReltextnumber = 'first|second|third|fourth|fifth|sixth|seventh|eighth?|ninth|tenth|eleventh|twelfth';
+var reReltexttext = 'next|last|previous|this';
+var reReltextunit = '(?:second|sec|minute|min|hour|day|fortnight|forthnight|month|year)s?|weeks|' + reDaytext;
+
+var reYear = '([0-9]{1,4})';
+var reYear2 = '([0-9]{2})';
+var reYear4 = '([0-9]{4})';
+var reYear4withSign = '([+-]?[0-9]{4})';
+var reMonth = '(1[0-2]|0?[0-9])';
+var reMonthlz = '(0[0-9]|1[0-2])';
+var reDay = '(?:(3[01]|[0-2]?[0-9])(?:st|nd|rd|th)?)';
+var reDaylz = '(0[0-9]|[1-2][0-9]|3[01])';
+
+var reMonthFull = 'january|february|march|april|may|june|july|august|september|october|november|december';
+var reMonthAbbr = 'jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec';
+var reMonthroman = 'i[vx]|vi{0,3}|xi{0,2}|i{1,3}';
+var reMonthText = '(' + reMonthFull + '|' + reMonthAbbr + '|' + reMonthroman + ')';
+
+var reTzCorrection = '((?:GMT)?([+-])' + reHour24 + ':?' + reMinute + '?)';
+var reDayOfYear = '(00[1-9]|0[1-9][0-9]|[12][0-9][0-9]|3[0-5][0-9]|36[0-6])';
+var reWeekOfYear = '(0[1-9]|[1-4][0-9]|5[0-3])';
+
+var reDateNoYear = reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]*';
+
+function processMeridian(hour, meridian) {
+	meridian = meridian && meridian.toLowerCase();
+
+	switch (meridian) {
+		case 'a':
+			hour += hour === 12 ? -12 : 0;
+			break;
+		case 'p':
+			hour += hour !== 12 ? 12 : 0;
+			break;
+	}
+
+	return hour;
+}
+
+function processYear(yearStr) {
+	var year = +yearStr;
+
+	if (yearStr.length < 4 && year < 100) {
+		year += year < 70 ? 2000 : 1900;
+	}
+
+	return year;
+}
+
+function lookupMonth(monthStr) {
+	return {
+		jan: 0,
+		january: 0,
+		i: 0,
+		feb: 1,
+		february: 1,
+		ii: 1,
+		mar: 2,
+		march: 2,
+		iii: 2,
+		apr: 3,
+		april: 3,
+		iv: 3,
+		may: 4,
+		v: 4,
+		jun: 5,
+		june: 5,
+		vi: 5,
+		jul: 6,
+		july: 6,
+		vii: 6,
+		aug: 7,
+		august: 7,
+		viii: 7,
+		sep: 8,
+		sept: 8,
+		september: 8,
+		ix: 8,
+		oct: 9,
+		october: 9,
+		x: 9,
+		nov: 10,
+		november: 10,
+		xi: 10,
+		dec: 11,
+		december: 11,
+		xii: 11
+	}[monthStr.toLowerCase()];
+}
+
+function lookupWeekday(dayStr) {
+	var desiredSundayNumber = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+	var dayNumbers = {
+		mon: 1,
+		monday: 1,
+		tue: 2,
+		tuesday: 2,
+		wed: 3,
+		wednesday: 3,
+		thu: 4,
+		thursday: 4,
+		fri: 5,
+		friday: 5,
+		sat: 6,
+		saturday: 6,
+		sun: 0,
+		sunday: 0
+	};
+
+	return dayNumbers[dayStr.toLowerCase()] || desiredSundayNumber;
+}
+
+function lookupRelative(relText) {
+	var relativeNumbers = {
+		last: -1,
+		previous: -1,
+		this: 0,
+		first: 1,
+		next: 1,
+		second: 2,
+		third: 3,
+		fourth: 4,
+		fifth: 5,
+		sixth: 6,
+		seventh: 7,
+		eight: 8,
+		eighth: 8,
+		ninth: 9,
+		tenth: 10,
+		eleventh: 11,
+		twelfth: 12
+	};
+
+	var relativeBehavior = {
+		this: 1
+	};
+
+	var relTextLower = relText.toLowerCase();
+
+	return {
+		amount: relativeNumbers[relTextLower],
+		behavior: relativeBehavior[relTextLower] || 0
+	};
+}
+
+function processTzCorrection(tzOffset, oldValue) {
+	var reTzCorrectionLoose = /(?:GMT)?([+-])(\d+)(:?)(\d{0,2})/i;
+	tzOffset = tzOffset && tzOffset.match(reTzCorrectionLoose);
+
+	if (!tzOffset) {
+		return oldValue;
+	}
+
+	var sign = tzOffset[1] === '-' ? 1 : -1;
+	var hours = +tzOffset[2];
+	var minutes = +tzOffset[4];
+
+	if (!tzOffset[4] && !tzOffset[3]) {
+		minutes = Math.floor(hours % 100);
+		hours = Math.floor(hours / 100);
+	}
+
+	return sign * (hours * 60 + minutes);
+}
+
+var formats = {
+	yesterday: {
+		regex: /^yesterday/i,
+		name: 'yesterday',
+		callback: function callback() {
+			this.rd -= 1;
+			return this.resetTime();
+		}
+	},
+
+	now: {
+		regex: /^now/i,
+		name: 'now'
+		// do nothing
+	},
+
+	noon: {
+		regex: /^noon/i,
+		name: 'noon',
+		callback: function callback() {
+			return this.resetTime() && this.time(12, 0, 0, 0);
+		}
+	},
+
+	midnightOrToday: {
+		regex: /^(midnight|today)/i,
+		name: 'midnight | today',
+		callback: function callback() {
+			return this.resetTime();
+		}
+	},
+
+	tomorrow: {
+		regex: /^tomorrow/i,
+		name: 'tomorrow',
+		callback: function callback() {
+			this.rd += 1;
+			return this.resetTime();
+		}
+	},
+
+	timestamp: {
+		regex: /^@(-?\d+)/i,
+		name: 'timestamp',
+		callback: function callback(match, timestamp) {
+			this.rs += +timestamp;
+			this.y = 1970;
+			this.m = 0;
+			this.d = 1;
+			this.dates = 0;
+
+			return this.resetTime() && this.zone(0);
+		}
+	},
+
+	firstOrLastDay: {
+		regex: /^(first|last) day of/i,
+		name: 'firstdayof | lastdayof',
+		callback: function callback(match, day) {
+			if (day.toLowerCase() === 'first') {
+				this.firstOrLastDayOfMonth = 1;
+			} else {
+				this.firstOrLastDayOfMonth = -1;
+			}
+		}
+	},
+
+	backOrFrontOf: {
+		regex: RegExp('^(back|front) of ' + reHour24 + reSpaceOpt + reMeridian + '?', 'i'),
+		name: 'backof | frontof',
+		callback: function callback(match, side, hours, meridian) {
+			var back = side.toLowerCase() === 'back';
+			var hour = +hours;
+			var minute = 15;
+
+			if (!back) {
+				hour -= 1;
+				minute = 45;
+			}
+
+			hour = processMeridian(hour, meridian);
+
+			return this.resetTime() && this.time(hour, minute, 0, 0);
+		}
+	},
+
+	weekdayOf: {
+		regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reDayfull + '|' + reDayabbr + ')' + reSpace + 'of', 'i'),
+		name: 'weekdayof'
+		// todo
+	},
+
+	mssqltime: {
+		regex: RegExp('^' + reHour12 + ':' + reMinutelz + ':' + reSecondlz + '[:.]([0-9]+)' + reMeridian, 'i'),
+		name: 'mssqltime',
+		callback: function callback(match, hour, minute, second, frac, meridian) {
+			return this.time(processMeridian(+hour, meridian), +minute, +second, +frac.substr(0, 3));
+		}
+	},
+
+	timeLong12: {
+		regex: RegExp('^' + reHour12 + '[:.]' + reMinute + '[:.]' + reSecondlz + reSpaceOpt + reMeridian, 'i'),
+		name: 'timelong12',
+		callback: function callback(match, hour, minute, second, meridian) {
+			return this.time(processMeridian(+hour, meridian), +minute, +second, 0);
+		}
+	},
+
+	timeShort12: {
+		regex: RegExp('^' + reHour12 + '[:.]' + reMinutelz + reSpaceOpt + reMeridian, 'i'),
+		name: 'timeshort12',
+		callback: function callback(match, hour, minute, meridian) {
+			return this.time(processMeridian(+hour, meridian), +minute, 0, 0);
+		}
+	},
+
+	timeTiny12: {
+		regex: RegExp('^' + reHour12 + reSpaceOpt + reMeridian, 'i'),
+		name: 'timetiny12',
+		callback: function callback(match, hour, meridian) {
+			return this.time(processMeridian(+hour, meridian), 0, 0, 0);
+		}
+	},
+
+	soap: {
+		regex: RegExp('^' + reYear4 + '-' + reMonthlz + '-' + reDaylz + 'T' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reFrac + reTzCorrection + '?', 'i'),
+		name: 'soap',
+		callback: function callback(match, year, month, day, hour, minute, second, frac, tzCorrection) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, +frac.substr(0, 3)) && this.zone(processTzCorrection(tzCorrection));
+		}
+	},
+
+	wddx: {
+		regex: RegExp('^' + reYear4 + '-' + reMonth + '-' + reDay + 'T' + reHour24 + ':' + reMinute + ':' + reSecond),
+		name: 'wddx',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	exif: {
+		regex: RegExp('^' + reYear4 + ':' + reMonthlz + ':' + reDaylz + ' ' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz, 'i'),
+		name: 'exif',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	xmlRpc: {
+		regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + 'T' + reHour24 + ':' + reMinutelz + ':' + reSecondlz),
+		name: 'xmlrpc',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	xmlRpcNoColon: {
+		regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + '[Tt]' + reHour24 + reMinutelz + reSecondlz),
+		name: 'xmlrpcnocolon',
+		callback: function callback(match, year, month, day, hour, minute, second) {
+			return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	clf: {
+		regex: RegExp('^' + reDay + '/(' + reMonthAbbr + ')/' + reYear4 + ':' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reSpace + reTzCorrection, 'i'),
+		name: 'clf',
+		callback: function callback(match, day, month, year, hour, minute, second, tzCorrection) {
+			return this.ymd(+year, lookupMonth(month), +day) && this.time(+hour, +minute, +second, 0) && this.zone(processTzCorrection(tzCorrection));
+		}
+	},
+
+	iso8601long: {
+		regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond + reFrac, 'i'),
+		name: 'iso8601long',
+		callback: function callback(match, hour, minute, second, frac) {
+			return this.time(+hour, +minute, +second, +frac.substr(0, 3));
+		}
+	},
+
+	dateTextual: {
+		regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]+' + reYear, 'i'),
+		name: 'datetextual',
+		callback: function callback(match, month, day, year) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	pointedDate4: {
+		regex: RegExp('^' + reDay + '[.\\t-]' + reMonth + '[.-]' + reYear4),
+		name: 'pointeddate4',
+		callback: function callback(match, day, month, year) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	pointedDate2: {
+		regex: RegExp('^' + reDay + '[.\\t]' + reMonth + '\\.' + reYear2),
+		name: 'pointeddate2',
+		callback: function callback(match, day, month, year) {
+			return this.ymd(processYear(year), month - 1, +day);
+		}
+	},
+
+	timeLong24: {
+		regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond),
+		name: 'timelong24',
+		callback: function callback(match, hour, minute, second) {
+			return this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	dateNoColon: {
+		regex: RegExp('^' + reYear4 + reMonthlz + reDaylz),
+		name: 'datenocolon',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	pgydotd: {
+		regex: RegExp('^' + reYear4 + '\\.?' + reDayOfYear),
+		name: 'pgydotd',
+		callback: function callback(match, year, day) {
+			return this.ymd(+year, 0, +day);
+		}
+	},
+
+	timeShort24: {
+		regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute, 'i'),
+		name: 'timeshort24',
+		callback: function callback(match, hour, minute) {
+			return this.time(+hour, +minute, 0, 0);
+		}
+	},
+
+	iso8601noColon: {
+		regex: RegExp('^t?' + reHour24lz + reMinutelz + reSecondlz, 'i'),
+		name: 'iso8601nocolon',
+		callback: function callback(match, hour, minute, second) {
+			return this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	iso8601dateSlash: {
+		// eventhough the trailing slash is optional in PHP
+		// here it's mandatory and inputs without the slash
+		// are handled by dateslash
+		regex: RegExp('^' + reYear4 + '/' + reMonthlz + '/' + reDaylz + '/'),
+		name: 'iso8601dateslash',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	dateSlash: {
+		regex: RegExp('^' + reYear4 + '/' + reMonth + '/' + reDay),
+		name: 'dateslash',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	american: {
+		regex: RegExp('^' + reMonth + '/' + reDay + '/' + reYear),
+		name: 'american',
+		callback: function callback(match, month, day, year) {
+			return this.ymd(processYear(year), month - 1, +day);
+		}
+	},
+
+	americanShort: {
+		regex: RegExp('^' + reMonth + '/' + reDay),
+		name: 'americanshort',
+		callback: function callback(match, month, day) {
+			return this.ymd(this.y, month - 1, +day);
+		}
+	},
+
+	gnuDateShortOrIso8601date2: {
+		// iso8601date2 is complete subset of gnudateshort
+		regex: RegExp('^' + reYear + '-' + reMonth + '-' + reDay),
+		name: 'gnudateshort | iso8601date2',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(processYear(year), month - 1, +day);
+		}
+	},
+
+	iso8601date4: {
+		regex: RegExp('^' + reYear4withSign + '-' + reMonthlz + '-' + reDaylz),
+		name: 'iso8601date4',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(+year, month - 1, +day);
+		}
+	},
+
+	gnuNoColon: {
+		regex: RegExp('^t?' + reHour24lz + reMinutelz, 'i'),
+		name: 'gnunocolon',
+		callback: function callback(match, hour, minute) {
+			// this rule is a special case
+			// if time was already set once by any preceding rule, it sets the captured value as year
+			switch (this.times) {
+				case 0:
+					return this.time(+hour, +minute, 0, this.f);
+				case 1:
+					this.y = hour * 100 + +minute;
+					this.times++;
+
+					return true;
+				default:
+					return false;
+			}
+		}
+	},
+
+	gnuDateShorter: {
+		regex: RegExp('^' + reYear4 + '-' + reMonth),
+		name: 'gnudateshorter',
+		callback: function callback(match, year, month) {
+			return this.ymd(+year, month - 1, 1);
+		}
+	},
+
+	pgTextReverse: {
+		// note: allowed years are from 32-9999
+		// years below 32 should be treated as days in datefull
+		regex: RegExp('^' + '(\\d{3,4}|[4-9]\\d|3[2-9])-(' + reMonthAbbr + ')-' + reDaylz, 'i'),
+		name: 'pgtextreverse',
+		callback: function callback(match, year, month, day) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	dateFull: {
+		regex: RegExp('^' + reDay + '[ \\t.-]*' + reMonthText + '[ \\t.-]*' + reYear, 'i'),
+		name: 'datefull',
+		callback: function callback(match, day, month, year) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	dateNoDay: {
+		regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reYear4, 'i'),
+		name: 'datenoday',
+		callback: function callback(match, month, year) {
+			return this.ymd(+year, lookupMonth(month), 1);
+		}
+	},
+
+	dateNoDayRev: {
+		regex: RegExp('^' + reYear4 + '[ .\\t-]*' + reMonthText, 'i'),
+		name: 'datenodayrev',
+		callback: function callback(match, year, month) {
+			return this.ymd(+year, lookupMonth(month), 1);
+		}
+	},
+
+	pgTextShort: {
+		regex: RegExp('^(' + reMonthAbbr + ')-' + reDaylz + '-' + reYear, 'i'),
+		name: 'pgtextshort',
+		callback: function callback(match, month, day, year) {
+			return this.ymd(processYear(year), lookupMonth(month), +day);
+		}
+	},
+
+	dateNoYear: {
+		regex: RegExp('^' + reDateNoYear, 'i'),
+		name: 'datenoyear',
+		callback: function callback(match, month, day) {
+			return this.ymd(this.y, lookupMonth(month), +day);
+		}
+	},
+
+	dateNoYearRev: {
+		regex: RegExp('^' + reDay + '[ .\\t-]*' + reMonthText, 'i'),
+		name: 'datenoyearrev',
+		callback: function callback(match, day, month) {
+			return this.ymd(this.y, lookupMonth(month), +day);
+		}
+	},
+
+	isoWeekDay: {
+		regex: RegExp('^' + reYear4 + '-?W' + reWeekOfYear + '(?:-?([0-7]))?'),
+		name: 'isoweekday | isoweek',
+		callback: function callback(match, year, week, day) {
+			day = day ? +day : 1;
+
+			if (!this.ymd(+year, 0, 1)) {
+				return false;
+			}
+
+			// get day of week for Jan 1st
+			var dayOfWeek = new Date(this.y, this.m, this.d).getDay();
+
+			// and use the day to figure out the offset for day 1 of week 1
+			dayOfWeek = 0 - (dayOfWeek > 4 ? dayOfWeek - 7 : dayOfWeek);
+
+			this.rd += dayOfWeek + (week - 1) * 7 + day;
+		}
+	},
+
+	relativeText: {
+		regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reReltextunit + ')', 'i'),
+		name: 'relativetext',
+		callback: function callback(match, relValue, relUnit) {
+			// todo: implement handling of 'this time-unit'
+			// eslint-disable-next-line no-unused-vars
+			var _lookupRelative = lookupRelative(relValue),
+				amount = _lookupRelative.amount,
+				behavior = _lookupRelative.behavior;
+
+			switch (relUnit.toLowerCase()) {
+				case 'sec':
+				case 'secs':
+				case 'second':
+				case 'seconds':
+					this.rs += amount;
+					break;
+				case 'min':
+				case 'mins':
+				case 'minute':
+				case 'minutes':
+					this.ri += amount;
+					break;
+				case 'hour':
+				case 'hours':
+					this.rh += amount;
+					break;
+				case 'day':
+				case 'days':
+					this.rd += amount;
+					break;
+				case 'fortnight':
+				case 'fortnights':
+				case 'forthnight':
+				case 'forthnights':
+					this.rd += amount * 14;
+					break;
+				case 'week':
+				case 'weeks':
+					this.rd += amount * 7;
+					break;
+				case 'month':
+				case 'months':
+					this.rm += amount;
+					break;
+				case 'year':
+				case 'years':
+					this.ry += amount;
+					break;
+				case 'mon':
+				case 'monday':
+				case 'tue':
+				case 'tuesday':
+				case 'wed':
+				case 'wednesday':
+				case 'thu':
+				case 'thursday':
+				case 'fri':
+				case 'friday':
+				case 'sat':
+				case 'saturday':
+				case 'sun':
+				case 'sunday':
+					this.resetTime();
+					this.weekday = lookupWeekday(relUnit, 7);
+					this.weekdayBehavior = 1;
+					this.rd += (amount > 0 ? amount - 1 : amount) * 7;
+					break;
+				case 'weekday':
+				case 'weekdays':
+					// todo
+					break;
+			}
+		}
+	},
+
+	relative: {
+		regex: RegExp('^([+-]*)[ \\t]*(\\d+)' + reSpaceOpt + '(' + reReltextunit + '|week)', 'i'),
+		name: 'relative',
+		callback: function callback(match, signs, relValue, relUnit) {
+			var minuses = signs.replace(/[^-]/g, '').length;
+
+			var amount = +relValue * Math.pow(-1, minuses);
+
+			switch (relUnit.toLowerCase()) {
+				case 'sec':
+				case 'secs':
+				case 'second':
+				case 'seconds':
+					this.rs += amount;
+					break;
+				case 'min':
+				case 'mins':
+				case 'minute':
+				case 'minutes':
+					this.ri += amount;
+					break;
+				case 'hour':
+				case 'hours':
+					this.rh += amount;
+					break;
+				case 'day':
+				case 'days':
+					this.rd += amount;
+					break;
+				case 'fortnight':
+				case 'fortnights':
+				case 'forthnight':
+				case 'forthnights':
+					this.rd += amount * 14;
+					break;
+				case 'week':
+				case 'weeks':
+					this.rd += amount * 7;
+					break;
+				case 'month':
+				case 'months':
+					this.rm += amount;
+					break;
+				case 'year':
+				case 'years':
+					this.ry += amount;
+					break;
+				case 'mon':
+				case 'monday':
+				case 'tue':
+				case 'tuesday':
+				case 'wed':
+				case 'wednesday':
+				case 'thu':
+				case 'thursday':
+				case 'fri':
+				case 'friday':
+				case 'sat':
+				case 'saturday':
+				case 'sun':
+				case 'sunday':
+					this.resetTime();
+					this.weekday = lookupWeekday(relUnit, 7);
+					this.weekdayBehavior = 1;
+					this.rd += (amount > 0 ? amount - 1 : amount) * 7;
+					break;
+				case 'weekday':
+				case 'weekdays':
+					// todo
+					break;
+			}
+		}
+	},
+
+	dayText: {
+		regex: RegExp('^(' + reDaytext + ')', 'i'),
+		name: 'daytext',
+		callback: function callback(match, dayText) {
+			this.resetTime();
+			this.weekday = lookupWeekday(dayText, 0);
+
+			if (this.weekdayBehavior !== 2) {
+				this.weekdayBehavior = 1;
+			}
+		}
+	},
+
+	relativeTextWeek: {
+		regex: RegExp('^(' + reReltexttext + ')' + reSpace + 'week', 'i'),
+		name: 'relativetextweek',
+		callback: function callback(match, relText) {
+			this.weekdayBehavior = 2;
+
+			switch (relText.toLowerCase()) {
+				case 'this':
+					this.rd += 0;
+					break;
+				case 'next':
+					this.rd += 7;
+					break;
+				case 'last':
+				case 'previous':
+					this.rd -= 7;
+					break;
+			}
+
+			if (isNaN(this.weekday)) {
+				this.weekday = 1;
+			}
+		}
+	},
+
+	monthFullOrMonthAbbr: {
+		regex: RegExp('^(' + reMonthFull + '|' + reMonthAbbr + ')', 'i'),
+		name: 'monthfull | monthabbr',
+		callback: function callback(match, month) {
+			return this.ymd(this.y, lookupMonth(month), this.d);
+		}
+	},
+
+	tzCorrection: {
+		regex: RegExp('^' + reTzCorrection, 'i'),
+		name: 'tzcorrection',
+		callback: function callback(tzCorrection) {
+			return this.zone(processTzCorrection(tzCorrection));
+		}
+	},
+
+	ago: {
+		regex: /^ago/i,
+		name: 'ago',
+		callback: function callback() {
+			this.ry = -this.ry;
+			this.rm = -this.rm;
+			this.rd = -this.rd;
+			this.rh = -this.rh;
+			this.ri = -this.ri;
+			this.rs = -this.rs;
+			this.rf = -this.rf;
+		}
+	},
+
+	year4: {
+		regex: RegExp('^' + reYear4),
+		name: 'year4',
+		callback: function callback(match, year) {
+			this.y = +year;
+			return true;
+		}
+	},
+
+	whitespace: {
+		regex: /^[ .,\t]+/,
+		name: 'whitespace'
+		// do nothing
+	},
+
+	dateShortWithTimeLong: {
+		regex: RegExp('^' + reDateNoYear + 't?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond, 'i'),
+		name: 'dateshortwithtimelong',
+		callback: function callback(match, month, day, hour, minute, second) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(+hour, +minute, +second, 0);
+		}
+	},
+
+	dateShortWithTimeLong12: {
+		regex: RegExp('^' + reDateNoYear + reHour12 + '[:.]' + reMinute + '[:.]' + reSecondlz + reSpaceOpt + reMeridian, 'i'),
+		name: 'dateshortwithtimelong12',
+		callback: function callback(match, month, day, hour, minute, second, meridian) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(processMeridian(+hour, meridian), +minute, +second, 0);
+		}
+	},
+
+	dateShortWithTimeShort: {
+		regex: RegExp('^' + reDateNoYear + 't?' + reHour24 + '[:.]' + reMinute, 'i'),
+		name: 'dateshortwithtimeshort',
+		callback: function callback(match, month, day, hour, minute) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(+hour, +minute, 0, 0);
+		}
+	},
+
+	dateShortWithTimeShort12: {
+		regex: RegExp('^' + reDateNoYear + reHour12 + '[:.]' + reMinutelz + reSpaceOpt + reMeridian, 'i'),
+		name: 'dateshortwithtimeshort12',
+		callback: function callback(match, month, day, hour, minute, meridian) {
+			return this.ymd(this.y, lookupMonth(month), +day) && this.time(processMeridian(+hour, meridian), +minute, 0, 0);
+		}
+	}
+};
+
+var resultProto = {
+	// date
+	y: NaN,
+	m: NaN,
+	d: NaN,
+	// time
+	h: NaN,
+	i: NaN,
+	s: NaN,
+	f: NaN,
+
+	// relative shifts
+	ry: 0,
+	rm: 0,
+	rd: 0,
+	rh: 0,
+	ri: 0,
+	rs: 0,
+	rf: 0,
+
+	// weekday related shifts
+	weekday: NaN,
+	weekdayBehavior: 0,
+
+	// first or last day of month
+	// 0 none, 1 first, -1 last
+	firstOrLastDayOfMonth: 0,
+
+	// timezone correction in minutes
+	z: NaN,
+
+	// counters
+	dates: 0,
+	times: 0,
+	zones: 0,
+
+	// helper functions
+	ymd: function ymd(y, m, d) {
+		if (this.dates > 0) {
+			return false;
+		}
+
+		this.dates++;
+		this.y = y;
+		this.m = m;
+		this.d = d;
+		return true;
+	},
+	time: function time(h, i, s, f) {
+		if (this.times > 0) {
+			return false;
+		}
+
+		this.times++;
+		this.h = h;
+		this.i = i;
+		this.s = s;
+		this.f = f;
+
+		return true;
+	},
+	resetTime: function resetTime() {
+		this.h = 0;
+		this.i = 0;
+		this.s = 0;
+		this.f = 0;
+		this.times = 0;
+
+		return true;
+	},
+	zone: function zone(minutes) {
+		if (this.zones <= 1) {
+			this.zones++;
+			this.z = minutes;
+			return true;
+		}
+
+		return false;
+	},
+	toDate: function toDate(relativeTo) {
+		if (this.dates && !this.times) {
+			this.h = this.i = this.s = this.f = 0;
+		}
+
+		// fill holes
+		if (isNaN(this.y)) {
+			this.y = relativeTo.getFullYear();
+		}
+
+		if (isNaN(this.m)) {
+			this.m = relativeTo.getMonth();
+		}
+
+		if (isNaN(this.d)) {
+			this.d = relativeTo.getDate();
+		}
+
+		if (isNaN(this.h)) {
+			this.h = relativeTo.getHours();
+		}
+
+		if (isNaN(this.i)) {
+			this.i = relativeTo.getMinutes();
+		}
+
+		if (isNaN(this.s)) {
+			this.s = relativeTo.getSeconds();
+		}
+
+		if (isNaN(this.f)) {
+			this.f = relativeTo.getMilliseconds();
+		}
+
+		// adjust special early
+		switch (this.firstOrLastDayOfMonth) {
+			case 1:
+				this.d = 1;
+				break;
+			case -1:
+				this.d = 0;
+				this.m += 1;
+				break;
+		}
+
+		if (!isNaN(this.weekday)) {
+			var date = new Date(relativeTo.getTime());
+			date.setFullYear(this.y, this.m, this.d);
+			date.setHours(this.h, this.i, this.s, this.f);
+
+			var dow = date.getDay();
+
+			if (this.weekdayBehavior === 2) {
+				// To make "this week" work, where the current day of week is a "sunday"
+				if (dow === 0 && this.weekday !== 0) {
+					this.weekday = -6;
+				}
+
+				// To make "sunday this week" work, where the current day of week is not a "sunday"
+				if (this.weekday === 0 && dow !== 0) {
+					this.weekday = 7;
+				}
+
+				this.d -= dow;
+				this.d += this.weekday;
+			} else {
+				var diff = this.weekday - dow;
+
+				// some PHP magic
+				if (this.rd < 0 && diff < 0 || this.rd >= 0 && diff <= -this.weekdayBehavior) {
+					diff += 7;
+				}
+
+				if (this.weekday >= 0) {
+					this.d += diff;
+				} else {
+					this.d -= 7 - (Math.abs(this.weekday) - dow);
+				}
+
+				this.weekday = NaN;
+			}
+		}
+
+		// adjust relative
+		this.y += this.ry;
+		this.m += this.rm;
+		this.d += this.rd;
+
+		this.h += this.rh;
+		this.i += this.ri;
+		this.s += this.rs;
+		this.f += this.rf;
+
+		this.ry = this.rm = this.rd = 0;
+		this.rh = this.ri = this.rs = this.rf = 0;
+
+		var result = new Date(relativeTo.getTime());
+		// since Date constructor treats years <= 99 as 1900+
+		// it can't be used, thus this weird way
+		result.setFullYear(this.y, this.m, this.d);
+		result.setHours(this.h, this.i, this.s, this.f);
+
+		// note: this is done twice in PHP
+		// early when processing special relatives
+		// and late
+		// todo: check if the logic can be reduced
+		// to just one time action
+		switch (this.firstOrLastDayOfMonth) {
+			case 1:
+				result.setDate(1);
+				break;
+			case -1:
+				result.setMonth(result.getMonth() + 1, 0);
+				break;
+		}
+
+		// adjust timezone
+		if (!isNaN(this.z) && result.getTimezoneOffset() !== this.z) {
+			result.setUTCFullYear(result.getFullYear(), result.getMonth(), result.getDate());
+
+			result.setUTCHours(result.getHours(), result.getMinutes() + this.z, result.getSeconds(), result.getMilliseconds());
+		}
+
+		return result;
+	}
+};
+
+module.exports = function toTime(str, now) {
+	//       discuss at: https://locutus.io/php/toTime/
+	//      original by: Caio Ariede (https://caioariede.com)
+	//      improved by: Kevin van Zonneveld (https://kvz.io)
+	//      improved by: Caio Ariede (https://caioariede.com)
+	//      improved by: A. Matías Quezada (https://amatiasq.com)
+	//      improved by: preuter
+	//      improved by: Brett Zamir (https://brett-zamir.me)
+	//      improved by: Mirko Faber
+	//         input by: David
+	//      bugfixed by: Wagner B. Soares
+	//      bugfixed by: Artur Tchernychev
+	//      bugfixed by: Stephan Bösch-Plepelits (https://github.com/plepe)
+	// reimplemented by: Rafał Kukawski
+	//           note 1: Examples all have a fixed timestamp to prevent
+	//           note 1: tests to fail because of variable time(zones)
+	//        example 1: toTime('+1 day', 1129633200)
+	//        returns 1: 1129719600
+	//        example 2: toTime('+1 week 2 days 4 hours 2 seconds', 1129633200)
+	//        returns 2: 1130425202
+	//        example 3: toTime('last month', 1129633200)
+	//        returns 3: 1127041200
+	//        example 4: toTime('2009-05-04 08:30:00+00')
+	//        returns 4: 1241425800
+	//        example 5: toTime('2009-05-04 08:30:00+02:00')
+	//        returns 5: 1241418600
+
+	if (now == null) {
+		now = Math.floor(Date.now() / 1000);
+	}
+
+	// the rule order is important
+	// if multiple rules match, the longest match wins
+	// if multiple rules match the same string, the first match wins
+	var rules = [formats.yesterday, formats.now, formats.noon, formats.midnightOrToday, formats.tomorrow, formats.timestamp, formats.firstOrLastDay, formats.backOrFrontOf,
+		// formats.weekdayOf, // not yet implemented
+		formats.timeTiny12, formats.timeShort12, formats.timeLong12, formats.mssqltime, formats.timeShort24, formats.timeLong24, formats.iso8601long, formats.gnuNoColon, formats.iso8601noColon, formats.americanShort, formats.american, formats.iso8601date4, formats.iso8601dateSlash, formats.dateSlash, formats.gnuDateShortOrIso8601date2, formats.gnuDateShorter, formats.dateFull, formats.pointedDate4, formats.pointedDate2, formats.dateNoDay, formats.dateNoDayRev, formats.dateTextual, formats.dateNoYear, formats.dateNoYearRev, formats.dateNoColon, formats.xmlRpc, formats.xmlRpcNoColon, formats.soap, formats.wddx, formats.exif, formats.pgydotd, formats.isoWeekDay, formats.pgTextShort, formats.pgTextReverse, formats.clf, formats.year4, formats.ago, formats.dayText, formats.relativeTextWeek, formats.relativeText, formats.monthFullOrMonthAbbr, formats.tzCorrection, formats.dateShortWithTimeShort12, formats.dateShortWithTimeLong12, formats.dateShortWithTimeShort, formats.dateShortWithTimeLong, formats.relative, formats.whitespace];
+
+	var result = Object.create(resultProto);
+
+	while (str.length) {
+		var longestMatch = null;
+		var finalRule = null;
+
+		for (var i = 0, l = rules.length; i < l; i++) {
+			var format = rules[i];
+
+			var match = str.match(format.regex);
+
+			if (match) {
+				if (!longestMatch || match[0].length > longestMatch[0].length) {
+					longestMatch = match;
+					finalRule = format;
+				}
+			}
+		}
+
+		if (!finalRule || finalRule.callback && finalRule.callback.apply(result, longestMatch) === false) {
+			return false;
+		}
+
+		str = str.substr(longestMatch[0].length);
+		finalRule = null;
+		longestMatch = null;
+	}
+
+	return Math.floor(result.toDate(new Date(now * 1000)) / 1000);
+};
+},{}],22:[function(require,module,exports){
+var toTime = require('./toTime');
 
 function toUnixTime(date, preserveJsMs) {
 	date = ['undefined', 'null', 'false', 'true'].indexOf(String(date)) > -1 ? new Date() : date;
@@ -5406,7 +7603,7 @@ function toUnixTime(date, preserveJsMs) {
 	}
 
 	if (isNaN(date)) {
-		date = strtotime(date);
+		date = toTime(date);
 		return isNaN(date) || date === false ? NaN : date;
 	}
 
@@ -5419,7 +7616,7 @@ function toUnixTime(date, preserveJsMs) {
 }
 
 module.exports = toUnixTime;
-},{"locutus/php/datetime/strtotime":26}],22:[function(require,module,exports){
+},{"./toTime":21}],23:[function(require,module,exports){
 function toUpperCase(s, option, preserveCase) {
 	option = option != null ? option : null;
 	s = preserveCase || preserveCase == null ? String(s) : String(s).toLowerCase();
@@ -5442,7 +7639,7 @@ function toUpperCase(s, option, preserveCase) {
 }
 
 module.exports = toUpperCase;
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5512,20 +7709,20 @@ module.exports = function _phpCastString(value) {
   }
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 module.exports = function array_reverse(array, preserveKeys) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/array_reverse/
-  // original by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/array_reverse/
+  // original by: Kevin van Zonneveld (https://kvz.io)
   // improved by: Karol Kowalski
   //   example 1: array_reverse( [ 'php', '4.0', ['green', 'red'] ], true)
   //   returns 1: { 2: ['green', 'red'], 1: '4.0', 0: 'php'}
 
   var isArray = Object.prototype.toString.call(array) === '[object Array]';
   var tmpArr = preserveKeys ? {} : [];
-  var key;
+  var key = void 0;
 
   if (isArray && !preserveKeys) {
     return array.slice(0).reverse();
@@ -5554,19 +7751,19 @@ module.exports = function array_reverse(array, preserveKeys) {
   return tmpArr;
 };
 
-},{}],25:[function(require,module,exports){
-(function (global){
+},{}],26:[function(require,module,exports){
+(function (global){(function (){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 module.exports = function strftime(fmt, timestamp) {
-  //       discuss at: http://locutus.io/php/strftime/
-  //      original by: Blues (http://tech.bluesmoon.info/)
-  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  //       discuss at: https://locutus.io/php/strftime/
+  //      original by: Blues (https://tech.bluesmoon.info/)
+  // reimplemented by: Brett Zamir (https://brett-zamir.me)
   //         input by: Alex
-  //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //      improved by: Brett Zamir (http://brett-zamir.me)
+  //      bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //      improved by: Brett Zamir (https://brett-zamir.me)
   //           note 1: Uses global: locutus to store locale info
   //        example 1: strftime("%A", 1062462400); // Return value will depend on date and locale
   //        returns 1: 'Tuesday'
@@ -5754,1099 +7951,14 @@ module.exports = function strftime(fmt, timestamp) {
   return str;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../strings/setlocale":31}],26:[function(require,module,exports){
-'use strict';
-
-var reSpace = '[ \\t]+';
-var reSpaceOpt = '[ \\t]*';
-var reMeridian = '(?:([ap])\\.?m\\.?([\\t ]|$))';
-var reHour24 = '(2[0-4]|[01]?[0-9])';
-var reHour24lz = '([01][0-9]|2[0-4])';
-var reHour12 = '(0?[1-9]|1[0-2])';
-var reMinute = '([0-5]?[0-9])';
-var reMinutelz = '([0-5][0-9])';
-var reSecond = '(60|[0-5]?[0-9])';
-var reSecondlz = '(60|[0-5][0-9])';
-var reFrac = '(?:\\.([0-9]+))';
-
-var reDayfull = 'sunday|monday|tuesday|wednesday|thursday|friday|saturday';
-var reDayabbr = 'sun|mon|tue|wed|thu|fri|sat';
-var reDaytext = reDayfull + '|' + reDayabbr + '|weekdays?';
-
-var reReltextnumber = 'first|second|third|fourth|fifth|sixth|seventh|eighth?|ninth|tenth|eleventh|twelfth';
-var reReltexttext = 'next|last|previous|this';
-var reReltextunit = '(?:second|sec|minute|min|hour|day|fortnight|forthnight|month|year)s?|weeks|' + reDaytext;
-
-var reYear = '([0-9]{1,4})';
-var reYear2 = '([0-9]{2})';
-var reYear4 = '([0-9]{4})';
-var reYear4withSign = '([+-]?[0-9]{4})';
-var reMonth = '(1[0-2]|0?[0-9])';
-var reMonthlz = '(0[0-9]|1[0-2])';
-var reDay = '(?:(3[01]|[0-2]?[0-9])(?:st|nd|rd|th)?)';
-var reDaylz = '(0[0-9]|[1-2][0-9]|3[01])';
-
-var reMonthFull = 'january|february|march|april|may|june|july|august|september|october|november|december';
-var reMonthAbbr = 'jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec';
-var reMonthroman = 'i[vx]|vi{0,3}|xi{0,2}|i{1,3}';
-var reMonthText = '(' + reMonthFull + '|' + reMonthAbbr + '|' + reMonthroman + ')';
-
-var reTzCorrection = '((?:GMT)?([+-])' + reHour24 + ':?' + reMinute + '?)';
-var reDayOfYear = '(00[1-9]|0[1-9][0-9]|[12][0-9][0-9]|3[0-5][0-9]|36[0-6])';
-var reWeekOfYear = '(0[1-9]|[1-4][0-9]|5[0-3])';
-
-function processMeridian(hour, meridian) {
-  meridian = meridian && meridian.toLowerCase();
-
-  switch (meridian) {
-    case 'a':
-      hour += hour === 12 ? -12 : 0;
-      break;
-    case 'p':
-      hour += hour !== 12 ? 12 : 0;
-      break;
-  }
-
-  return hour;
-}
-
-function processYear(yearStr) {
-  var year = +yearStr;
-
-  if (yearStr.length < 4 && year < 100) {
-    year += year < 70 ? 2000 : 1900;
-  }
-
-  return year;
-}
-
-function lookupMonth(monthStr) {
-  return {
-    jan: 0,
-    january: 0,
-    i: 0,
-    feb: 1,
-    february: 1,
-    ii: 1,
-    mar: 2,
-    march: 2,
-    iii: 2,
-    apr: 3,
-    april: 3,
-    iv: 3,
-    may: 4,
-    v: 4,
-    jun: 5,
-    june: 5,
-    vi: 5,
-    jul: 6,
-    july: 6,
-    vii: 6,
-    aug: 7,
-    august: 7,
-    viii: 7,
-    sep: 8,
-    sept: 8,
-    september: 8,
-    ix: 8,
-    oct: 9,
-    october: 9,
-    x: 9,
-    nov: 10,
-    november: 10,
-    xi: 10,
-    dec: 11,
-    december: 11,
-    xii: 11
-  }[monthStr.toLowerCase()];
-}
-
-function lookupWeekday(dayStr) {
-  var desiredSundayNumber = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-  var dayNumbers = {
-    mon: 1,
-    monday: 1,
-    tue: 2,
-    tuesday: 2,
-    wed: 3,
-    wednesday: 3,
-    thu: 4,
-    thursday: 4,
-    fri: 5,
-    friday: 5,
-    sat: 6,
-    saturday: 6,
-    sun: 0,
-    sunday: 0
-  };
-
-  return dayNumbers[dayStr.toLowerCase()] || desiredSundayNumber;
-}
-
-function lookupRelative(relText) {
-  var relativeNumbers = {
-    last: -1,
-    previous: -1,
-    this: 0,
-    first: 1,
-    next: 1,
-    second: 2,
-    third: 3,
-    fourth: 4,
-    fifth: 5,
-    sixth: 6,
-    seventh: 7,
-    eight: 8,
-    eighth: 8,
-    ninth: 9,
-    tenth: 10,
-    eleventh: 11,
-    twelfth: 12
-  };
-
-  var relativeBehavior = {
-    this: 1
-  };
-
-  var relTextLower = relText.toLowerCase();
-
-  return {
-    amount: relativeNumbers[relTextLower],
-    behavior: relativeBehavior[relTextLower] || 0
-  };
-}
-
-function processTzCorrection(tzOffset, oldValue) {
-  var reTzCorrectionLoose = /(?:GMT)?([+-])(\d+)(:?)(\d{0,2})/i;
-  tzOffset = tzOffset && tzOffset.match(reTzCorrectionLoose);
-
-  if (!tzOffset) {
-    return oldValue;
-  }
-
-  var sign = tzOffset[1] === '-' ? 1 : -1;
-  var hours = +tzOffset[2];
-  var minutes = +tzOffset[4];
-
-  if (!tzOffset[4] && !tzOffset[3]) {
-    minutes = Math.floor(hours % 100);
-    hours = Math.floor(hours / 100);
-  }
-
-  return sign * (hours * 60 + minutes);
-}
-
-var formats = {
-  yesterday: {
-    regex: /^yesterday/i,
-    name: 'yesterday',
-    callback: function callback() {
-      this.rd -= 1;
-      return this.resetTime();
-    }
-  },
-
-  now: {
-    regex: /^now/i,
-    name: 'now'
-    // do nothing
-  },
-
-  noon: {
-    regex: /^noon/i,
-    name: 'noon',
-    callback: function callback() {
-      return this.resetTime() && this.time(12, 0, 0, 0);
-    }
-  },
-
-  midnightOrToday: {
-    regex: /^(midnight|today)/i,
-    name: 'midnight | today',
-    callback: function callback() {
-      return this.resetTime();
-    }
-  },
-
-  tomorrow: {
-    regex: /^tomorrow/i,
-    name: 'tomorrow',
-    callback: function callback() {
-      this.rd += 1;
-      return this.resetTime();
-    }
-  },
-
-  timestamp: {
-    regex: /^@(-?\d+)/i,
-    name: 'timestamp',
-    callback: function callback(match, timestamp) {
-      this.rs += +timestamp;
-      this.y = 1970;
-      this.m = 0;
-      this.d = 1;
-      this.dates = 0;
-
-      return this.resetTime() && this.zone(0);
-    }
-  },
-
-  firstOrLastDay: {
-    regex: /^(first|last) day of/i,
-    name: 'firstdayof | lastdayof',
-    callback: function callback(match, day) {
-      if (day.toLowerCase() === 'first') {
-        this.firstOrLastDayOfMonth = 1;
-      } else {
-        this.firstOrLastDayOfMonth = -1;
-      }
-    }
-  },
-
-  backOrFrontOf: {
-    regex: RegExp('^(back|front) of ' + reHour24 + reSpaceOpt + reMeridian + '?', 'i'),
-    name: 'backof | frontof',
-    callback: function callback(match, side, hours, meridian) {
-      var back = side.toLowerCase() === 'back';
-      var hour = +hours;
-      var minute = 15;
-
-      if (!back) {
-        hour -= 1;
-        minute = 45;
-      }
-
-      hour = processMeridian(hour, meridian);
-
-      return this.resetTime() && this.time(hour, minute, 0, 0);
-    }
-  },
-
-  weekdayOf: {
-    regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reDayfull + '|' + reDayabbr + ')' + reSpace + 'of', 'i'),
-    name: 'weekdayof'
-    // todo
-  },
-
-  mssqltime: {
-    regex: RegExp('^' + reHour12 + ':' + reMinutelz + ':' + reSecondlz + '[:.]([0-9]+)' + reMeridian, 'i'),
-    name: 'mssqltime',
-    callback: function callback(match, hour, minute, second, frac, meridian) {
-      return this.time(processMeridian(+hour, meridian), +minute, +second, +frac.substr(0, 3));
-    }
-  },
-
-  timeLong12: {
-    regex: RegExp('^' + reHour12 + '[:.]' + reMinute + '[:.]' + reSecondlz + reSpaceOpt + reMeridian, 'i'),
-    name: 'timelong12',
-    callback: function callback(match, hour, minute, second, meridian) {
-      return this.time(processMeridian(+hour, meridian), +minute, +second, 0);
-    }
-  },
-
-  timeShort12: {
-    regex: RegExp('^' + reHour12 + '[:.]' + reMinutelz + reSpaceOpt + reMeridian, 'i'),
-    name: 'timeshort12',
-    callback: function callback(match, hour, minute, meridian) {
-      return this.time(processMeridian(+hour, meridian), +minute, 0, 0);
-    }
-  },
-
-  timeTiny12: {
-    regex: RegExp('^' + reHour12 + reSpaceOpt + reMeridian, 'i'),
-    name: 'timetiny12',
-    callback: function callback(match, hour, meridian) {
-      return this.time(processMeridian(+hour, meridian), 0, 0, 0);
-    }
-  },
-
-  soap: {
-    regex: RegExp('^' + reYear4 + '-' + reMonthlz + '-' + reDaylz + 'T' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reFrac + reTzCorrection + '?', 'i'),
-    name: 'soap',
-    callback: function callback(match, year, month, day, hour, minute, second, frac, tzCorrection) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, +frac.substr(0, 3)) && this.zone(processTzCorrection(tzCorrection));
-    }
-  },
-
-  wddx: {
-    regex: RegExp('^' + reYear4 + '-' + reMonth + '-' + reDay + 'T' + reHour24 + ':' + reMinute + ':' + reSecond),
-    name: 'wddx',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  exif: {
-    regex: RegExp('^' + reYear4 + ':' + reMonthlz + ':' + reDaylz + ' ' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz, 'i'),
-    name: 'exif',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  xmlRpc: {
-    regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + 'T' + reHour24 + ':' + reMinutelz + ':' + reSecondlz),
-    name: 'xmlrpc',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  xmlRpcNoColon: {
-    regex: RegExp('^' + reYear4 + reMonthlz + reDaylz + '[Tt]' + reHour24 + reMinutelz + reSecondlz),
-    name: 'xmlrpcnocolon',
-    callback: function callback(match, year, month, day, hour, minute, second) {
-      return this.ymd(+year, month - 1, +day) && this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  clf: {
-    regex: RegExp('^' + reDay + '/(' + reMonthAbbr + ')/' + reYear4 + ':' + reHour24lz + ':' + reMinutelz + ':' + reSecondlz + reSpace + reTzCorrection, 'i'),
-    name: 'clf',
-    callback: function callback(match, day, month, year, hour, minute, second, tzCorrection) {
-      return this.ymd(+year, lookupMonth(month), +day) && this.time(+hour, +minute, +second, 0) && this.zone(processTzCorrection(tzCorrection));
-    }
-  },
-
-  iso8601long: {
-    regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond + reFrac, 'i'),
-    name: 'iso8601long',
-    callback: function callback(match, hour, minute, second, frac) {
-      return this.time(+hour, +minute, +second, +frac.substr(0, 3));
-    }
-  },
-
-  dateTextual: {
-    regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]+' + reYear, 'i'),
-    name: 'datetextual',
-    callback: function callback(match, month, day, year) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  pointedDate4: {
-    regex: RegExp('^' + reDay + '[.\\t-]' + reMonth + '[.-]' + reYear4),
-    name: 'pointeddate4',
-    callback: function callback(match, day, month, year) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  pointedDate2: {
-    regex: RegExp('^' + reDay + '[.\\t]' + reMonth + '\\.' + reYear2),
-    name: 'pointeddate2',
-    callback: function callback(match, day, month, year) {
-      return this.ymd(processYear(year), month - 1, +day);
-    }
-  },
-
-  timeLong24: {
-    regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute + '[:.]' + reSecond),
-    name: 'timelong24',
-    callback: function callback(match, hour, minute, second) {
-      return this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  dateNoColon: {
-    regex: RegExp('^' + reYear4 + reMonthlz + reDaylz),
-    name: 'datenocolon',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  pgydotd: {
-    regex: RegExp('^' + reYear4 + '\\.?' + reDayOfYear),
-    name: 'pgydotd',
-    callback: function callback(match, year, day) {
-      return this.ymd(+year, 0, +day);
-    }
-  },
-
-  timeShort24: {
-    regex: RegExp('^t?' + reHour24 + '[:.]' + reMinute, 'i'),
-    name: 'timeshort24',
-    callback: function callback(match, hour, minute) {
-      return this.time(+hour, +minute, 0, 0);
-    }
-  },
-
-  iso8601noColon: {
-    regex: RegExp('^t?' + reHour24lz + reMinutelz + reSecondlz, 'i'),
-    name: 'iso8601nocolon',
-    callback: function callback(match, hour, minute, second) {
-      return this.time(+hour, +minute, +second, 0);
-    }
-  },
-
-  iso8601dateSlash: {
-    // eventhough the trailing slash is optional in PHP
-    // here it's mandatory and inputs without the slash
-    // are handled by dateslash
-    regex: RegExp('^' + reYear4 + '/' + reMonthlz + '/' + reDaylz + '/'),
-    name: 'iso8601dateslash',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  dateSlash: {
-    regex: RegExp('^' + reYear4 + '/' + reMonth + '/' + reDay),
-    name: 'dateslash',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  american: {
-    regex: RegExp('^' + reMonth + '/' + reDay + '/' + reYear),
-    name: 'american',
-    callback: function callback(match, month, day, year) {
-      return this.ymd(processYear(year), month - 1, +day);
-    }
-  },
-
-  americanShort: {
-    regex: RegExp('^' + reMonth + '/' + reDay),
-    name: 'americanshort',
-    callback: function callback(match, month, day) {
-      return this.ymd(this.y, month - 1, +day);
-    }
-  },
-
-  gnuDateShortOrIso8601date2: {
-    // iso8601date2 is complete subset of gnudateshort
-    regex: RegExp('^' + reYear + '-' + reMonth + '-' + reDay),
-    name: 'gnudateshort | iso8601date2',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(processYear(year), month - 1, +day);
-    }
-  },
-
-  iso8601date4: {
-    regex: RegExp('^' + reYear4withSign + '-' + reMonthlz + '-' + reDaylz),
-    name: 'iso8601date4',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(+year, month - 1, +day);
-    }
-  },
-
-  gnuNoColon: {
-    regex: RegExp('^t' + reHour24lz + reMinutelz, 'i'),
-    name: 'gnunocolon',
-    callback: function callback(match, hour, minute) {
-      return this.time(+hour, +minute, 0, this.f);
-    }
-  },
-
-  gnuDateShorter: {
-    regex: RegExp('^' + reYear4 + '-' + reMonth),
-    name: 'gnudateshorter',
-    callback: function callback(match, year, month) {
-      return this.ymd(+year, month - 1, 1);
-    }
-  },
-
-  pgTextReverse: {
-    // note: allowed years are from 32-9999
-    // years below 32 should be treated as days in datefull
-    regex: RegExp('^' + '(\\d{3,4}|[4-9]\\d|3[2-9])-(' + reMonthAbbr + ')-' + reDaylz, 'i'),
-    name: 'pgtextreverse',
-    callback: function callback(match, year, month, day) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  dateFull: {
-    regex: RegExp('^' + reDay + '[ \\t.-]*' + reMonthText + '[ \\t.-]*' + reYear, 'i'),
-    name: 'datefull',
-    callback: function callback(match, day, month, year) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  dateNoDay: {
-    regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reYear4, 'i'),
-    name: 'datenoday',
-    callback: function callback(match, month, year) {
-      return this.ymd(+year, lookupMonth(month), 1);
-    }
-  },
-
-  dateNoDayRev: {
-    regex: RegExp('^' + reYear4 + '[ .\\t-]*' + reMonthText, 'i'),
-    name: 'datenodayrev',
-    callback: function callback(match, year, month) {
-      return this.ymd(+year, lookupMonth(month), 1);
-    }
-  },
-
-  pgTextShort: {
-    regex: RegExp('^(' + reMonthAbbr + ')-' + reDaylz + '-' + reYear, 'i'),
-    name: 'pgtextshort',
-    callback: function callback(match, month, day, year) {
-      return this.ymd(processYear(year), lookupMonth(month), +day);
-    }
-  },
-
-  dateNoYear: {
-    regex: RegExp('^' + reMonthText + '[ .\\t-]*' + reDay + '[,.stndrh\\t ]*', 'i'),
-    name: 'datenoyear',
-    callback: function callback(match, month, day) {
-      return this.ymd(this.y, lookupMonth(month), +day);
-    }
-  },
-
-  dateNoYearRev: {
-    regex: RegExp('^' + reDay + '[ .\\t-]*' + reMonthText, 'i'),
-    name: 'datenoyearrev',
-    callback: function callback(match, day, month) {
-      return this.ymd(this.y, lookupMonth(month), +day);
-    }
-  },
-
-  isoWeekDay: {
-    regex: RegExp('^' + reYear4 + '-?W' + reWeekOfYear + '(?:-?([0-7]))?'),
-    name: 'isoweekday | isoweek',
-    callback: function callback(match, year, week, day) {
-      day = day ? +day : 1;
-
-      if (!this.ymd(+year, 0, 1)) {
-        return false;
-      }
-
-      // get day of week for Jan 1st
-      var dayOfWeek = new Date(this.y, this.m, this.d).getDay();
-
-      // and use the day to figure out the offset for day 1 of week 1
-      dayOfWeek = 0 - (dayOfWeek > 4 ? dayOfWeek - 7 : dayOfWeek);
-
-      this.rd += dayOfWeek + (week - 1) * 7 + day;
-    }
-  },
-
-  relativeText: {
-    regex: RegExp('^(' + reReltextnumber + '|' + reReltexttext + ')' + reSpace + '(' + reReltextunit + ')', 'i'),
-    name: 'relativetext',
-    callback: function callback(match, relValue, relUnit) {
-      // todo: implement handling of 'this time-unit'
-      // eslint-disable-next-line no-unused-vars
-      var _lookupRelative = lookupRelative(relValue),
-          amount = _lookupRelative.amount,
-          behavior = _lookupRelative.behavior;
-
-      switch (relUnit.toLowerCase()) {
-        case 'sec':
-        case 'secs':
-        case 'second':
-        case 'seconds':
-          this.rs += amount;
-          break;
-        case 'min':
-        case 'mins':
-        case 'minute':
-        case 'minutes':
-          this.ri += amount;
-          break;
-        case 'hour':
-        case 'hours':
-          this.rh += amount;
-          break;
-        case 'day':
-        case 'days':
-          this.rd += amount;
-          break;
-        case 'fortnight':
-        case 'fortnights':
-        case 'forthnight':
-        case 'forthnights':
-          this.rd += amount * 14;
-          break;
-        case 'week':
-        case 'weeks':
-          this.rd += amount * 7;
-          break;
-        case 'month':
-        case 'months':
-          this.rm += amount;
-          break;
-        case 'year':
-        case 'years':
-          this.ry += amount;
-          break;
-        case 'mon':case 'monday':
-        case 'tue':case 'tuesday':
-        case 'wed':case 'wednesday':
-        case 'thu':case 'thursday':
-        case 'fri':case 'friday':
-        case 'sat':case 'saturday':
-        case 'sun':case 'sunday':
-          this.resetTime();
-          this.weekday = lookupWeekday(relUnit, 7);
-          this.weekdayBehavior = 1;
-          this.rd += (amount > 0 ? amount - 1 : amount) * 7;
-          break;
-        case 'weekday':
-        case 'weekdays':
-          // todo
-          break;
-      }
-    }
-  },
-
-  relative: {
-    regex: RegExp('^([+-]*)[ \\t]*(\\d+)' + reSpaceOpt + '(' + reReltextunit + '|week)', 'i'),
-    name: 'relative',
-    callback: function callback(match, signs, relValue, relUnit) {
-      var minuses = signs.replace(/[^-]/g, '').length;
-
-      var amount = +relValue * Math.pow(-1, minuses);
-
-      switch (relUnit.toLowerCase()) {
-        case 'sec':
-        case 'secs':
-        case 'second':
-        case 'seconds':
-          this.rs += amount;
-          break;
-        case 'min':
-        case 'mins':
-        case 'minute':
-        case 'minutes':
-          this.ri += amount;
-          break;
-        case 'hour':
-        case 'hours':
-          this.rh += amount;
-          break;
-        case 'day':
-        case 'days':
-          this.rd += amount;
-          break;
-        case 'fortnight':
-        case 'fortnights':
-        case 'forthnight':
-        case 'forthnights':
-          this.rd += amount * 14;
-          break;
-        case 'week':
-        case 'weeks':
-          this.rd += amount * 7;
-          break;
-        case 'month':
-        case 'months':
-          this.rm += amount;
-          break;
-        case 'year':
-        case 'years':
-          this.ry += amount;
-          break;
-        case 'mon':case 'monday':
-        case 'tue':case 'tuesday':
-        case 'wed':case 'wednesday':
-        case 'thu':case 'thursday':
-        case 'fri':case 'friday':
-        case 'sat':case 'saturday':
-        case 'sun':case 'sunday':
-          this.resetTime();
-          this.weekday = lookupWeekday(relUnit, 7);
-          this.weekdayBehavior = 1;
-          this.rd += (amount > 0 ? amount - 1 : amount) * 7;
-          break;
-        case 'weekday':
-        case 'weekdays':
-          // todo
-          break;
-      }
-    }
-  },
-
-  dayText: {
-    regex: RegExp('^(' + reDaytext + ')', 'i'),
-    name: 'daytext',
-    callback: function callback(match, dayText) {
-      this.resetTime();
-      this.weekday = lookupWeekday(dayText, 0);
-
-      if (this.weekdayBehavior !== 2) {
-        this.weekdayBehavior = 1;
-      }
-    }
-  },
-
-  relativeTextWeek: {
-    regex: RegExp('^(' + reReltexttext + ')' + reSpace + 'week', 'i'),
-    name: 'relativetextweek',
-    callback: function callback(match, relText) {
-      this.weekdayBehavior = 2;
-
-      switch (relText.toLowerCase()) {
-        case 'this':
-          this.rd += 0;
-          break;
-        case 'next':
-          this.rd += 7;
-          break;
-        case 'last':
-        case 'previous':
-          this.rd -= 7;
-          break;
-      }
-
-      if (isNaN(this.weekday)) {
-        this.weekday = 1;
-      }
-    }
-  },
-
-  monthFullOrMonthAbbr: {
-    regex: RegExp('^(' + reMonthFull + '|' + reMonthAbbr + ')', 'i'),
-    name: 'monthfull | monthabbr',
-    callback: function callback(match, month) {
-      return this.ymd(this.y, lookupMonth(month), this.d);
-    }
-  },
-
-  tzCorrection: {
-    regex: RegExp('^' + reTzCorrection, 'i'),
-    name: 'tzcorrection',
-    callback: function callback(tzCorrection) {
-      return this.zone(processTzCorrection(tzCorrection));
-    }
-  },
-
-  ago: {
-    regex: /^ago/i,
-    name: 'ago',
-    callback: function callback() {
-      this.ry = -this.ry;
-      this.rm = -this.rm;
-      this.rd = -this.rd;
-      this.rh = -this.rh;
-      this.ri = -this.ri;
-      this.rs = -this.rs;
-      this.rf = -this.rf;
-    }
-  },
-
-  gnuNoColon2: {
-    // second instance of gnunocolon, without leading 't'
-    // it's down here, because it is very generic (4 digits in a row)
-    // thus conflicts with many rules above
-    // only year4 should come afterwards
-    regex: RegExp('^' + reHour24lz + reMinutelz, 'i'),
-    name: 'gnunocolon',
-    callback: function callback(match, hour, minute) {
-      return this.time(+hour, +minute, 0, this.f);
-    }
-  },
-
-  year4: {
-    regex: RegExp('^' + reYear4),
-    name: 'year4',
-    callback: function callback(match, year) {
-      this.y = +year;
-      return true;
-    }
-  },
-
-  whitespace: {
-    regex: /^[ .,\t]+/,
-    name: 'whitespace'
-    // do nothing
-  },
-
-  any: {
-    regex: /^[\s\S]+/,
-    name: 'any',
-    callback: function callback() {
-      return false;
-    }
-  }
-};
-
-var resultProto = {
-  // date
-  y: NaN,
-  m: NaN,
-  d: NaN,
-  // time
-  h: NaN,
-  i: NaN,
-  s: NaN,
-  f: NaN,
-
-  // relative shifts
-  ry: 0,
-  rm: 0,
-  rd: 0,
-  rh: 0,
-  ri: 0,
-  rs: 0,
-  rf: 0,
-
-  // weekday related shifts
-  weekday: NaN,
-  weekdayBehavior: 0,
-
-  // first or last day of month
-  // 0 none, 1 first, -1 last
-  firstOrLastDayOfMonth: 0,
-
-  // timezone correction in minutes
-  z: NaN,
-
-  // counters
-  dates: 0,
-  times: 0,
-  zones: 0,
-
-  // helper functions
-  ymd: function ymd(y, m, d) {
-    if (this.dates > 0) {
-      return false;
-    }
-
-    this.dates++;
-    this.y = y;
-    this.m = m;
-    this.d = d;
-    return true;
-  },
-  time: function time(h, i, s, f) {
-    if (this.times > 0) {
-      return false;
-    }
-
-    this.times++;
-    this.h = h;
-    this.i = i;
-    this.s = s;
-    this.f = f;
-
-    return true;
-  },
-  resetTime: function resetTime() {
-    this.h = 0;
-    this.i = 0;
-    this.s = 0;
-    this.f = 0;
-    this.times = 0;
-
-    return true;
-  },
-  zone: function zone(minutes) {
-    if (this.zones <= 1) {
-      this.zones++;
-      this.z = minutes;
-      return true;
-    }
-
-    return false;
-  },
-  toDate: function toDate(relativeTo) {
-    if (this.dates && !this.times) {
-      this.h = this.i = this.s = this.f = 0;
-    }
-
-    // fill holes
-    if (isNaN(this.y)) {
-      this.y = relativeTo.getFullYear();
-    }
-
-    if (isNaN(this.m)) {
-      this.m = relativeTo.getMonth();
-    }
-
-    if (isNaN(this.d)) {
-      this.d = relativeTo.getDate();
-    }
-
-    if (isNaN(this.h)) {
-      this.h = relativeTo.getHours();
-    }
-
-    if (isNaN(this.i)) {
-      this.i = relativeTo.getMinutes();
-    }
-
-    if (isNaN(this.s)) {
-      this.s = relativeTo.getSeconds();
-    }
-
-    if (isNaN(this.f)) {
-      this.f = relativeTo.getMilliseconds();
-    }
-
-    // adjust special early
-    switch (this.firstOrLastDayOfMonth) {
-      case 1:
-        this.d = 1;
-        break;
-      case -1:
-        this.d = 0;
-        this.m += 1;
-        break;
-    }
-
-    if (!isNaN(this.weekday)) {
-      var date = new Date(relativeTo.getTime());
-      date.setFullYear(this.y, this.m, this.d);
-      date.setHours(this.h, this.i, this.s, this.f);
-
-      var dow = date.getDay();
-
-      if (this.weekdayBehavior === 2) {
-        // To make "this week" work, where the current day of week is a "sunday"
-        if (dow === 0 && this.weekday !== 0) {
-          this.weekday = -6;
-        }
-
-        // To make "sunday this week" work, where the current day of week is not a "sunday"
-        if (this.weekday === 0 && dow !== 0) {
-          this.weekday = 7;
-        }
-
-        this.d -= dow;
-        this.d += this.weekday;
-      } else {
-        var diff = this.weekday - dow;
-
-        // some PHP magic
-        if (this.rd < 0 && diff < 0 || this.rd >= 0 && diff <= -this.weekdayBehavior) {
-          diff += 7;
-        }
-
-        if (this.weekday >= 0) {
-          this.d += diff;
-        } else {
-          this.d -= 7 - (Math.abs(this.weekday) - dow);
-        }
-
-        this.weekday = NaN;
-      }
-    }
-
-    // adjust relative
-    this.y += this.ry;
-    this.m += this.rm;
-    this.d += this.rd;
-
-    this.h += this.rh;
-    this.i += this.ri;
-    this.s += this.rs;
-    this.f += this.rf;
-
-    this.ry = this.rm = this.rd = 0;
-    this.rh = this.ri = this.rs = this.rf = 0;
-
-    var result = new Date(relativeTo.getTime());
-    // since Date constructor treats years <= 99 as 1900+
-    // it can't be used, thus this weird way
-    result.setFullYear(this.y, this.m, this.d);
-    result.setHours(this.h, this.i, this.s, this.f);
-
-    // note: this is done twice in PHP
-    // early when processing special relatives
-    // and late
-    // todo: check if the logic can be reduced
-    // to just one time action
-    switch (this.firstOrLastDayOfMonth) {
-      case 1:
-        result.setDate(1);
-        break;
-      case -1:
-        result.setMonth(result.getMonth() + 1, 0);
-        break;
-    }
-
-    // adjust timezone
-    if (!isNaN(this.z) && result.getTimezoneOffset() !== this.z) {
-      result.setUTCFullYear(result.getFullYear(), result.getMonth(), result.getDate());
-
-      result.setUTCHours(result.getHours(), result.getMinutes() + this.z, result.getSeconds(), result.getMilliseconds());
-    }
-
-    return result;
-  }
-};
-
-module.exports = function strtotime(str, now) {
-  //       discuss at: http://locutus.io/php/strtotime/
-  //      original by: Caio Ariede (http://caioariede.com)
-  //      improved by: Kevin van Zonneveld (http://kvz.io)
-  //      improved by: Caio Ariede (http://caioariede.com)
-  //      improved by: A. Matías Quezada (http://amatiasq.com)
-  //      improved by: preuter
-  //      improved by: Brett Zamir (http://brett-zamir.me)
-  //      improved by: Mirko Faber
-  //         input by: David
-  //      bugfixed by: Wagner B. Soares
-  //      bugfixed by: Artur Tchernychev
-  //      bugfixed by: Stephan Bösch-Plepelits (http://github.com/plepe)
-  // reimplemented by: Rafał Kukawski
-  //           note 1: Examples all have a fixed timestamp to prevent
-  //           note 1: tests to fail because of variable time(zones)
-  //        example 1: strtotime('+1 day', 1129633200)
-  //        returns 1: 1129719600
-  //        example 2: strtotime('+1 week 2 days 4 hours 2 seconds', 1129633200)
-  //        returns 2: 1130425202
-  //        example 3: strtotime('last month', 1129633200)
-  //        returns 3: 1127041200
-  //        example 4: strtotime('2009-05-04 08:30:00+00')
-  //        returns 4: 1241425800
-  //        example 5: strtotime('2009-05-04 08:30:00+02:00')
-  //        returns 5: 1241418600
-  if (now == null) {
-    now = Math.floor(Date.now() / 1000);
-  }
-
-  // the rule order is very fragile
-  // as many formats are similar to others
-  // so small change can cause
-  // input misinterpretation
-  var rules = [formats.yesterday, formats.now, formats.noon, formats.midnightOrToday, formats.tomorrow, formats.timestamp, formats.firstOrLastDay, formats.backOrFrontOf,
-  // formats.weekdayOf, // not yet implemented
-  formats.mssqltime, formats.timeLong12, formats.timeShort12, formats.timeTiny12, formats.soap, formats.wddx, formats.exif, formats.xmlRpc, formats.xmlRpcNoColon, formats.clf, formats.iso8601long, formats.dateTextual, formats.pointedDate4, formats.pointedDate2, formats.timeLong24, formats.dateNoColon, formats.pgydotd, formats.timeShort24, formats.iso8601noColon,
-  // iso8601dateSlash needs to come before dateSlash
-  formats.iso8601dateSlash, formats.dateSlash, formats.american, formats.americanShort, formats.gnuDateShortOrIso8601date2, formats.iso8601date4, formats.gnuNoColon, formats.gnuDateShorter, formats.pgTextReverse, formats.dateFull, formats.dateNoDay, formats.dateNoDayRev, formats.pgTextShort, formats.dateNoYear, formats.dateNoYearRev, formats.isoWeekDay, formats.relativeText, formats.relative, formats.dayText, formats.relativeTextWeek, formats.monthFullOrMonthAbbr, formats.tzCorrection, formats.ago, formats.gnuNoColon2, formats.year4,
-  // note: the two rules below
-  // should always come last
-  formats.whitespace, formats.any];
-
-  var result = Object.create(resultProto);
-
-  while (str.length) {
-    for (var i = 0, l = rules.length; i < l; i++) {
-      var format = rules[i];
-
-      var match = str.match(format.regex);
-
-      if (match) {
-        // care only about false results. Ignore other values
-        if (format.callback && format.callback.apply(result, match) === false) {
-          return false;
-        }
-
-        str = str.substr(match[0].length);
-        break;
-      }
-    }
-  }
-
-  return Math.floor(result.toDate(new Date(now * 1000)) / 1000);
-};
-
-},{}],27:[function(require,module,exports){
-(function (process){
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../strings/setlocale":31}],27:[function(require,module,exports){
+(function (process){(function (){
 'use strict';
 
 module.exports = function getenv(varname) {
-  //  discuss at: http://locutus.io/php/getenv/
-  // original by: Brett Zamir (http://brett-zamir.me)
+  //  discuss at: https://locutus.io/php/getenv/
+  // original by: Brett Zamir (https://brett-zamir.me)
   //   example 1: getenv('LC_ALL')
   //   returns 1: false
 
@@ -6857,15 +7969,15 @@ module.exports = function getenv(varname) {
   return process.env[varname];
 };
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 },{"_process":37}],28:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 module.exports = function explode(delimiter, string, limit) {
-  //  discuss at: http://locutus.io/php/explode/
-  // original by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/explode/
+  // original by: Kevin van Zonneveld (https://kvz.io)
   //   example 1: explode(' ', 'Kevin van Zonneveld')
   //   returns 1: [ 'Kevin', 'van', 'Zonneveld' ]
 
@@ -6916,18 +8028,18 @@ module.exports = function explode(delimiter, string, limit) {
 'use strict';
 
 module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEncode) {
-  //       discuss at: http://locutus.io/php/htmlspecialchars/
+  //       discuss at: https://locutus.io/php/htmlspecialchars/
   //      original by: Mirek Slugen
-  //      improved by: Kevin van Zonneveld (http://kvz.io)
+  //      improved by: Kevin van Zonneveld (https://kvz.io)
   //      bugfixed by: Nathan
   //      bugfixed by: Arno
-  //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //       revised by: Kevin van Zonneveld (http://kvz.io)
+  //      bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //      bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //       revised by: Kevin van Zonneveld (https://kvz.io)
   //         input by: Ratheous
-  //         input by: Mailfaker (http://www.weedem.fr/)
+  //         input by: Mailfaker (https://www.weedem.fr/)
   //         input by: felix
-  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  // reimplemented by: Brett Zamir (https://brett-zamir.me)
   //           note 1: charset argument not supported
   //        example 1: htmlspecialchars("<a href='test'>Test</a>", 'ENT_QUOTES')
   //        returns 1: '&lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;'
@@ -6953,12 +8065,12 @@ module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEn
   string = string.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   var OPTS = {
-    'ENT_NOQUOTES': 0,
-    'ENT_HTML_QUOTE_SINGLE': 1,
-    'ENT_HTML_QUOTE_DOUBLE': 2,
-    'ENT_COMPAT': 2,
-    'ENT_QUOTES': 3,
-    'ENT_IGNORE': 4
+    ENT_NOQUOTES: 0,
+    ENT_HTML_QUOTE_SINGLE: 1,
+    ENT_HTML_QUOTE_DOUBLE: 2,
+    ENT_COMPAT: 2,
+    ENT_QUOTES: 3,
+    ENT_IGNORE: 4
   };
   if (quoteStyle === 0) {
     noquotes = true;
@@ -6991,26 +8103,26 @@ module.exports = function htmlspecialchars(string, quoteStyle, charset, doubleEn
 
 module.exports = function number_format(number, decimals, decPoint, thousandsSep) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/number_format/
-  // original by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  // improved by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/number_format/
+  // original by: Jonas Raoni Soares Silva (https://www.jsfromhell.com)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
   // improved by: davook
-  // improved by: Brett Zamir (http://brett-zamir.me)
-  // improved by: Brett Zamir (http://brett-zamir.me)
+  // improved by: Brett Zamir (https://brett-zamir.me)
+  // improved by: Brett Zamir (https://brett-zamir.me)
   // improved by: Theriault (https://github.com/Theriault)
-  // improved by: Kevin van Zonneveld (http://kvz.io)
-  // bugfixed by: Michael White (http://getsprink.com)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
+  // bugfixed by: Michael White (https://getsprink.com)
   // bugfixed by: Benjamin Lupton
-  // bugfixed by: Allan Jensen (http://www.winternet.no)
+  // bugfixed by: Allan Jensen (https://www.winternet.no)
   // bugfixed by: Howard Yeend
   // bugfixed by: Diogo Resende
   // bugfixed by: Rival
-  // bugfixed by: Brett Zamir (http://brett-zamir.me)
-  //  revised by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  //  revised by: Luke Smith (http://lucassmith.name)
-  //    input by: Kheang Hok Chin (http://www.distantia.ca/)
+  // bugfixed by: Brett Zamir (https://brett-zamir.me)
+  //  revised by: Jonas Raoni Soares Silva (https://www.jsfromhell.com)
+  //  revised by: Luke Smith (https://lucassmith.name)
+  //    input by: Kheang Hok Chin (https://www.distantia.ca/)
   //    input by: Jay Klehr
-  //    input by: Amir Habibi (http://www.residence-mixte.com/)
+  //    input by: Amir Habibi (https://www.residence-mixte.com/)
   //    input by: Amirouche
   //   example 1: number_format(1234.56)
   //   returns 1: '1,235'
@@ -7075,21 +8187,21 @@ module.exports = function number_format(number, decimals, decPoint, thousandsSep
 };
 
 },{}],31:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 module.exports = function setlocale(category, locale) {
-  //  discuss at: http://locutus.io/php/setlocale/
-  // original by: Brett Zamir (http://brett-zamir.me)
-  // original by: Blues (http://hacks.bluesmoon.info/strftime/strftime.js)
-  // original by: YUI Library (http://developer.yahoo.com/yui/docs/YAHOO.util.DateLocale.html)
+  //  discuss at: https://locutus.io/php/setlocale/
+  // original by: Brett Zamir (https://brett-zamir.me)
+  // original by: Blues (https://hacks.bluesmoon.info/strftime/strftime.js)
+  // original by: YUI Library (https://developer.yahoo.com/yui/docs/YAHOO.util.DateLocale.html)
   //      note 1: Is extensible, but currently only implements locales en,
   //      note 1: en_US, en_GB, en_AU, fr, and fr_CA for LC_TIME only; C for LC_CTYPE;
   //      note 1: C and en for LC_MONETARY/LC_NUMERIC; en for LC_COLLATE
   //      note 1: Uses global: locutus to store locale info
-  //      note 1: Consider using http://demo.icu-project.org/icu-bin/locexp as basis for localization (as in i18n_loc_set_default())
+  //      note 1: Consider using https://demo.icu-project.org/icu-bin/locexp as basis for localization (as in i18n_loc_set_default())
   //      note 2: This function tries to establish the locale via the `window` global.
   //      note 2: This feature will not work in Node and hence is Browser-only
   //   example 1: setlocale('LC_ALL', 'en_US')
@@ -7108,25 +8220,25 @@ module.exports = function setlocale(category, locale) {
       return new Date(orig);
     }
     var newObj = {};
-    for (var i in orig) {
-      if (_typeof(orig[i]) === 'object') {
-        newObj[i] = _copy(orig[i]);
+    for (var _i in orig) {
+      if (_typeof(orig[_i]) === 'object') {
+        newObj[_i] = _copy(orig[_i]);
       } else {
-        newObj[i] = orig[i];
+        newObj[_i] = orig[_i];
       }
     }
     return newObj;
   };
 
   // Function usable by a ngettext implementation (apparently not an accessible part of setlocale(),
-  // but locale-specific) See http://www.gnu.org/software/gettext/manual/gettext.html#Plural-forms
+  // but locale-specific) See https://www.gnu.org/software/gettext/manual/gettext.html#Plural-forms
   // though amended with others from https://developer.mozilla.org/En/Localization_and_Plurals (new
   // categories noted with "MDC" below, though not sure of whether there is a convention for the
   // relative order of these newer groups as far as ngettext) The function name indicates the number
-  // of plural forms (nplural) Need to look into http://cldr.unicode.org/ (maybe future JavaScript);
+  // of plural forms (nplural) Need to look into https://cldr.unicode.org/ (maybe future JavaScript);
   // Dojo has some functions (under new BSD), including JSON conversions of LDML XML from CLDR:
-  // http://bugs.dojotoolkit.org/browser/dojo/trunk/cldr and docs at
-  // http://api.dojotoolkit.org/jsdoc/HEAD/dojo.cldr
+  // https://bugs.dojotoolkit.org/browser/dojo/trunk/cldr and docs at
+  // https://api.dojotoolkit.org/jsdoc/HEAD/dojo.cldr
 
   // var _nplurals1 = function (n) {
   //   // e.g., Japanese
@@ -7154,12 +8266,12 @@ module.exports = function setlocale(category, locale) {
     $locutus.php.locales = {};
 
     $locutus.php.locales.en = {
-      'LC_COLLATE': function LC_COLLATE(str1, str2) {
+      LC_COLLATE: function LC_COLLATE(str1, str2) {
         // @todo: This one taken from strcmp, but need for other locales; we don't use localeCompare
         // since its locale is not settable
         return str1 === str2 ? 0 : str1 > str2 ? 1 : -1;
       },
-      'LC_CTYPE': {
+      LC_CTYPE: {
         // Need to change any of these for English as opposed to C?
         an: /^[A-Za-z\d]+$/g,
         al: /^[A-Za-z]+$/g,
@@ -7177,7 +8289,7 @@ module.exports = function setlocale(category, locale) {
         lower: 'abcdefghijklmnopqrstuvwxyz',
         upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       },
-      'LC_TIME': {
+      LC_TIME: {
         // Comments include nl_langinfo() constant equivalents and any
         // changes from Blues' implementation
         a: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -7200,7 +8312,7 @@ module.exports = function setlocale(category, locale) {
         // D_FMT // switched order of %m and %d; changed %y to %Y (C uses %y)
         X: '%r',
         // T_FMT // changed from %T to %r  (%T is default for C, not English US)
-        // Following are from nl_langinfo() or http://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
+        // Following are from nl_langinfo() or https://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
         alt_digits: '',
         // e.g., ordinal
         ERA: '',
@@ -7211,7 +8323,7 @@ module.exports = function setlocale(category, locale) {
       },
       // Assuming distinction between numeric and monetary is thus:
       // See below for C locale
-      'LC_MONETARY': {
+      LC_MONETARY: {
         // based on Windows "english" (English_United States.1252) locale
         int_curr_symbol: 'USD',
         currency_symbol: '$',
@@ -7242,13 +8354,13 @@ module.exports = function setlocale(category, locale) {
         // succeeds curr. symbol
         n_sign_posn: 0 // see p_sign_posn
       },
-      'LC_NUMERIC': {
+      LC_NUMERIC: {
         // based on Windows "english" (English_United States.1252) locale
         decimal_point: '.',
         thousands_sep: ',',
         grouping: [3] // see mon_grouping, but for non-monetary values (use thousands_sep)
       },
-      'LC_MESSAGES': {
+      LC_MESSAGES: {
         YESEXPR: '^[yY].*',
         NOEXPR: '^[nN].*',
         YESSTR: '',
@@ -7326,8 +8438,8 @@ module.exports = function setlocale(category, locale) {
     // Try to establish the locale via the `window` global
     if (typeof window !== 'undefined' && window.document) {
       var d = window.document;
-      var NS_XHTML = 'http://www.w3.org/1999/xhtml';
-      var NS_XML = 'http://www.w3.org/XML/1998/namespace';
+      var NS_XHTML = 'https://www.w3.org/1999/xhtml';
+      var NS_XML = 'https://www.w3.org/XML/1998/namespace';
       if (d.getElementsByTagNameNS && d.getElementsByTagNameNS(NS_XHTML, 'html')[0]) {
         if (d.getElementsByTagNameNS(NS_XHTML, 'html')[0].getAttributeNS && d.getElementsByTagNameNS(NS_XHTML, 'html')[0].getAttributeNS(NS_XML, 'lang')) {
           $locutus.php.locale = d.getElementsByTagName(NS_XHTML, 'html')[0].getAttributeNS(NS_XML, 'lang');
@@ -7351,18 +8463,18 @@ module.exports = function setlocale(category, locale) {
 
   if (!$locutus.php.localeCategories) {
     $locutus.php.localeCategories = {
-      'LC_COLLATE': $locutus.php.locale,
+      LC_COLLATE: $locutus.php.locale,
       // for string comparison, see strcoll()
-      'LC_CTYPE': $locutus.php.locale,
+      LC_CTYPE: $locutus.php.locale,
       // for character classification and conversion, for example strtoupper()
-      'LC_MONETARY': $locutus.php.locale,
+      LC_MONETARY: $locutus.php.locale,
       // for localeconv()
-      'LC_NUMERIC': $locutus.php.locale,
+      LC_NUMERIC: $locutus.php.locale,
       // for decimal separator (See also localeconv())
-      'LC_TIME': $locutus.php.locale,
+      LC_TIME: $locutus.php.locale,
       // for date and time formatting with strftime()
       // for system responses (available if PHP was compiled with libintl):
-      'LC_MESSAGES': $locutus.php.locale
+      LC_MESSAGES: $locutus.php.locale
     };
   }
 
@@ -7411,24 +8523,24 @@ module.exports = function setlocale(category, locale) {
   return locale;
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../info/getenv":27}],32:[function(require,module,exports){
 'use strict';
 
 module.exports = function str_pad(input, padLength, padString, padType) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/str_pad/
-  // original by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: Michael White (http://getsprink.com)
+  //  discuss at: https://locutus.io/php/str_pad/
+  // original by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: Michael White (https://getsprink.com)
   //    input by: Marco van Oort
-  // bugfixed by: Brett Zamir (http://brett-zamir.me)
+  // bugfixed by: Brett Zamir (https://brett-zamir.me)
   //   example 1: str_pad('Kevin van Zonneveld', 30, '-=', 'STR_PAD_LEFT')
   //   returns 1: '-=-=-=-=-=-Kevin van Zonneveld'
   //   example 2: str_pad('Kevin van Zonneveld', 30, '-', 'STR_PAD_BOTH')
   //   returns 2: '------Kevin van Zonneveld-----'
 
   var half = '';
-  var padToGo;
+  var padToGo = void 0;
 
   var _strPadRepeater = function _strPadRepeater(s, len) {
     var collect = '';
@@ -7467,10 +8579,10 @@ module.exports = function str_pad(input, padLength, padString, padType) {
 
 module.exports = function str_repeat(input, multiplier) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/str_repeat/
-  // original by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  // improved by: Ian Carter (http://euona.com/)
+  //  discuss at: https://locutus.io/php/str_repeat/
+  // original by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: Jonas Raoni Soares Silva (https://www.jsfromhell.com)
+  // improved by: Ian Carter (https://euona.com/)
   //   example 1: str_repeat('-=', 10)
   //   returns 1: '-=-=-=-=-=-=-=-=-=-='
 
@@ -7494,32 +8606,32 @@ module.exports = function str_repeat(input, multiplier) {
 
 module.exports = function strip_tags(input, allowed) {
   // eslint-disable-line camelcase
-  //  discuss at: http://locutus.io/php/strip_tags/
-  // original by: Kevin van Zonneveld (http://kvz.io)
+  //  discuss at: https://locutus.io/php/strip_tags/
+  // original by: Kevin van Zonneveld (https://kvz.io)
   // improved by: Luke Godfrey
-  // improved by: Kevin van Zonneveld (http://kvz.io)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
   //    input by: Pul
   //    input by: Alex
   //    input by: Marc Palau
-  //    input by: Brett Zamir (http://brett-zamir.me)
+  //    input by: Brett Zamir (https://brett-zamir.me)
   //    input by: Bobby Drake
   //    input by: Evertjan Garretsen
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
   // bugfixed by: Onno Marsman (https://twitter.com/onnomarsman)
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
   // bugfixed by: Eric Nagel
-  // bugfixed by: Kevin van Zonneveld (http://kvz.io)
+  // bugfixed by: Kevin van Zonneveld (https://kvz.io)
   // bugfixed by: Tomasz Wesolowski
   // bugfixed by: Tymon Sturgeon (https://scryptonite.com)
   // bugfixed by: Tim de Koning (https://www.kingsquare.nl)
-  //  revised by: Rafał Kukawski (http://blog.kukawski.pl)
+  //  revised by: Rafał Kukawski (https://blog.kukawski.pl)
   //   example 1: strip_tags('<p>Kevin</p> <br /><b>van</b> <i>Zonneveld</i>', '<i><b>')
   //   returns 1: 'Kevin <b>van</b> <i>Zonneveld</i>'
   //   example 2: strip_tags('<p>Kevin <img src="someimage.png" onmouseover="someFunction()">van <i>Zonneveld</i></p>', '<p>')
   //   returns 2: '<p>Kevin van Zonneveld</p>'
-  //   example 3: strip_tags("<a href='http://kvz.io'>Kevin van Zonneveld</a>", "<a>")
-  //   returns 3: "<a href='http://kvz.io'>Kevin van Zonneveld</a>"
+  //   example 3: strip_tags("<a href='https://kvz.io'>Kevin van Zonneveld</a>", "<a>")
+  //   returns 3: "<a href='https://kvz.io'>Kevin van Zonneveld</a>"
   //   example 4: strip_tags('1 < 5 5 > 1')
   //   returns 4: '1 < 5 5 > 1'
   //   example 5: strip_tags('1 <br/> 1')
@@ -7559,14 +8671,14 @@ module.exports = function strip_tags(input, allowed) {
   }
 };
 
-},{"../_helpers/_phpCastString":23}],35:[function(require,module,exports){
+},{"../_helpers/_phpCastString":24}],35:[function(require,module,exports){
 'use strict';
 
 module.exports = function strrev(string) {
-  //       discuss at: http://locutus.io/php/strrev/
-  //      original by: Kevin van Zonneveld (http://kvz.io)
+  //       discuss at: https://locutus.io/php/strrev/
+  //      original by: Kevin van Zonneveld (https://kvz.io)
   //      bugfixed by: Onno Marsman (https://twitter.com/onnomarsman)
-  // reimplemented by: Brett Zamir (http://brett-zamir.me)
+  // reimplemented by: Brett Zamir (https://brett-zamir.me)
   //        example 1: strrev('Kevin van Zonneveld')
   //        returns 1: 'dlevennoZ nav niveK'
   //        example 2: strrev('a\u0301haB')
@@ -7581,7 +8693,7 @@ module.exports = function strrev(string) {
   // out if you don't care about combining characters
   // Keep Unicode combining characters together with the character preceding
   // them and which they are modifying (as in PHP 6)
-  // See http://unicode.org/reports/tr44/#Property_Table (Me+Mn)
+  // See https://unicode.org/reports/tr44/#Property_Table (Me+Mn)
   // We also add the low surrogate range at the beginning here so it will be
   // maintained with its preceding high surrogate
 
@@ -7598,12 +8710,12 @@ module.exports = function strrev(string) {
 'use strict';
 
 module.exports = function trim(str, charlist) {
-  //  discuss at: http://locutus.io/php/trim/
-  // original by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: mdsjack (http://www.mdsjack.bo.it)
-  // improved by: Alexander Ermolaev (http://snippets.dzone.com/user/AlexanderErmolaev)
-  // improved by: Kevin van Zonneveld (http://kvz.io)
-  // improved by: Steven Levithan (http://blog.stevenlevithan.com)
+  //  discuss at: https://locutus.io/php/trim/
+  // original by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: mdsjack (https://www.mdsjack.bo.it)
+  // improved by: Alexander Ermolaev (https://snippets.dzone.com/user/AlexanderErmolaev)
+  // improved by: Kevin van Zonneveld (https://kvz.io)
+  // improved by: Steven Levithan (https://blog.stevenlevithan.com)
   // improved by: Jack
   //    input by: Erkekjetter
   //    input by: DxGx
@@ -7833,66 +8945,74 @@ process.umask = function() { return 0; };
 var htmlspecialchars = require('locutus/php/strings/htmlspecialchars');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'breaklines',
-	function (s) {
-		if (s == null) {
-			return '';
-		}
+  'modifier',
+  'breaklines',
+  function (s)
+  {
+    if (s == null)
+    {
+      return '';
+    }
 
-		return htmlspecialchars(s, 0, 'UTF-8').replace(/(\r\n|\n\r|\r|\n)/g, '<br />\n');
-	}
+    return htmlspecialchars(s, 0, 'UTF-8').replace(/(\r\n|\n\r|\r|\n)/g, '<br />\n');
+  }
 );
 
 },{"locutus/php/strings/htmlspecialchars":29}],39:[function(require,module,exports){
 var toBytes = require('es5-util/js/toBytes');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'bytes',
-	function (s, precision) {
-		precision = precision != null ? precision : 2;
-		return toBytes(s, precision);
-	}
+  'modifier',
+  'bytes',
+  function (s, precision)
+  {
+    precision = precision != null ? precision : 2;
+    return toBytes(s, precision);
+  }
 );
 
 },{"es5-util/js/toBytes":18}],40:[function(require,module,exports){
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'capitalize',
-	function (s, preserveCase) {
-		return toUpperCase(s, 'words', !!preserveCase);
-	}
+  'modifier',
+  'capitalize',
+  function (s, preserveCase)
+  {
+    return toUpperCase(s, 'words', !!preserveCase);
+  }
 );
 
-},{"es5-util/js/toUpperCase":22}],41:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":23}],41:[function(require,module,exports){
 var isNotSetLoose = require('es5-util/js/isNotSetLoose');
-var toUnixTime = require('es5-util/js/toUnixTime');
-var strftime = require('locutus/php/datetime/strftime');
+var toUnixTime    = require('es5-util/js/toUnixTime');
+var strftime      = require('locutus/php/datetime/strftime');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'date',
-	function (time, format, defaultDate) {
-		if (isNotSetLoose(time) || !time) {
-			if (isNotSetLoose(defaultDate)) {
-				return '';
-			}
-			time = defaultDate;
-		}
+  'modifier',
+  'date',
+  function (time, format, defaultDate)
+  {
+    if (isNotSetLoose(time) || !time)
+    {
+      if (isNotSetLoose(defaultDate))
+      {
+        return '';
+      }
+      time = defaultDate;
+    }
 
-		return strftime(format != null ? format : '%b %e, %Y', toUnixTime(time));
-	}
+    return strftime(format != null ? format : '%b %e, %Y', toUnixTime(time));
+  }
 );
 
-},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":21,"locutus/php/datetime/strftime":25}],42:[function(require,module,exports){
+},{"es5-util/js/isNotSetLoose":8,"es5-util/js/toUnixTime":22,"locutus/php/datetime/strftime":26}],42:[function(require,module,exports){
 var getDefaultTags = require('./../helpers/getDefaultTags');
 
 Latte.getDefaultTags = getDefaultTags;
 
-Latte.setDefaultTags = function (template, obj) {
+Latte.setDefaultTags = function (template, obj)
+{
   return getDefaultTags(obj) + template;
 };
 
@@ -7900,143 +9020,157 @@ Latte.setDefaultTags = function (template, obj) {
 var toUpperCase = require('es5-util/js/toUpperCase');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'firstUpper',
-	function (s, preserveCase) {
-		return toUpperCase(s, 'first', !!preserveCase);
-	}
+  'modifier',
+  'firstUpper',
+  function (s, preserveCase)
+  {
+    return toUpperCase(s, 'first', !!preserveCase);
+  }
 );
 
-},{"es5-util/js/toUpperCase":22}],44:[function(require,module,exports){
+},{"es5-util/js/toUpperCase":23}],44:[function(require,module,exports){
 var toString = require('es5-util/js/toString');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'implode',
-	function (arr, glue, keyGlue) {
-		return toString(arr, glue != null ? glue : '', keyGlue);
-	}
+  'modifier',
+  'implode',
+  function (arr, glue, keyGlue)
+  {
+    return toString(arr, glue != null ? glue : '', keyGlue);
+  }
 );
 
 },{"es5-util/js/toString":20}],45:[function(require,module,exports){
-var isObjectLike = require('es5-util/js/isObjectLike');
+var isObjectLike        = require('es5-util/js/isObjectLike');
 var toAssociativeValues = require('es5-util/js/toAssociativeValues');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'length',
-	function (s) {
-		if (s == null) {
-			return 0;
-		}
+  'modifier',
+  'length',
+  function (s)
+  {
+    if (s == null)
+    {
+      return 0;
+    }
 
-		return (isObjectLike(s) ? toAssociativeValues(s) : s).length;
-	}
+    return (isObjectLike(s) ? toAssociativeValues(s) : s).length;
+  }
 );
 
 },{"es5-util/js/isObjectLike":11,"es5-util/js/toAssociativeValues":17}],46:[function(require,module,exports){
-var toNumber = require('es5-util/js/toNumber');
+var toNumber      = require('es5-util/js/toNumber');
 var number_format = require('locutus/php/strings/number_format');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'number',
-	function (s, decimals, dec_point, thousands_sep) {
-		decimals = decimals != null ? decimals : 0;
-		dec_point = dec_point != null ? dec_point : '.';
-		thousands_sep = thousands_sep != null ? thousands_sep : ',';
-		return number_format(toNumber(s), decimals, dec_point, thousands_sep);
-	}
+  'modifier',
+  'number',
+  function (s, decimals, dec_point, thousands_sep)
+  {
+    decimals      = decimals != null ? decimals : 0;
+    dec_point     = dec_point != null ? dec_point : '.';
+    thousands_sep = thousands_sep != null ? thousands_sep : ',';
+    return number_format(toNumber(s), decimals, dec_point, thousands_sep);
+  }
 );
 
 },{"es5-util/js/toNumber":19,"locutus/php/strings/number_format":30}],47:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padBoth',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_BOTH');
-	}
+  'modifier',
+  'padBoth',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_BOTH');
+  }
 );
 
 },{"locutus/php/strings/str_pad":32}],48:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padLeft',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_LEFT');
-	}
+  'modifier',
+  'padLeft',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_LEFT');
+  }
 );
 
 },{"locutus/php/strings/str_pad":32}],49:[function(require,module,exports){
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padRight',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_RIGHT');
-	}
+  'modifier',
+  'padRight',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_RIGHT');
+  }
 );
 
 },{"locutus/php/strings/str_pad":32}],50:[function(require,module,exports){
 var str_repeat = require('locutus/php/strings/str_repeat');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'repeat',
-	function (s, count) {
-		return str_repeat(String(s), ~~count);
-	}
+  'modifier',
+  'repeat',
+  function (s, count)
+  {
+    return str_repeat(String(s), ~~count);
+  }
 );
 
 },{"locutus/php/strings/str_repeat":33}],51:[function(require,module,exports){
 var findReplace = require('es5-util/js/findReplace');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'replaceRe',
-	function (s, find, replace) {
-		return findReplace(s, find, replace);
-	}
+  'modifier',
+  'replaceRe',
+  function (s, find, replace)
+  {
+    return findReplace(s, find, replace);
+  }
 );
 
 },{"es5-util/js/findReplace":1}],52:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
-var toArray = require('es5-util/js/toArray');
-var array_reverse = require('locutus/php/array/array_reverse');
-var strrev = require('locutus/php/strings/strrev');
+var toArray           = require('es5-util/js/toArray');
+var array_reverse     = require('locutus/php/array/array_reverse');
+var strrev            = require('locutus/php/strings/strrev');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'reverse',
-	function (s, preserveKeys) {
-		if (isArrayLikeObject(s)) {
-			return array_reverse(toArray(s), !!preserveKeys);
-		}
+  'modifier',
+  'reverse',
+  function (s, preserveKeys)
+  {
+    if (isArrayLikeObject(s))
+    {
+      return array_reverse(toArray(s), !!preserveKeys);
+    }
 
-		return strrev(String(s));
-	});
+    return strrev(String(s));
+  });
 
-},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":16,"locutus/php/array/array_reverse":24,"locutus/php/strings/strrev":35}],53:[function(require,module,exports){
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/toArray":16,"locutus/php/array/array_reverse":25,"locutus/php/strings/strrev":35}],53:[function(require,module,exports){
 var strip_tags = require('locutus/php/strings/strip_tags');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'striptags',
-	function (s) {
-		return strip_tags(s);
-	}
+  'modifier',
+  'striptags',
+  function (s)
+  {
+    return strip_tags(s);
+  }
 );
 
 },{"locutus/php/strings/strip_tags":34}],54:[function(require,module,exports){
 var substr = require('es5-util/js/substr');
 
-var substring = function (s, start, length, validatePositions) {
-	return substr(s, start, length, !!validatePositions);
+var substring = function (s, start, length, validatePositions)
+{
+  return substr(s, start, length, !!validatePositions);
 };
 
 Latte.prototype.registerPlugin('modifier', 'substring', substring);
@@ -8046,43 +9180,49 @@ Latte.prototype.registerPlugin('modifier', 'substr', substring);
 var trim = require('locutus/php/strings/trim');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'trim',
-	function (s, charlist) {
-		charlist = charlist != null ? charlist : " \t\n\r\0\x0B";
-		return trim(String(s), charlist);
-	}
+  'modifier',
+  'trim',
+  function (s, charlist)
+  {
+    charlist = charlist != null ? charlist : " \t\n\r\0\x0B";
+    return trim(String(s), charlist);
+  }
 );
 
 },{"locutus/php/strings/trim":36}],56:[function(require,module,exports){
 var getNestedParts = require('./getNestedParts');
-var replaceParts = require('./replaceParts');
-var explode = require('es5-util/js/toArray');
-var implode = require('es5-util/js/toString');
+var replaceParts   = require('./replaceParts');
+var explode        = require('es5-util/js/toArray');
+var implode        = require('es5-util/js/toString');
 
-function defaultFilter(s, ldelim, rdelim) {
-  var str = s, a, z;
+function defaultFilter(s, ldelim, rdelim)
+{
+  var str = s,
+      a,
+      z;
 
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
   var re = new RegExp('([\\S\\s]*)(' + ldelim + '{1})(default{1})(\\s)([^' + rdelim + ']*?)(' + rdelim + '{1})([\\S\\s]*)', 'img');
-  a = str.replace(re, "$1");
-  s = str.replace(re, "$5");
-  z = str.replace(re, "$7");
+  a      = str.replace(re, "$1");
+  s      = str.replace(re, "$5");
+  z      = str.replace(re, "$7");
 
-  if (s === str) {
+  if (s === str)
+  {
     return s;
   }
 
-  var braces = replaceParts(s, getNestedParts(s, '[', ']'), 24);
-  var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
+  var braces     = replaceParts(s, getNestedParts(s, '[', ']'), 24);
+  var parens     = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), 24);
   var paramParts = explode(parens.s, ',');
 
-  paramParts.forEach(function (param, index, paramParts) {
-    var equalPos = param.indexOf('=');
-    var variable = param.slice(0, equalPos).trim();
-    var value = param.slice(equalPos + 1).trim();
+  paramParts.forEach(function (param, index, paramParts)
+  {
+    var equalPos      = param.indexOf('=');
+    var variable      = param.slice(0, equalPos).trim();
+    var value         = param.slice(equalPos + 1).trim();
     paramParts[index] = ldelim + variable + ' = ' + variable + '|default:' + value + rdelim;
   });
 
@@ -8091,13 +9231,14 @@ function defaultFilter(s, ldelim, rdelim) {
 
 module.exports = defaultFilter;
 
-},{"./getNestedParts":60,"./replaceParts":63,"es5-util/js/toArray":16,"es5-util/js/toString":20}],57:[function(require,module,exports){
+},{"./getNestedParts":60,"./replaceParts":65,"es5-util/js/toArray":16,"es5-util/js/toString":20}],57:[function(require,module,exports){
 var getNestedParts = require('./getNestedParts');
-var replaceParts = require('./replaceParts');
-var replaceDelims = require('./replaceDelims').replaceDelims;
-var returnDelims = require('./replaceDelims').returnDelims;
+var replaceParts   = require('./replaceParts');
+var replaceDelims  = require('./replaceDelims').replaceDelims;
+var returnDelims   = require('./replaceDelims').returnDelims;
 
-function encodeTemplate(str, ldelim, rdelim, length, getUID) {
+function encodeTemplate(str, ldelim, rdelim, length, getUID)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
   length = length != null ? length : 24;
@@ -8107,8 +9248,9 @@ function encodeTemplate(str, ldelim, rdelim, length, getUID) {
   var parens = replaceParts(braces.s, getNestedParts(braces.s, '(', ')'), length, getUID);
 
   return {
-    s: parens.s,
-    decode: function (newStr) {
+    s     : parens.s,
+    decode: function (newStr)
+    {
       newStr = newStr != null ? newStr : parens.s;
       return returnDelims(braces.returnParts(parens.returnParts(newStr)));
     },
@@ -8117,30 +9259,39 @@ function encodeTemplate(str, ldelim, rdelim, length, getUID) {
 
 module.exports = encodeTemplate;
 
-},{"./getNestedParts":60,"./replaceDelims":62,"./replaceParts":63}],58:[function(require,module,exports){
+},{"./getNestedParts":60,"./replaceDelims":64,"./replaceParts":65}],58:[function(require,module,exports){
 var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('locutus/php/strings/explode');
+var replaceParts   = require('./replaceParts');
+var explode        = require('locutus/php/strings/explode');
 
-function forFilter(s, ldelim, rdelim) {
+function forFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}(?:for ){1}([^};]*?);{1}([^};]*?);{1}([^}]*?)' + rdelim + '{1}', 'mg');
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}(?:for ){1}([^};]*?);{1}([^};]*?);{1}([^}]*?)' + rdelim + '{1}', 'mg');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
-    var parts, expr1, expr2, expr3, variable, step = '1';
+  found.forEach(function (foundItem, i)
+  {
+    var parts,
+        expr1,
+        expr2,
+        expr3,
+        variable,
+        step  = '1';
     foundItem = foundItem.slice(ldelim.length + 'for '.length, -ldelim.length);
 
-    if ((parts = explode(';', foundItem, 3)).length !== 3) {
+    if ((parts = explode(';', foundItem, 3)).length !== 3)
+    {
       return replace[i] = foundItem;
     }
 
@@ -8149,19 +9300,22 @@ function forFilter(s, ldelim, rdelim) {
     expr3 = parts[2].trim();
 
     var expr3match = expr3.match(/([+-]{1})([+-=]{1})([^, ;}]*)/) || [];
-    if (expr3match[2] === '=') {
+    if (expr3match[2] === '=')
+    {
       step = expr3match[3] || '1';
     }
-    if (expr3match[1] === '-') {
+    if (expr3match[1] === '-')
+    {
       step = '-' + step;
     }
 
     var expr2match = expr2.match(/([<>]{1})(=?) *(.*)/) || [];
-    var glt = expr2match[1] || '<';
-    var glte = expr2match[2] || '';
-    var condition = expr2match[3] || '2';
+    var glt        = expr2match[1] || '<';
+    var glte       = expr2match[2] || '';
+    var condition  = expr2match[3] || '2';
 
-    if (glte !== '=') {
+    if (glte !== '=')
+    {
       condition += glt === '<' ? '-1' : '+1';
     }
 
@@ -8175,15 +9329,18 @@ function forFilter(s, ldelim, rdelim) {
 
 module.exports = forFilter;
 
-},{"./encodeTemplate":57,"./replaceParts":63,"locutus/php/strings/explode":28}],59:[function(require,module,exports){
-var smartyObjectFilter = require('./smartyObjectFilter');
+},{"./encodeTemplate":57,"./replaceParts":65,"locutus/php/strings/explode":28}],59:[function(require,module,exports){
+var latteObjectFilter = require('./latteObjectFilter');
 
-function getDefaultTags(obj) {
+function getDefaultTags(obj)
+{
   var s = [];
 
-  for (var key in obj) {
-    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(String(key))) {
-      s.push('{$' + String(key) + ' = $' + String(key) + '|default:' + smartyObjectFilter(obj[key]) + '}')
+  for (var key in obj)
+  {
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(String(key)))
+    {
+      s.push('{$' + String(key) + ' = $' + String(key) + '|default:' + latteObjectFilter(obj[key]) + '}')
     }
   }
 
@@ -8192,46 +9349,64 @@ function getDefaultTags(obj) {
 
 module.exports = getDefaultTags;
 
-},{"./smartyObjectFilter":65}],60:[function(require,module,exports){
-function getNestedParts(str, open, close) {
-  if (str.length < 2) {
+},{"./latteObjectFilter":62}],60:[function(require,module,exports){
+function getNestedParts(str, open, close)
+{
+  if (str.length < 2)
+  {
     return [];
   }
 
   close = close != null ? close : open;
 
-  if (str.length === 2) {
+  if (str.length === 2)
+  {
     return str[0] === open && str[1] === close ? [str] : [];
   }
 
-  var parts = [], nestedLevels = {}, tags = [open, "'", '"', '`'], tagsPos, level = 0, escaped, currentChar;
+  var parts = [],
+      nestedLevels = {},
+      tags = [open, "'", '"', '`'],
+      tagsPos,
+      level = 0,
+      escaped,
+      currentChar;
 
-  for (var i = 0, j = 0; i < str.length; i++, j = i) {
+  for (var i = 0, j = 0; i < str.length; i++, j = i)
+  {
     currentChar = str[i];
-    escaped = false;
+    escaped     = false;
 
-    if (nestedLevels[level]) {
-      if (currentChar === nestedLevels[level].closeTag) {
-        if (level === 1 && close === nestedLevels[level].closeTag) {
+    if (nestedLevels[level])
+    {
+      if (currentChar === nestedLevels[level].closeTag)
+      {
+        if (level === 1 && close === nestedLevels[level].closeTag)
+        {
           parts.push(str.slice(nestedLevels[level].startIndex, i + 1));
         }
         delete nestedLevels[level--];
-      } else if ((tagsPos = tags.indexOf(currentChar)) > -1 && close === nestedLevels[level].closeTag) {
+      }
+      else if ((tagsPos = tags.indexOf(currentChar)) > -1 && close === nestedLevels[level].closeTag)
+      {
         nestedLevels[++level] = {
           startIndex: i,
-          closeTag: tagsPos === 0 ? close : tags[tagsPos],
+          closeTag  : tagsPos === 0 ? close : tags[tagsPos],
         };
       }
-    } else if ((tagsPos = tags.indexOf(currentChar)) > -1) {
+    }
+    else if ((tagsPos = tags.indexOf(currentChar)) > -1)
+    {
       nestedLevels[++level] = {
         startIndex: i,
-        closeTag: tagsPos === 0 ? close : tags[tagsPos],
+        closeTag  : tagsPos === 0 ? close : tags[tagsPos],
       };
     }
 
   }
 
-  if (Object.keys(nestedLevels).length > 0) {
+  if (Object.keys(nestedLevels).length > 0)
+  {
     parts.push(str.slice(nestedLevels[1].startIndex));
   }
 
@@ -8241,130 +9416,41 @@ function getNestedParts(str, open, close) {
 module.exports = getNestedParts;
 
 },{}],61:[function(require,module,exports){
-function nAttributesFilter(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  var re = new RegExp('(n:[A-Za-z0-9 ]+=[\\s]*)(["\'])(' + ldelim + '?)((?:(?!\\2)[^}])*)(' + rdelim + '?)(\\2)', 'img');
-  return s.replace(re, "$1$2" + ldelim + "$4" + rdelim + "$2");
-}
-
-module.exports = nAttributesFilter;
-
-},{}],62:[function(require,module,exports){
-function replaceDelims(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), '__ldelim__');
-  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), '__rdelim__');
-
-  return s;
-}
-
-function returnDelims(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  s = s.replace(new RegExp('__ldelim__', 'g'), ldelim + 'l' + rdelim);
-  s = s.replace(new RegExp('__rdelim__', 'g'), ldelim + 'r' + rdelim);
-
-  return s;
-}
-
-function processDelims(s, ldelim, rdelim) {
-  ldelim = ldelim != null ? ldelim : '{';
-  rdelim = rdelim != null ? rdelim : '}';
-
-  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), ldelim);
-  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), rdelim);
-
-  return s;
-};
-
-
-module.exports.replaceDelims = replaceDelims;
-
-module.exports.returnDelims = returnDelims;
-
-module.exports.processDelims = processDelims;
-
-},{}],63:[function(require,module,exports){
-var getiUID = require('es5-util/js/getUID').getiUID;
-
-function replaceParts(str, parts, length, getUID) {
-  getUID = getUID != null ? getUID : getiUID;
-
-  var reference = new Map();
-
-  function returnParts(newStr, newParts) {
-    var counter = 0;
-    reference.forEach(function (part, id) {
-      var replacePart = newParts != null ? newParts[counter++] : part;
-      newStr = newStr.replace(id, replacePart)
-    });
-
-    return newStr;
-  }
-
-  function getId() {
-    var id;
-
-    do {
-      id = getUID(length);
-    } while (reference.has(id));
-
-    return id;
-  }
-
-  parts.forEach(function (part) {
-    var id = getId();
-
-    reference.set(id, part);
-
-    str = str.replace(part, id);
-  });
-
-  return {
-    s: str,
-    returnParts: returnParts,
-  };
-}
-
-module.exports = replaceParts;
-
-},{"es5-util/js/getUID":2}],64:[function(require,module,exports){
 var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('es5-util/js/toArray');
-var implode = require('es5-util/js/toString');
+var replaceParts   = require('./replaceParts');
+var explode        = require('es5-util/js/toArray');
+var implode        = require('es5-util/js/toString');
 
-function smartyFilter(s, ldelim, rdelim) {
+function latteFilter(s, ldelim, rdelim)
+{
   //  force comma after template name
   s = s.replace(/({include ["']{1}[A-Za-z0-9]+["']{1})(,?)/g, "$1,");
 
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}(include){1}\\s[^' + rdelim + ']*?' + rdelim + '{1}', 'img');
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}(include){1}\\s[^' + rdelim + ']*?' + rdelim + '{1}', 'img');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
+  found.forEach(function (foundItem, i)
+  {
     var foundItemInner = foundItem.slice(ldelim.length, -ldelim.length);
-    var foundParts = explode(foundItemInner, ',');
-    var replacedParts = [];
+    var foundParts     = explode(foundItemInner, ',');
+    var replacedParts  = [];
 
-
-    foundParts.forEach(function (foundPart) {
+    foundParts.forEach(function (foundPart)
+    {
       foundPart = foundPart.replace('=>', '=').trim();
-      if (foundPart.length > 0) {
+      if (foundPart.length > 0)
+      {
         replacedParts.push(foundPart);
       }
     });
@@ -8377,20 +9463,24 @@ function smartyFilter(s, ldelim, rdelim) {
   return es.decode(ep.returnParts(ep.s, replace));
 }
 
-module.exports = smartyFilter;
+module.exports = latteFilter;
 
-},{"./encodeTemplate":57,"./replaceParts":63,"es5-util/js/toArray":16,"es5-util/js/toString":20}],65:[function(require,module,exports){
+},{"./encodeTemplate":57,"./replaceParts":65,"es5-util/js/toArray":16,"es5-util/js/toString":20}],62:[function(require,module,exports){
 var isArrayLikeObject = require('es5-util/js/isArrayLikeObject');
-var isObject = require('es5-util/js/isObject');
+var isObject          = require('es5-util/js/isObject');
 
-function smartyObjectFilter(input) {
-  if (!isObject(input)) {
-    if (input == null) {
+function latteObjectFilter(input)
+{
+  if (!isObject(input))
+  {
+    if (input == null)
+    {
       return '""';
     }
 
     var noStringify = '!ns ';
-    if (typeof input === 'string' && input.substring(0, noStringify.length) === noStringify) {
+    if (typeof input === 'string' && input.substring(0, noStringify.length) === noStringify)
+    {
       return input.slice(noStringify.length);
     }
 
@@ -8399,75 +9489,198 @@ function smartyObjectFilter(input) {
 
   var items = [];
 
-  for (var key in input) {
-    if (input.hasOwnProperty(key) || typeof input[key] !== 'function') {
-      items.push((isArrayLikeObject(input) ? '' : '"' + key + '"=>') + smartyObjectFilter(input[key]));
+  for (var key in input)
+  {
+    if (input.hasOwnProperty(key) || typeof input[key] !== 'function')
+    {
+      items.push((isArrayLikeObject(input) ? '' : '"' + key + '"=>') + latteObjectFilter(input[key]));
     }
   }
 
   return '[' + items.join(',') + ']';
 }
 
-module.exports = smartyObjectFilter;
+module.exports = latteObjectFilter;
 
-},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],66:[function(require,module,exports){
-var encodeTemplate = require('./encodeTemplate');
-var replaceParts = require('./replaceParts');
-var explode = require('locutus/php/strings/explode');
-
-function ternaryFilter(s, ldelim, rdelim) {
+},{"es5-util/js/isArrayLikeObject":4,"es5-util/js/isObject":10}],63:[function(require,module,exports){
+function nAttributesFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var es = encodeTemplate(s, ldelim, rdelim);
-  var re = new RegExp(ldelim + '{1}([^?' + rdelim + ']+?)\\?([^:?' + rdelim + ']*?)[:?]{1}([^' + rdelim + ']*?)' + rdelim + '{1}', 'mg');
+  var re = new RegExp('(n:[A-Za-z0-9 ]+=[\\s]*)(["\'])(' + ldelim + '?)((?:(?!\\2)[^}])*)(' + rdelim + '?)(\\2)', 'img');
+  return s.replace(re, "$1$2" + ldelim + "$4" + rdelim + "$2");
+}
+
+module.exports = nAttributesFilter;
+
+},{}],64:[function(require,module,exports){
+function replaceDelims(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), '__ldelim__');
+  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), '__rdelim__');
+
+  return s;
+}
+
+function returnDelims(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp('__ldelim__', 'g'), ldelim + 'l' + rdelim);
+  s = s.replace(new RegExp('__rdelim__', 'g'), ldelim + 'r' + rdelim);
+
+  return s;
+}
+
+function processDelims(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  s = s.replace(new RegExp(ldelim + 'l' + rdelim, 'g'), ldelim);
+  s = s.replace(new RegExp(ldelim + 'r' + rdelim, 'g'), rdelim);
+
+  return s;
+};
+
+module.exports.replaceDelims = replaceDelims;
+
+module.exports.returnDelims = returnDelims;
+
+module.exports.processDelims = processDelims;
+
+},{}],65:[function(require,module,exports){
+var getiUID = require('es5-util/js/getUID').getiUID;
+
+function replaceParts(str, parts, length, getUID)
+{
+  getUID = getUID != null ? getUID : getiUID;
+
+  var reference = new Map();
+
+  function returnParts(newStr, newParts)
+  {
+    var counter = 0;
+    reference.forEach(function (part, id)
+    {
+      var replacePart = newParts != null ? newParts[counter++] : part;
+      newStr          = newStr.replace(id, replacePart)
+    });
+
+    return newStr;
+  }
+
+  function getId()
+  {
+    var id;
+
+    do
+    {
+      id = getUID(length);
+    }
+    while (reference.has(id));
+
+    return id;
+  }
+
+  parts.forEach(function (part)
+  {
+    var id = getId();
+
+    reference.set(id, part);
+
+    str = str.replace(part, id);
+  });
+
+  return {
+    s          : str,
+    returnParts: returnParts,
+  };
+}
+
+module.exports = replaceParts;
+
+},{"es5-util/js/getUID":2}],66:[function(require,module,exports){
+var encodeTemplate = require('./encodeTemplate');
+var replaceParts   = require('./replaceParts');
+var explode        = require('locutus/php/strings/explode');
+
+function ternaryFilter(s, ldelim, rdelim)
+{
+  ldelim = ldelim != null ? ldelim : '{';
+  rdelim = rdelim != null ? rdelim : '}';
+
+  var es    = encodeTemplate(s, ldelim, rdelim);
+  var re    = new RegExp(ldelim + '{1}([^?' + rdelim + ']+?)\\?([^:?' + rdelim + ']*?)[:?]{1}([^' + rdelim + ']*?)' + rdelim + '{1}', 'mg');
   var found = es.s.match(re);
 
-  if (!found) {
+  if (!found)
+  {
     return s;
   }
 
   var replace = [];
 
-  found.forEach(function (foundItem, i) {
-    var variable = null, condition, truthy, falsy, parts;
+  found.forEach(function (foundItem, i)
+  {
+    var variable = null,
+        condition,
+        truthy,
+        falsy,
+        parts;
 
     condition = foundItem.slice(ldelim.length, -ldelim.length);
-    parts = explode(' = ', condition, 2);
+    parts     = explode(' = ', condition, 2);
 
-    if (parts.length === 2) {
-      variable = parts[0].trim();
+    if (parts.length === 2)
+    {
+      variable  = parts[0].trim();
       condition = parts[1].trim();
     }
 
-    if ((parts = explode(' ?? ', condition, 2)).length === 2) {
-      truthy = parts[0].trim();
-      falsy = parts[1].trim();
+    if ((parts = explode(' ?? ', condition, 2)).length === 2)
+    {
+      truthy    = parts[0].trim();
+      falsy     = parts[1].trim();
       condition = truthy + ' !== ' + "''";
-    } else if ((parts = explode(' ?: ', condition, 2)).length === 2) {
+    }
+    else if ((parts = explode(' ?: ', condition, 2)).length === 2)
+    {
       condition = truthy = parts[0].trim();
-      falsy = parts[1].trim();
-    } else {
-      if ((parts = explode(' ? ', condition, 2)).length < 2) {
+      falsy     = parts[1].trim();
+    }
+    else
+    {
+      if ((parts = explode(' ? ', condition, 2)).length < 2)
+      {
         return replace[i] = foundItem;
       }
 
-      if (parts.length === 2) {
+      if (parts.length === 2)
+      {
         condition = parts[0].trim();
-        truthy = parts[1].trim();
+        truthy    = parts[1].trim();
       }
 
-      if ((parts = explode(' : ', truthy, 2)).length < 2) {
+      if ((parts = explode(' : ', truthy, 2)).length < 2)
+      {
         return replace[i] = foundItem;
       }
 
-      if (parts.length === 2) {
+      if (parts.length === 2)
+      {
         truthy = parts[0].trim();
-        falsy = parts[1].trim();
+        falsy  = parts[1].trim();
       }
     }
 
-    if (!variable) {
+    if (!variable)
+    {
       return replace[i] = '{if ' + condition + '}{' + truthy + '}{else}{' + falsy + '}{/if}';
     }
 
@@ -8481,14 +9694,17 @@ function ternaryFilter(s, ldelim, rdelim) {
 
 module.exports = ternaryFilter;
 
-},{"./encodeTemplate":57,"./replaceParts":63,"locutus/php/strings/explode":28}],67:[function(require,module,exports){
-function varFilter(s, ldelim, rdelim) {
+},{"./encodeTemplate":57,"./replaceParts":65,"locutus/php/strings/explode":28}],67:[function(require,module,exports){
+function varFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 
-  var prev = '', re = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
+  var prev = '',
+      re = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
 
-  while (prev !== s) {
+  while (prev !== s)
+  {
     s = (prev = s).replace(re, "$1$4$5");
   }
 
@@ -8500,7 +9716,8 @@ module.exports = varFilter;
 },{}],68:[function(require,module,exports){
 var defaultFilter = require('./../helpers/defaultFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return defaultFilter(s);
 });
 
@@ -8510,113 +9727,139 @@ var processDelims = require('./../helpers/replaceDelims').processDelims;
 Latte.prototype.registerPlugin(
   'function',
   'l',
-  function (params, data) {
-    return Latte.prototype.left_delimiter || data.smarty.ldelim;
+  function (params, data)
+  {
+    return Latte.prototype.left_delimiter || data.latte.ldelim;
   }
 );
 
 Latte.prototype.registerPlugin(
   'function',
   'r',
-  function (params, data) {
-    return Latte.prototype.right_delimiter || data.smarty.rdelim;
+  function (params, data)
+  {
+    return Latte.prototype.right_delimiter || data.latte.rdelim;
   }
 );
 
-Latte.prototype.registerFilter('post', function (s) {
-  return processDelims(s, this.smarty.ldelim, this.smarty.rdelim);
+Latte.prototype.registerFilter('post', function (s)
+{
+  return processDelims(s, this.latte.ldelim, this.latte.rdelim);
 });
 
-},{"./../helpers/replaceDelims":62}],70:[function(require,module,exports){
+},{"./../helpers/replaceDelims":64}],70:[function(require,module,exports){
 var hasKeys = require('es5-util/js/hasKeys');
 
-if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params')) {
-	Latte.prototype.registerFilter('params', function (actualParams) {
-		if (actualParams.hasOwnProperty('expand') && typeof actualParams.expand === 'object') {
-			for (var prop in actualParams.expand) {
-				actualParams[prop] = actualParams.expand[prop];
-			}
-		}
+if (hasKeys(Latte.prototype, 'filtersGlobal.params') || hasKeys(Latte.prototype, 'filters_global.params'))
+{
+  Latte.prototype.registerFilter('params', function (actualParams)
+  {
+    if (actualParams.hasOwnProperty('expand') && typeof actualParams.expand === 'object')
+    {
+      for (var prop in actualParams.expand)
+      {
+        actualParams[prop] = actualParams.expand[prop];
+      }
+    }
 
-		return actualParams;
-	});
+    return actualParams;
+  });
 }
 
-Latte.prototype.registerFilter('pre', function (s) {
-	return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
+Latte.prototype.registerFilter('pre', function (s)
+{
+  return s.replace(/({)(((?! \(expand\) ).)*)( \(expand\) )([^}]*)(})/img, "$1$2 expand=$5$6");
 });
 
 },{"es5-util/js/hasKeys":3}],71:[function(require,module,exports){
 var forFilter = require('./../helpers/forFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return forFilter(s);
 });
 
 },{"./../helpers/forFilter":58}],72:[function(require,module,exports){
-var smartyFilter = require('./../helpers/smartyFilter');
+var latteFilter = require('./../helpers/latteFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
-  return smartyFilter(s);
+Latte.prototype.registerFilter('pre', function (s)
+{
+  return latteFilter(s);
 });
 
-},{"./../helpers/smartyFilter":64}],73:[function(require,module,exports){
-Latte.prototype.registerFilter('pre', function (s) {
+},{"./../helpers/latteFilter":61}],73:[function(require,module,exports){
+Latte.prototype.registerFilter('pre', function (s)
+{
   return s.replace(new RegExp('\\$iterator->', 'g'), '$iterator@');
 });
 
 },{}],74:[function(require,module,exports){
 var nAttributesFilter = require('./../helpers/nAttributesFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return nAttributesFilter(s, Latte.prototype.left_delimiter || this.ldelim || '{', Latte.prototype.right_delimiter || this.rdelim || '}');
 });
 
-},{"./../helpers/nAttributesFilter":61}],75:[function(require,module,exports){
-var isEmptyLoose = require('es5-util/js/isEmptyLoose');
+},{"./../helpers/nAttributesFilter":63}],75:[function(require,module,exports){
+var isEmptyLoose    = require('es5-util/js/isEmptyLoose');
 var isNotEmptyLoose = require('es5-util/js/isNotEmptyLoose');
-var isNotSetTag = require('es5-util/js/isNotSetTag');
-var isSetTag = require('es5-util/js/isSetTag');
+var isNotSetTag     = require('es5-util/js/isNotSetTag');
+var isSetTag        = require('es5-util/js/isSetTag');
 
-Latte.postProcess = function (htmlString) {
-  if (typeof $ !== 'function') {
+Latte.postProcess = function (htmlString)
+{
+  if (typeof $ !== 'function')
+  {
     return htmlString;
   }
 
   var $dom = $($.parseHTML('<div>' + htmlString + '</div>'));
 
-  $dom.find('[n\\:tag-if]').each(function (index, el) {
-    var $el = $(el), attr = 'n:tag-if';
+  $dom.find('[n\\:tag-if]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:tag-if';
 
     isSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.replaceWith($el.html());
   });
 
-  $dom.find('[n\\:ifcontent]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifcontent';
+  $dom.find('[n\\:ifcontent]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifcontent';
 
     isSetTag($el.html().trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifset]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifset';
+  $dom.find('[n\\:ifset]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifset';
 
     isSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifnotset]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifnotset';
+  $dom.find('[n\\:ifnotset]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifnotset';
 
     isNotSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifempty]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifempty';
+  $dom.find('[n\\:ifempty]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifempty';
 
     isEmptyLoose($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
 
-  $dom.find('[n\\:ifnotempty]').each(function (index, el) {
-    var $el = $(el), attr = 'n:ifnotempty';
+  $dom.find('[n\\:ifnotempty]').each(function (index, el)
+  {
+    var $el = $(el),
+        attr = 'n:ifnotempty';
 
     isNotEmptyLoose($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
   });
@@ -8626,27 +9869,31 @@ Latte.postProcess = function (htmlString) {
 
 },{"es5-util/js/isEmptyLoose":5,"es5-util/js/isNotEmptyLoose":7,"es5-util/js/isNotSetTag":9,"es5-util/js/isSetTag":13}],76:[function(require,module,exports){
 Latte.prototype.registerPlugin(
-	'block',
-	'spaceless',
-	function (params, content, data, repeat) {
-		if (repeat.value) {
-			return '';
-		}
-		return content.replace(/[ \t]*[\r\n]+[ \t]*/g, '');
-	}
+  'block',
+  'spaceless',
+  function (params, content, data, repeat)
+  {
+    if (repeat.value)
+    {
+      return '';
+    }
+    return content.replace(/[ \t]*[\r\n]+[ \t]*/g, '');
+  }
 );
 
 },{}],77:[function(require,module,exports){
 var ternaryFilter = require('./../helpers/ternaryFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return ternaryFilter(s);
 });
 
 },{"./../helpers/ternaryFilter":66}],78:[function(require,module,exports){
 var varFilter = require('./../helpers/varFilter');
 
-Latte.prototype.registerFilter('pre', function (s) {
+Latte.prototype.registerFilter('pre', function (s)
+{
   return varFilter(s);
 });
 

@@ -1,4 +1,5 @@
-function nAttributesFilter(s, ldelim, rdelim) {
+function nAttributesFilter(s, ldelim, rdelim)
+{
   ldelim = ldelim != null ? ldelim : '{';
   rdelim = rdelim != null ? rdelim : '}';
 

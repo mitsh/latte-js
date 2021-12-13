@@ -1,31 +1,40 @@
-define(['./core', './util/phpjs'], function (Latte, phpJs) {
+define(['./core', './util/phpjs'], function (Latte, phpJs)
+{
   'use strict'
 
   Latte.prototype.registerPlugin(
     'modifier',
     'capitalize',
-    function (s, upDigits, lcRest) {
-      if (typeof s !== 'string') {
+    function (s, upDigits, lcRest)
+    {
+      if (typeof s !== 'string')
+      {
         return s
       }
-      var re = new RegExp(upDigits ? '[^a-zA-Z_\u00E0-\u00FC]+' : '[^a-zA-Z0-9_\u00E0-\u00FC]')
+      var re    = new RegExp(upDigits ? '[^a-zA-Z_\u00E0-\u00FC]+' : '[^a-zA-Z0-9_\u00E0-\u00FC]')
       var found = null
-      var res = ''
-      if (lcRest) {
+      var res   = ''
+      if (lcRest)
+      {
         s = s.toLowerCase()
       }
       var word
-      for (found = s.match(re); found; found = s.match(re)) {
+      for (found = s.match(re); found; found = s.match(re))
+      {
         word = s.slice(0, found.index)
-        if (word.match(/\d/)) {
+        if (word.match(/\d/))
+        {
           res += word
-        } else {
+        }
+        else
+        {
           res += word.charAt(0).toUpperCase() + word.slice(1)
         }
         res += s.slice(found.index, found.index + found[0].length)
         s = s.slice(found.index + found[0].length)
       }
-      if (s.match(/\d/)) {
+      if (s.match(/\d/))
+      {
         return res + s
       }
       return res + s.charAt(0).toUpperCase() + s.slice(1)
@@ -35,7 +44,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'cat',
-    function (s, value) {
+    function (s, value)
+    {
       value = value || ''
       return String(s) + value
     }
@@ -44,16 +54,25 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'count',
-    function (a) {
-      if (a instanceof Array) {
+    function (a)
+    {
+      if (a instanceof Array)
+      {
         return a.length
-      } else if (typeof a === 'object') {
-        if (Object.keys) {
+      }
+      else if (typeof a === 'object')
+      {
+        if (Object.keys)
+        {
           return Object.keys(a).length
-        } else {
+        }
+        else
+        {
           var l = 0
-          for (var k in a) {
-            if (a.hasOwnProperty(k)) {
+          for (var k in a)
+          {
+            if (a.hasOwnProperty(k))
+            {
               ++l
             }
           }
@@ -67,7 +86,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'count_characters',
-    function (s, includeWhitespaces) {
+    function (s, includeWhitespaces)
+    {
       s = String(s)
       return includeWhitespaces ? s.length : s.replace(/\s/g, '').length
     }
@@ -76,9 +96,11 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'count_paragraphs',
-    function (s) {
+    function (s)
+    {
       var found = String(s).match(/\n+/g)
-      if (found) {
+      if (found)
+      {
         return found.length + 1
       }
       return 1
@@ -88,10 +110,13 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'count_sentences',
-    function (s) {
-      if (typeof s === 'string') {
+    function (s)
+    {
+      if (typeof s === 'string')
+      {
         var found = s.match(/\w[.?!](\W|$)/g)
-        if (found) {
+        if (found)
+        {
           return found.length
         }
       }
@@ -102,10 +127,13 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'count_words',
-    function (s) {
-      if (typeof s === 'string') {
+    function (s)
+    {
+      if (typeof s === 'string')
+      {
         var found = s.match(/\w+/g)
-        if (found) {
+        if (found)
+        {
           return found.length
         }
       }
@@ -116,7 +144,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'date_format',
-    function (s, fmt, defaultDate) {
+    function (s, fmt, defaultDate)
+    {
       return phpJs.strftime((fmt || '%b %e, %Y'), phpJs.makeTimeStamp((s || defaultDate)))
     }
   )
@@ -124,23 +153,31 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'debug_print_var',
-    function (s) {
+    function (s)
+    {
       console.log(s + '--')
       // Determining environment first. If its node, we do console.logs
       // else we open new windows for browsers.
       var env = ''
-      if (typeof module === 'object' && module && typeof module.exports === 'object') {
+      if (typeof module === 'object' && module && typeof module.exports === 'object')
+      {
         env = 'node'
-      } else if (typeof window === 'object' && window.document) {
+      }
+      else if (typeof window === 'object' && window.document)
+      {
         env = 'browser'
       }
-      if (env === '') {
+      if (env === '')
+      {
         // We do not know env.
         return ''
       }
-      if (env === 'browser') {
+      if (env === 'browser')
+      {
         return Latte.prototype.printR(s)
-      } else {
+      }
+      else
+      {
         console.log(s)
       }
     }
@@ -149,7 +186,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'defaultValue',
-    function (s, value) {
+    function (s, value)
+    {
       value = value || ''
       return (s && s !== 'null' && typeof s !== 'undefined') ? s : value
     }
@@ -158,70 +196,91 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'escape',
-    function (s, escType, charSet, doubleEncode) {
-      s = String(s)
-      escType = escType || 'html'
-      charSet = charSet || 'UTF-8'
+    function (s, escType, charSet, doubleEncode)
+    {
+      s            = String(s)
+      escType      = escType || 'html'
+      charSet      = charSet || 'UTF-8'
       doubleEncode = (typeof doubleEncode !== 'undefined') ? Boolean(doubleEncode) : true
-      var res = ''
+      var res      = ''
       var i
 
-      switch (escType) {
-        case 'html': {
-          if (doubleEncode) {
+      switch (escType)
+      {
+        case 'html':
+        {
+          if (doubleEncode)
+          {
             s = s.replace(/&/g, '&amp;')
           }
           return s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#039;').replace(/"/g, '&quot;')
         }
-        case 'htmlall': {
+        case 'htmlall':
+        {
           return phpJs.htmlEntities(s, 3, charSet)
         }
-        case 'url': {
+        case 'url':
+        {
           return phpJs.rawUrlEncode(s)
         }
-        case 'urlpathinfo': {
+        case 'urlpathinfo':
+        {
           return phpJs.rawUrlEncode(s).replace(/%2F/g, '/')
         }
-        case 'quotes': {
+        case 'quotes':
+        {
           return s.replace(/(^|[^\\])'/g, "$1\\'")
         }
-        case 'hex': {
+        case 'hex':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             res += '%' + phpJs.bin2Hex(s.substr(i, 1)).toLowerCase()
           }
           return res
         }
-        case 'hexentity': {
+        case 'hexentity':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             res += '&#x' + phpJs.bin2Hex(s.substr(i, 1)) + ';'
           }
           return res
         }
-        case 'decentity': {
+        case 'decentity':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             res += '&#' + phpJs.ord(s.substr(i, 1)) + ';'
           }
           return res
         }
-        case 'mail': {
+        case 'mail':
+        {
           return s.replace(/@/g, ' [AT] ').replace(/[.]/g, ' [DOT] ')
         }
-        case 'nonstd': {
+        case 'nonstd':
+        {
           res = ''
-          for (i = 0; i < s.length; ++i) {
+          for (i = 0; i < s.length; ++i)
+          {
             var _ord = phpJs.ord(s.substr(i, 1))
-            if (_ord >= 126) {
+            if (_ord >= 126)
+            {
               res += '&#' + _ord + ';'
-            } else {
+            }
+            else
+            {
               res += s.substr(i, 1)
             }
           }
           return res
         }
-        case 'javascript': {
+        case 'javascript':
+        {
           return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\//g, '</')
         }
       }
@@ -232,7 +291,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'from_charset',
-    function (s) {
+    function (s)
+    {
       // No implementation in JS. But modifier should not fail hencce this.
       return s
     }
@@ -241,13 +301,15 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'indent',
-    function (s, repeat, indentWith) {
-      s = String(s)
-      repeat = repeat || 4
+    function (s, repeat, indentWith)
+    {
+      s          = String(s)
+      repeat     = repeat || 4
       indentWith = indentWith || ' '
 
       var indentStr = ''
-      while (repeat--) {
+      while (repeat--)
+      {
         indentStr += indentWith
       }
 
@@ -259,7 +321,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'lower',
-    function (s) {
+    function (s)
+    {
       return (String(s)).toLowerCase()
     }
   )
@@ -267,7 +330,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'nl2br',
-    function (s) {
+    function (s)
+    {
       return String(s).replace(/\n/g, '<br />')
     }
   )
@@ -277,7 +341,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'regex_replace',
-    function (s, re, replaceWith) {
+    function (s, re, replaceWith)
+    {
       var pattern = re.match(/^ *\/(.*)\/(.*) *$/)
       return String(s).replace(new RegExp(pattern[1], 'g' + (pattern.length > 1 ? pattern[2] : '')), replaceWith)
     }
@@ -286,16 +351,19 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'replace',
-    function (s, search, replaceWith) {
-      if (!search) {
+    function (s, search, replaceWith)
+    {
+      if (!search)
+      {
         return s
       }
-      s = String(s)
-      search = String(search)
+      s           = String(s)
+      search      = String(search)
       replaceWith = String(replaceWith)
-      var res = ''
-      var pos = -1
-      for (pos = s.indexOf(search); pos >= 0; pos = s.indexOf(search)) {
+      var res     = ''
+      var pos     = -1
+      for (pos = s.indexOf(search); pos >= 0; pos = s.indexOf(search))
+      {
         res += s.slice(0, pos) + replaceWith
         pos += search.length
         s = s.slice(pos)
@@ -307,8 +375,10 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'spacify',
-    function (s, space) {
-      if (!space) {
+    function (s, space)
+    {
+      if (!space)
+      {
         space = ' '
       }
       return String(s).replace(/(\n|.)(?!$)/g, '$1' + space)
@@ -318,7 +388,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'string_format',
-    function (s, fmt) {
+    function (s, fmt)
+    {
       return phpJs.sprintf(fmt, s)
     }
   )
@@ -326,7 +397,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'strip',
-    function (s, replaceWith) {
+    function (s, replaceWith)
+    {
       replaceWith = replaceWith || ' '
       return String(s).replace(/[\s]+/g, replaceWith)
     }
@@ -335,24 +407,32 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'strip_tags',
-    function (s, addSpaceOrTagsToExclude, tagsToExclude) {
-      if (addSpaceOrTagsToExclude === null) {
+    function (s, addSpaceOrTagsToExclude, tagsToExclude)
+    {
+      if (addSpaceOrTagsToExclude === null)
+      {
         addSpaceOrTagsToExclude = true
       }
-      if (!tagsToExclude) {
-        if (addSpaceOrTagsToExclude !== true && addSpaceOrTagsToExclude !== false && ((addSpaceOrTagsToExclude + '').length > 0)) {
-          tagsToExclude = addSpaceOrTagsToExclude
+      if (!tagsToExclude)
+      {
+        if (addSpaceOrTagsToExclude !== true && addSpaceOrTagsToExclude !== false && ((addSpaceOrTagsToExclude + '').length > 0))
+        {
+          tagsToExclude           = addSpaceOrTagsToExclude
           addSpaceOrTagsToExclude = true
         }
       }
-      if (tagsToExclude) {
+      if (tagsToExclude)
+      {
         var filters = tagsToExclude.split('>')
         filters.splice(-1, 1)
-        s = String(s).replace(/<[^>]*?>/g, function (match, offset, contents) {
+        s = String(s).replace(/<[^>]*?>/g, function (match, offset, contents)
+        {
           var tagName = match.match(/\w+/)
-          for (var i = 0; i < filters.length; i++) {
+          for (var i = 0; i < filters.length; i++)
+          {
             var tagName2 = (filters[i] + '>').match(/\w+/)
-            if (tagName[0] === tagName2[0]) {
+            if (tagName[0] === tagName2[0])
+            {
               return match
             }
           }
@@ -367,7 +447,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'to_charset',
-    function (s) {
+    function (s)
+    {
       // No implementation in JS. But modifier should not fail hencce this.
       return s
     }
@@ -376,22 +457,26 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'truncate',
-    function (s, length, etc, breakWords, middle) {
-      s = String(s)
+    function (s, length, etc, breakWords, middle)
+    {
+      s      = String(s)
       length = length || 80
-      etc = (etc != null) ? etc : '...'
+      etc    = (etc != null) ? etc : '...'
 
-      if (s.length <= length) {
+      if (s.length <= length)
+      {
         return s
       }
 
       length -= Math.min(length, etc.length)
-      if (middle) {
+      if (middle)
+      {
         // one of floor()'s should be replaced with ceil() but it so in Latte
         return s.slice(0, Math.floor(length / 2)) + etc + s.slice(s.length - Math.floor(length / 2))
       }
 
-      if (!breakWords) {
+      if (!breakWords)
+      {
         s = s.slice(0, length + 1).replace(/\s+?(\S+)?$/, '')
       }
 
@@ -402,22 +487,28 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'unescape',
-    function (s, escType, charSet) {
-      s = String(s)
+    function (s, escType, charSet)
+    {
+      s       = String(s)
       escType = escType || 'html'
       charSet = charSet || 'UTF-8'
 
-      switch (escType) {
-        case 'html': {
+      switch (escType)
+      {
+        case 'html':
+        {
           return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#039;/g, "'").replace(/&quot;/g, '"')
         }
-        case 'entity': {
+        case 'entity':
+        {
           return phpJs.htmlEntityDecode(s, 1)
         }
-        case 'htmlall': {
+        case 'htmlall':
+        {
           return phpJs.htmlEntityDecode(s, 1)
         }
-        case 'url': {
+        case 'url':
+        {
           return phpJs.rawUrlDecode(s)
         }
       }
@@ -428,7 +519,8 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'upper',
-    function (s) {
+    function (s)
+    {
       return (String(s)).toUpperCase()
     }
   )
@@ -436,23 +528,28 @@ define(['./core', './util/phpjs'], function (Latte, phpJs) {
   Latte.prototype.registerPlugin(
     'modifier',
     'wordwrap',
-    function (s, width, wrapWith, breakWords) {
-      width = width || 80
+    function (s, width, wrapWith, breakWords)
+    {
+      width    = width || 80
       wrapWith = wrapWith || '\n'
 
       var lines = String(s).split('\n')
-      for (var i = 0; i < lines.length; ++i) {
-        var line = lines[i]
+      for (var i = 0; i < lines.length; ++i)
+      {
+        var line  = lines[i]
         var parts = ''
-        while (line.length > width) {
-          var pos = 0
+        while (line.length > width)
+        {
+          var pos   = 0
           var found = line.slice(pos).match(/\s+/)
-          for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/)) {
+          for (; found && (pos + found.index) <= width; found = line.slice(pos).match(/\s+/))
+          {
             pos += found.index + found[0].length
           }
           pos = (breakWords ? (width - 1) : (pos || (found ? found.index + found[0].length : line.length)))
           parts += line.slice(0, pos).replace(/\s+$/, '')
-          if (pos < line.length) {
+          if (pos < line.length)
+          {
             parts += wrapWith
           }
           line = line.slice(pos)

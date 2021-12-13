@@ -1,4 +1,10 @@
-define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '../util/findinarray'], function (objectMerge, trimAllQuotes, evalString, findInArray) {
+define([
+  '../util/objectmerge',
+  '../util/trimallquotes',
+  '../util/evalstring',
+  '../util/findinarray'
+], function (objectMerge, trimAllQuotes, evalString, findInArray)
+{
   // Parser object. Plain object which just does parsing.
   var LatteParser = {
 
@@ -28,27 +34,31 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     blocks: {},
 
-    getTemplate: function (name) {
+    getTemplate: function (name)
+    {
       throw new Error('no getTemplate function defined.')
     },
 
-    getConfig: function () {
+    getConfig: function ()
+    {
       throw new Error('no getConfig function defined.')
     },
 
-    clear: function () {
+    clear: function ()
+    {
       // Clean up config, specific for this parsing.
       this.runTimePlugins = {}
-      this.preFilters = []
-      this.autoLiteral = true
-      this.plugins = {}
-      this.ldelim = '{'
-      this.rdelim = '}'
-      this.blocks = {}
-      this.outerBlocks = {}
+      this.preFilters     = []
+      this.autoLiteral    = true
+      this.plugins        = {}
+      this.ldelim         = '{'
+      this.rdelim         = '}'
+      this.blocks         = {}
+      this.outerBlocks    = {}
     },
 
-    getTree: function (template) {
+    getTree: function (template)
+    {
       var tree
       // Remove comments, we never want them.
       template = this.removeComments(template)
@@ -62,13 +72,18 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Parse the template and get the output.
       tree = this.parse(template)
 
-      if (tree.usedExtends > 0) {
+      if (tree.usedExtends > 0)
+      {
         var tmpTree = []
         // Now in the tree remove anything other than block after extends
-        for (var i = 0; i < tree.length; i++) {
-          if (i < tree.usedExtends) {
+        for (var i = 0; i < tree.length; i++)
+        {
+          if (i < tree.usedExtends)
+          {
             tmpTree.push(tree[i])
-          } else if (tree[i].type === 'build-in' && (tree[i].name === 'block')) {
+          }
+          else if (tree[i].type === 'build-in' && (tree[i].name === 'block'))
+          {
             tmpTree.push(tree[i])
           }
         }
@@ -79,7 +94,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     // Parse the template and return the data.
-    getParsed: function (template) {
+    getParsed: function (template)
+    {
       var tree = this.getTree(template)
       var runTimePlugins
 
@@ -95,16 +111,17 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Refactor to maintain cache. Until that keep commented.
       // this.files = {};
       return {
-        tree: tree,
+        tree          : tree,
         runTimePlugins: runTimePlugins,
-        blocks: blocks,
-        outerBlocks: outerBlocks
+        blocks        : blocks,
+        outerBlocks   : outerBlocks
       }
     },
 
     // Parse the template and generate tree.
-    parse: function (tpl) {
-      var tree = []
+    parse: function (tpl)
+    {
+      var tree        = []
       var openTag
       var tag
       var name
@@ -113,70 +130,94 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       var closeTag
       var usedExtends = 0
 
-      for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl)) {
-        if (openTag.index) {
+      for (openTag = this.findTag('', tpl); openTag; openTag = this.findTag('', tpl))
+      {
+        if (openTag.index)
+        {
           tree = tree.concat(this.parseText(tpl.slice(0, openTag.index)))
         }
         tpl = tpl.slice((openTag.index + openTag[0].length))
         tag = openTag[1].match(/^\s*(\w+)(.*)$/)
-        if (tag) {
+        if (tag)
+        {
           // Function?!
-          name = tag[1]
+          name     = tag[1]
           paramStr = (tag.length > 2) ? tag[2].replace(/^\s+|\s+$/g, '') : ''
-          if (name in this.buildInFunctions) {
+          if (name in this.buildInFunctions)
+          {
             var buildIn = this.buildInFunctions[name]
-            var params = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr)
-            if (buildIn.type === 'block') {
+            var params  = ('parseParams' in buildIn ? buildIn.parseParams.bind(this) : this.parseParams.bind(this))(paramStr)
+            if (buildIn.type === 'block')
+            {
               // Remove new line after block open tag (like in Latte)
-              tpl = tpl.replace(/^\n/, '')
-              closeTag = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
+              tpl              = tpl.replace(/^\n/, '')
+              closeTag         = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
               var functionTree = buildIn.parse.call(this, params, tpl.slice(0, closeTag.index))
-              if (functionTree) {
+              if (functionTree)
+              {
                 // Some functions return false like {php} and {function}
                 tree = tree.concat(functionTree)
               }
               tpl = tpl.slice(closeTag.index + closeTag[0].length)
-            } else {
-              if (name === 'extends') {
+            }
+            else
+            {
+              if (name === 'extends')
+              {
                 // Anything before {extends} should be stripped.
                 tree.splice(0, tree.length)
               }
               tree = tree.concat(buildIn.parse.call(this, params))
-              if (name === 'extends') {
+              if (name === 'extends')
+              {
                 usedExtends = tree.length
               }
             }
             tpl = tpl.replace(/^\n/, '')
-          } else if (name in this.runTimePlugins) {
+          }
+          else if (name in this.runTimePlugins)
+          {
             // Possible it is function name. give it a priority before plugin.
             tree = tree.concat(this.parsePluginFunc(name, this.parseParams(paramStr)))
-          } else if (name in this.plugins) {
+          }
+          else if (name in this.plugins)
+          {
             var plugin = this.plugins[name]
-            if (plugin.type === 'block') {
+            if (plugin.type === 'block')
+            {
               closeTag = this.findCloseTag('/' + name, name + ' +[^}]*', tpl)
-              tree = tree.concat(this.parsePluginBlock(name, this.parseParams(paramStr), tpl.slice(0, closeTag.index)))
-              tpl = tpl.slice(closeTag.index + closeTag[0].length)
-            } else if (plugin.type === 'function') {
+              tree     = tree.concat(this.parsePluginBlock(name, this.parseParams(paramStr), tpl.slice(0, closeTag.index)))
+              tpl      = tpl.slice(closeTag.index + closeTag[0].length)
+            }
+            else if (plugin.type === 'function')
+            {
               tree = tree.concat(this.parsePluginFunc(name, this.parseParams(paramStr)))
             }
-            if (name === 'append' || name === 'assign' || name === 'capture' || name === 'eval' || name === 'include') {
+            if (name === 'append' || name === 'assign' || name === 'capture' || name === 'eval' || name === 'include')
+            {
               tpl = tpl.replace(/^\n/, '')
             }
-          } else {
+          }
+          else
+          {
             // Variable.
             node = this.buildInFunctions.expression.parse.call(this, openTag[1])
             tree.push(node)
           }
-        } else {
+        }
+        else
+        {
           // Variable.
           node = this.buildInFunctions.expression.parse.call(this, openTag[1])
-          if (node.expression.type === 'build-in' && node.expression.name === 'operator' && node.expression.op === '=') {
+          if (node.expression.type === 'build-in' && node.expression.name === 'operator' && node.expression.op === '=')
+          {
             tpl = tpl.replace(/^\n/, '')
           }
           tree.push(node)
         }
       }
-      if (tpl) {
+      if (tpl)
+      {
         tree = tree.concat(this.parseText(tpl))
       }
       tree.usedExtends = usedExtends
@@ -184,43 +225,54 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     // Find a first {tag} in the string.
-    findTag: function (expression, s) {
-      var openCount = 0
-      var offset = 0
+    findTag: function (expression, s)
+    {
+      var openCount        = 0
+      var offset           = 0
       var i
-      var ldelim = this.ldelim
-      var rdelim = this.rdelim
+      var ldelim           = this.ldelim
+      var rdelim           = this.rdelim
       var skipInWhitespace = this.autoLiteral
-      var expressionAny = /^\s*(.+)\s*$/i
-      var expressionTag = expression ? new RegExp('^\\s*(' + expression + ')\\s*$', 'i') : expressionAny
+      var expressionAny    = /^\s*(.+)\s*$/i
+      var expressionTag    = expression ? new RegExp('^\\s*(' + expression + ')\\s*$', 'i') : expressionAny
       var sTag
       var found
 
-      for (i = 0; i < s.length; ++i) {
-        if (s.substr(i, ldelim.length) === ldelim) {
-          if (skipInWhitespace && (i + 1) < s.length && s.substr((i + 1), 1).match(/\s/)) {
+      for (i = 0; i < s.length; ++i)
+      {
+        if (s.substr(i, ldelim.length) === ldelim)
+        {
+          if (skipInWhitespace && (i + 1) < s.length && s.substr((i + 1), 1).match(/\s/))
+          {
             continue
           }
-          if (!openCount) {
+          if (!openCount)
+          {
             s = s.slice(i)
             offset += parseInt(i)
             i = 0
           }
           ++openCount
-        } else if (s.substr(i, rdelim.length) === rdelim) {
-          if (skipInWhitespace && (i - 1) >= 0 && s.substr((i - 1), 1).match(/\s/)) {
+        }
+        else if (s.substr(i, rdelim.length) === rdelim)
+        {
+          if (skipInWhitespace && (i - 1) >= 0 && s.substr((i - 1), 1).match(/\s/))
+          {
             continue
           }
-          if (!--openCount) {
-            sTag = s.slice(ldelim.length, i).replace(/[\r\n]/g, ' ')
+          if (!--openCount)
+          {
+            sTag  = s.slice(ldelim.length, i).replace(/[\r\n]/g, ' ')
             found = sTag.match(expressionTag)
-            if (found) {
+            if (found)
+            {
               found.index = offset
-              found[0] = s.slice(0, (i + rdelim.length))
+              found[0]    = s.slice(0, (i + rdelim.length))
               return found
             }
           }
-          if (openCount < 0) {
+          if (openCount < 0)
+          {
             // Ignore any number of unmatched right delimiters.
             openCount = 0
           }
@@ -229,19 +281,24 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return null
     },
 
-    findElseTag: function (reOpen, reClose, reElse, s) {
+    findElseTag: function (reOpen, reClose, reElse, s)
+    {
       var offset = 0
 
-      for (var elseTag = this.findTag(reElse, s); elseTag; elseTag = this.findTag(reElse, s)) {
+      for (var elseTag = this.findTag(reElse, s); elseTag; elseTag = this.findTag(reElse, s))
+      {
         var openTag = this.findTag(reOpen, s)
-        if (!openTag || openTag.index > elseTag.index) {
+        if (!openTag || openTag.index > elseTag.index)
+        {
           elseTag.index += offset
           return elseTag
-        } else {
-          s = s.slice(openTag.index + openTag[0].length)
+        }
+        else
+        {
+          s            = s.slice(openTag.index + openTag[0].length)
           offset += openTag.index + openTag[0].length
           var closeTag = this.findCloseTag(reClose, reOpen, s)
-          s = s.slice(closeTag.index + closeTag[0].length)
+          s            = s.slice(closeTag.index + closeTag[0].length)
           offset += closeTag.index + closeTag[0].length
         }
       }
@@ -249,41 +306,52 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     // Find closing tag which matches. expressionClose.
-    findCloseTag: function (expressionClose, expressionOpen, s) {
-      var sInner = ''
-      var closeTag = null
-      var openTag = null
+    findCloseTag: function (expressionClose, expressionOpen, s)
+    {
+      var sInner    = ''
+      var closeTag  = null
+      var openTag   = null
       var findIndex = 0
 
-      do {
-        if (closeTag) {
+      do
+      {
+        if (closeTag)
+        {
           findIndex += closeTag[0].length
         }
         closeTag = this.findTag(expressionClose, s)
-        if (!closeTag) {
+        if (!closeTag)
+        {
           throw new Error('Unclosed ' + this.ldelim + expressionOpen + this.rdelim)
         }
         sInner += s.slice(0, closeTag.index)
         findIndex += closeTag.index
-        s = s.slice((closeTag.index + closeTag[0].length))
+        s       = s.slice((closeTag.index + closeTag[0].length))
         openTag = this.findTag(expressionOpen, sInner)
-        if (openTag) {
+        if (openTag)
+        {
           sInner = sInner.slice((openTag.index + openTag[0].length))
         }
-      } while (openTag)
+      }
+      while (openTag)
 
       closeTag.index = findIndex
       return closeTag
     },
 
-    bundleOp: function (i, tree, precedence) {
+    bundleOp: function (i, tree, precedence)
+    {
       var op = tree[i]
-      if (op.name === 'operator' && op.precedence === precedence && !op.params.__parsed) {
-        if (op.optype === 'binary') {
+      if (op.name === 'operator' && op.precedence === precedence && !op.params.__parsed)
+      {
+        if (op.optype === 'binary')
+        {
           op.params.__parsed = [tree[(i - 1)], tree[(i + 1)]]
           tree.splice((i - 1), 3, op)
           return [true, tree]
-        } else if (op.optype === 'post-unary') {
+        }
+        else if (op.optype === 'post-unary')
+        {
           op.params.__parsed = [tree[(i - 1)]]
           tree.splice((i - 1), 2, op)
           return [true, tree]
@@ -295,25 +363,34 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return [false, tree]
     },
 
-    composeExpression: function (tree) {
+    composeExpression: function (tree)
+    {
       var i = 0
       var data
 
-      for (i = 0; i < tree.length; ++i) {
-        if (tree[i] instanceof Array) {
+      for (i = 0; i < tree.length; ++i)
+      {
+        if (tree[i] instanceof Array)
+        {
           tree[i] = this.composeExpression(tree[i])
         }
       }
 
-      for (var precedence = 1; precedence < 14; ++precedence) {
-        if (precedence === 2 || precedence === 10) {
-          for (i = tree.length; i > 0; --i) {
+      for (var precedence = 1; precedence < 14; ++precedence)
+      {
+        if (precedence === 2 || precedence === 10)
+        {
+          for (i = tree.length; i > 0; --i)
+          {
             data = this.bundleOp(i - 1, tree, precedence)
             i -= data[0]
             tree = data[1]
           }
-        } else {
-          for (i = 0; i < tree.length; ++i) {
+        }
+        else
+        {
+          for (i = 0; i < tree.length; ++i)
+          {
             data = this.bundleOp(i, tree, precedence)
             i -= data[0]
             tree = data[1]
@@ -324,66 +401,88 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return tree[0]
     },
 
-    getMatchingToken: function (s) {
-      for (var i = 0; i < this.tokens.length; ++i) {
-        if (s.match(this.tokens[i].regex)) {
+    getMatchingToken: function (s)
+    {
+      for (var i = 0; i < this.tokens.length; ++i)
+      {
+        if (s.match(this.tokens[i].regex))
+        {
           return i
         }
       }
       return false
     },
 
-    parseVar: function (s, name, token) {
+    parseVar: function (s, name, token)
+    {
       var expression = /^(?:\.|\s*->\s*|\[\s*)/
       var op
-      var data = {value: '', tree: []}
+      var data       = {value: '', tree: []}
       var lookUpData
-      var value = ''
-      var parts = [{type: 'text', data: name.replace(/^(\w+)@(key|index|iteration|counter|odd|even|first|last|empty|show|total)/gi, '$1__$2')}]
-      var rootName = token
+      var value      = ''
+      var parts      = [
+        {
+          type: 'text',
+          data: name.replace(/^(\w+)@(key|index|iteration|counter|odd|even|first|last|empty|show|total)/gi, '$1__$2')
+        }
+      ]
+      var rootName   = token
 
-      if (!token) {
-        token = name
+      if (!token)
+      {
+        token    = name
         rootName = token
       }
-      for (op = s.match(expression); op; op = s.match(expression)) {
+      for (op = s.match(expression); op; op = s.match(expression))
+      {
         token += op[0]
         s = s.slice(op[0].length)
-        if (op[0].match(/\[/)) {
+        if (op[0].match(/\[/))
+        {
           data = this.parseExpression(s, true)
-          if (data.tree) {
+          if (data.tree)
+          {
             token += data.value
             parts.push(data.tree)
             s = s.slice(data.value.length)
           }
           var closeOp = s.match(/\s*\]/)
-          if (closeOp) {
+          if (closeOp)
+          {
             token += closeOp[0]
             s = s.slice(closeOp[0].length)
           }
-        } else {
-          var parseMod = this.parseModifiersStop
+        }
+        else
+        {
+          var parseMod            = this.parseModifiersStop
           this.parseModifiersStop = true
-          lookUpData = this.lookUp(s, '')
-          if (lookUpData) {
-            data.tree = [].concat(data.tree, lookUpData.tree)
+          lookUpData              = this.lookUp(s, '')
+          if (lookUpData)
+          {
+            data.tree  = [].concat(data.tree, lookUpData.tree)
             data.value = lookUpData.value
             token += lookUpData.value
 
-            if (lookUpData.ret) {
+            if (lookUpData.ret)
+            {
               var part = data.tree[(data.tree.length - 1)]
-              if (part.type === 'plugin' && part.name === '__func') {
+              if (part.type === 'plugin' && part.name === '__func')
+              {
                 part.hasOwner = true
               }
               parts.push(part)
               s = s.slice(data.value.length)
-            } else {
+            }
+            else
+            {
               data = false
             }
           }
           this.parseModifiersStop = parseMod
         }
-        if (!data) {
+        if (!data)
+        {
           parts.push({type: 'text', data: ''})
         }
       }
@@ -392,70 +491,87 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return {s: s, token: token, tree: [{type: 'var', parts: parts}], value: value}
     },
 
-    parseFunc: function (name, params, tree) {
+    parseFunc: function (name, params, tree)
+    {
       params.__parsed.name = this.parseText(name, [])[0]
       tree.push({
-        type: 'plugin',
-        name: '__func',
+        type  : 'plugin',
+        name  : '__func',
         params: params
       })
       return tree
     },
 
-    parseOperator: function (op, type, precedence) {
-      return [{
-        type: 'build-in',
-        name: 'operator',
-        op: op,
-        optype: type,
-        precedence: precedence,
-        params: {}
-      }]
+    parseOperator: function (op, type, precedence)
+    {
+      return [
+        {
+          type      : 'build-in',
+          name      : 'operator',
+          op        : op,
+          optype    : type,
+          precedence: precedence,
+          params    : {}
+        }
+      ]
     },
 
-    parsePluginBlock: function (name, params, content) {
-      return [{
-        type: 'plugin',
-        name: name,
-        params: params,
-        subTree: this.parse(content, [])
-      }]
+    parsePluginBlock: function (name, params, content)
+    {
+      return [
+        {
+          type   : 'plugin',
+          name   : name,
+          params : params,
+          subTree: this.parse(content, [])
+        }
+      ]
     },
 
-    parsePluginFunc: function (name, params) {
-      return [{
-        type: 'plugin',
-        name: name,
-        params: params
-      }]
+    parsePluginFunc: function (name, params)
+    {
+      return [
+        {
+          type  : 'plugin',
+          name  : name,
+          params: params
+        }
+      ]
     },
 
-    parseModifiers: function (s, tree) {
+    parseModifiers: function (s, tree)
+    {
       var modifier = s.match(/^\|(\w+)/)
-      var value = ''
+      var value    = ''
       var funcName
-      if (this.parseModifiersStop) {
+      if (this.parseModifiersStop)
+      {
         return
       }
-      if (!modifier) {
+      if (!modifier)
+      {
         return
       }
       value += modifier[0]
 
       funcName = ((modifier[1] === 'default') ? 'defaultValue' : modifier[1])
-      s = s.slice(modifier[0].length).replace(/^\s+/, '')
+      s        = s.slice(modifier[0].length).replace(/^\s+/, '')
 
       this.parseModifiersStop = true
-      var params = []
-      for (var colon = s.match(/^\s*:\s*/); colon; colon = s.match(/^\s*:\s*/)) {
+      var params              = []
+      for (var colon = s.match(/^\s*:\s*/); colon; colon = s.match(/^\s*:\s*/))
+      {
         value += s.slice(0, colon[0].length)
-        s = s.slice(colon[0].length)
+        s              = s.slice(colon[0].length)
         var lookUpData = this.lookUp(s, '')
-        if (lookUpData.ret) {
+        if (lookUpData.ret)
+        {
           value += lookUpData.value
           params.push(lookUpData.tree[0])
           s = s.slice(lookUpData.value.length)
-        } else {
+        }
+        else
+        {
           params.push(this.parseText(''))
         }
       }
@@ -469,55 +585,68 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       // Modifiers can be combined.
       var selfData = this.parseModifiers(s, tree)
       // If data is returned merge the current tree and tree we got.
-      if (selfData) {
+      if (selfData)
+      {
         tree = tree.concat(selfData.tree)
       }
       return {value: value, tree: tree}
     },
 
-    parseParams: function (paramsStr, regexDelim, regexName) {
-      var s = paramsStr.replace(/\n/g, ' ').replace(/^\s+|\s+$/g, '')
+    parseParams: function (paramsStr, regexDelim, regexName)
+    {
+      var s      = paramsStr.replace(/\n/g, ' ').replace(/^\s+|\s+$/g, '')
       var params = []
-      paramsStr = ''
+      paramsStr  = ''
 
       params.__parsed = []
 
-      if (!s) {
+      if (!s)
+      {
         return params
       }
 
-      if (!regexDelim) {
+      if (!regexDelim)
+      {
         regexDelim = /^\s+/
-        regexName = /^(\w+)\s*=\s*/
+        regexName  = /^(\w+)\s*=\s*/
       }
 
-      while (s) {
+      while (s)
+      {
         var name = null
-        if (regexName) {
+        if (regexName)
+        {
           var foundName = s.match(regexName)
-          if (foundName) {
+          if (foundName)
+          {
             var firstChar = foundName[1].charAt(0).match(/^\d+/)
-            if (foundName[1] === 'true' || foundName[1] === 'false' || foundName[1] === 'null') {
+            if (foundName[1] === 'true' || foundName[1] === 'false' || foundName[1] === 'null')
+            {
               firstChar = true
             }
 
-            if (!firstChar) {
+            if (!firstChar)
+            {
               name = trimAllQuotes(foundName[1])
               paramsStr += s.slice(0, foundName[0].length)
-              s = s.slice(foundName[0].length)
+              s    = s.slice(foundName[0].length)
             }
           }
         }
 
         var param = this.parseExpression(s)
-        if (!param) {
+        if (!param)
+        {
           break
         }
 
-        if (name) {
-          params[name] = param.value
+        if (name)
+        {
+          params[name]          = param.value
           params.__parsed[name] = param.tree
-        } else {
+        }
+        else
+        {
           params.push(param.value)
           params.__parsed.push(param.tree)
         }
@@ -526,34 +655,43 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         s = s.slice(param.value.length)
 
         var foundDelim = s.match(regexDelim)
-        if (foundDelim) {
+        if (foundDelim)
+        {
           paramsStr += s.slice(0, foundDelim[0].length)
           s = s.slice(foundDelim[0].length)
-        } else {
+        }
+        else
+        {
           break
         }
       }
-      params.toString = function () {
+      params.toString = function ()
+      {
         return paramsStr
       }
       return params
     },
 
-    lookUp: function (s, value) {
+    lookUp: function (s, value)
+    {
       var tree = []
       var tag
 
-      if (!s) {
+      if (!s)
+      {
         return false
       }
-      if (s.substr(0, this.ldelim.length) === this.ldelim) {
+      if (s.substr(0, this.ldelim.length) === this.ldelim)
+      {
         tag = this.findTag('', s)
         value += tag[0]
-        if (tag) {
-          var t = this.parse(tag[0])
-          tree = tree.concat(t)
+        if (tag)
+        {
+          var t       = this.parse(tag[0])
+          tree        = tree.concat(t)
           var modData = this.parseModifiers(s.slice(value.length), tree)
-          if (modData) {
+          if (modData)
+          {
             return {ret: true, tree: modData.tree, value: modData.value}
           }
           return {ret: true, tree: tree, value: value}
@@ -561,26 +699,39 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       }
 
       var anyMatchingToken = this.getMatchingToken(s)
-      if (anyMatchingToken !== false) {
+      if (anyMatchingToken !== false)
+      {
         value += RegExp.lastMatch
-        var newTree = this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length), {tree: tree, token: RegExp.lastMatch})
+        var newTree = this.tokens[anyMatchingToken].parse.call(this, s.slice(RegExp.lastMatch.length), {
+          tree : tree,
+          token: RegExp.lastMatch
+        })
 
-        if (typeof newTree === 'string') {
-          if (newTree === 'parenStart') {
+        if (typeof newTree === 'string')
+        {
+          if (newTree === 'parenStart')
+          {
             var blankTree = []
             tree.push(blankTree)
             blankTree.parent = tree
-            tree = blankTree
-          } else if (newTree === 'parenEnd') {
-            if (tree.parent) {
+            tree             = blankTree
+          }
+          else if (newTree === 'parenEnd')
+          {
+            if (tree.parent)
+            {
               tree = tree.parent
             }
           }
-        } else if ((!!newTree) && (newTree.constructor === Object)) {
+        }
+        else if ((!!newTree) && (newTree.constructor === Object))
+        {
           value += newTree.value
           newTree = newTree.tree
-          tree = tree.concat(newTree)
-        } else {
+          tree    = tree.concat(newTree)
+        }
+        else
+        {
           tree = tree.concat(newTree)
         }
         return {ret: true, tree: tree, value: value}
@@ -589,27 +740,34 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     // Parse expression.
-    parseExpression: function (s) {
-      var tree = []
+    parseExpression: function (s)
+    {
+      var tree  = []
       var value = ''
       var data
 
       // TODO Refactor, to get this removed.
       this.lastTreeInExpression = tree
-      while (true) {
+      while (true)
+      {
         data = this.lookUp(s.slice(value.length), value)
-        if (data) {
-          tree = tree.concat(data.tree)
-          value = data.value
+        if (data)
+        {
+          tree                      = tree.concat(data.tree)
+          value                     = data.value
           this.lastTreeInExpression = tree
-          if (!data.ret) {
+          if (!data.ret)
+          {
             break
           }
-        } else {
+        }
+        else
+        {
           break
         }
       }
-      if (tree.length) {
+      if (tree.length)
+      {
         tree = this.composeExpression(tree)
       }
 
@@ -617,17 +775,21 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     // Parse boolean.
-    parseBool: function (boolVal) {
+    parseBool: function (boolVal)
+    {
       return [{type: 'boolean', data: boolVal}]
     },
 
     // Parse text.
-    parseText: function (text) {
+    parseText: function (text)
+    {
       var tree = []
 
-      if (this.parseEmbeddedVars) {
+      if (this.parseEmbeddedVars)
+      {
         var re = /([$][\w@]+)|`([^`]*)`/
-        for (var found = re.exec(text); found; found = re.exec(text)) {
+        for (var found = re.exec(text); found; found = re.exec(text))
+        {
           tree.push({type: 'text', data: text.slice(0, found.index)})
           var d = this.parseExpression(found[1] ? found[1] : found[2])
           tree.push(d.tree)
@@ -638,32 +800,40 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       return tree
     },
 
-    loadTemplate: function (name, nocache) {
+    loadTemplate: function (name, nocache)
+    {
       var tree = []
-      if (nocache || !(name in this.files)) {
+      if (nocache || !(name in this.files))
+      {
         var tpl = this.getTemplate(name)
-        if (typeof tpl !== 'string') {
+        if (typeof tpl !== 'string')
+        {
           throw new Error('No template for ' + name)
         }
-        tree = this.getTree(tpl)
+        tree             = this.getTree(tpl)
         this.files[name] = tree
-      } else {
+      }
+      else
+      {
         tree = this.files[name]
       }
       return tree
     },
 
     // Remove comments. We do not want to parse them anyway.
-    removeComments: function (tpl) {
+    removeComments: function (tpl)
+    {
       var ldelim = new RegExp(this.ldelim + '\\*')
       var rdelim = new RegExp('\\*' + this.rdelim)
       var newTpl = ''
 
-      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim)) {
+      for (var openTag = tpl.match(ldelim); openTag; openTag = tpl.match(ldelim))
+      {
         newTpl += tpl.slice(0, openTag.index)
-        tpl = tpl.slice(openTag.index + openTag[0].length)
+        tpl          = tpl.slice(openTag.index + openTag[0].length)
         var closeTag = tpl.match(rdelim)
-        if (!closeTag) {
+        if (!closeTag)
+        {
           throw new Error('Unclosed ' + ldelim + '*')
         }
         tpl = tpl.slice(closeTag.index + closeTag[0].length)
@@ -673,14 +843,17 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
     // TODO:: Remove this duplicate function.
     // Apply the filters to template.
-    applyFilters: function (filters) {
+    applyFilters: function (filters)
+    {
       var args = []
 
-      for (var j = 1; j < arguments.length; j++) {
+      for (var j = 1; j < arguments.length; j++)
+      {
         args[j - 1] = arguments[j]
       }
 
-      for (var i = 0; i < filters.length; ++i) {
+      for (var i = 0; i < filters.length; ++i)
+      {
         args[0] = filters[i].apply(this, args)
       }
 
@@ -688,14 +861,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     },
 
     // Tokens to indentify data inside template.
-    tokens: [
+    tokens          : [
       {
         // Token for variable.
         'regex': /^\$([\w@]+)/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var dataVar = this.parseVar(s, RegExp.$1, RegExp.$1)
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
-          if (dataMod) {
+          if (dataMod)
+          {
             dataVar.value += dataMod.value
             return dataMod
           }
@@ -705,8 +880,10 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for boolean.
         'regex': /^(true|false)/i,
-        parse: function (s, data) {
-          if (data.token.match(/true/i)) {
+        parse  : function (s, data)
+        {
+          if (data.token.match(/true/i))
+          {
             return this.parseBool(true)
           }
           return this.parseBool(false)
@@ -715,12 +892,14 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for to grab data inside single quotes.
         'regex': /^'([^'\\]*(?:\\.[^'\\]*)*)'/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           // Data inside single quote is like string, we do not parse it.
           var regexStr = evalString(RegExp.$1)
           var textTree = this.parseText(regexStr)
-          var dataMod = this.parseModifiers(s, textTree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s, textTree)
+          if (dataMod)
+          {
             return dataMod
           }
           return textTree
@@ -730,25 +909,29 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
         // Token for to grab data inside double quotes.
         // We parse data inside double quotes.
         'regex': /^"([^"\\]*(?:\\.[^"\\]*)*)"/,
-        parse: function (s, data) {
-          var v = evalString(RegExp.$1)
+        parse  : function (s, data)
+        {
+          var v     = evalString(RegExp.$1)
           var isVar = v.match(this.tokens[0]['regex'])
-          if (isVar) {
+          if (isVar)
+          {
             var newData = this.parseVar(v, isVar[1], isVar[0])
-            if (newData.token.length === v.length) {
+            if (newData.token.length === v.length)
+            {
               return [newData.tree[0]]
             }
           }
           this.parseEmbeddedVars = true
-          var tree = []
+          var tree               = []
           tree.push({
-            type: 'plugin',
-            name: '__quoted',
+            type  : 'plugin',
+            name  : '__quoted',
             params: {__parsed: this.parse(v, [])}
           })
           this.parseEmbeddedVars = false
-          var modData = this.parseModifiers(s, tree)
-          if (modData) {
+          var modData            = this.parseModifiers(s, tree)
+          if (modData)
+          {
             return modData
           }
           return tree
@@ -757,14 +940,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for func().
         'regex': /^(\w+)\s*[(]([)]?)/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var funcName = RegExp.$1
-          var noArgs = RegExp.$2
-          var params = this.parseParams(((noArgs) ? '' : s), /^\s*,\s*/)
-          var tree = this.parseFunc(funcName, params, [])
+          var noArgs   = RegExp.$2
+          var params   = this.parseParams(((noArgs) ? '' : s), /^\s*,\s*/)
+          var tree     = this.parseFunc(funcName, params, [])
           // var value += params.toString();
-          var dataMod = this.parseModifiers(s.slice(params.toString().length), tree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s.slice(params.toString().length), tree)
+          if (dataMod)
+          {
             return dataMod
           }
           return tree
@@ -773,7 +958,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for expression in parentheses.
         'regex': /^\s*\(\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           // We do not know way of manupilating the tree here.
           return 'parenStart'
         }
@@ -781,7 +967,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for end of func() or (expr).
         'regex': /^\s*\)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           // We do not know way of manupilating the tree here.
           return 'parenEnd'
         }
@@ -789,10 +976,14 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Token for increment operator.
         'regex': /^\s*(\+\+|--)\s*/,
-        parse: function (s, data) {
-          if (this.lastTreeInExpression.length && this.lastTreeInExpression[this.lastTreeInExpression.length - 1].type === 'var') {
+        parse  : function (s, data)
+        {
+          if (this.lastTreeInExpression.length && this.lastTreeInExpression[this.lastTreeInExpression.length - 1].type === 'var')
+          {
             return this.parseOperator(RegExp.$1, 'post-unary', 1)
-          } else {
+          }
+          else
+          {
             return this.parseOperator(RegExp.$1, 'pre-unary', 1)
           }
         }
@@ -800,14 +991,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for strict equal, strict not equal, equal and not equal operator.
         'regex': /^\s*(===|!==|==|!=)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 6)
         }
       },
       {
         // Regex for equal, not equal operator.
         'regex': /^\s+(eq|ne|neq)\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var op = RegExp.$1.replace(/ne(q)?/, '!=').replace(/eq/, '==')
           return this.parseOperator(op, 'binary', 6)
         }
@@ -815,45 +1008,54 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for NOT operator.
         'regex': /^\s*!\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('!', 'pre-unary', 2)
         }
       },
       {
         // Regex for NOT operator.
         'regex': /^\s+not\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('!', 'pre-unary', 2)
         }
       },
       {
         // Regex for =, +=, *=, /=, %= operator.
         'regex': /^\s*(=|\+=|-=|\*=|\/=|%=)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 10)
         }
       },
       {
         // Regex for *, /, % binary operator.
         'regex': /^\s*(\*|\/|%)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 3)
         }
       },
       {
         // Regex for mod operator.
         'regex': /^\s+mod\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('%', 'binary', 3)
         }
       },
       {
         // Regex for +/- operator.
         'regex': /^\s*(\+|-)\s*/,
-        parse: function (s, data) {
-          if (!this.lastTreeInExpression.length || this.lastTreeInExpression[this.lastTreeInExpression.length - 1].name === 'operator') {
+        parse  : function (s, data)
+        {
+          if (!this.lastTreeInExpression.length || this.lastTreeInExpression[this.lastTreeInExpression.length - 1].name === 'operator')
+          {
             return this.parseOperator(RegExp.$1, 'pre-unary', 4)
-          } else {
+          }
+          else
+          {
             return this.parseOperator(RegExp.$1, 'binary', 4)
           }
         }
@@ -861,14 +1063,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for less than, greater than, less than equal, reather than equal.
         'regex': /^\s*(<=|>=|<>|<|>)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1.replace(/<>/, '!='), 'binary', 5)
         }
       },
       {
         // Regex for less than, greater than, less than equal, reather than equal.
         'regex': /^\s+(lt|lte|le|gt|gte|ge)\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var op = RegExp.$1.replace(/l(t)?e/, '<').replace(/lt/, '<=').replace(/g(t)?e/, '>').replace(/gt/, '>=')
           return this.parseOperator(op, 'binary', 5)
         }
@@ -876,17 +1080,20 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for short hand "is (not) div by".
         'regex': /^\s+(is\s+(not\s+)?div\s+by)\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$2 ? 'div_not' : 'div', 'binary', 7)
         }
       },
       {
         // Regex for short hand "is (not) even/odd by".
         'regex': /^\s+is\s+(not\s+)?(even|odd)(\s+by\s+)?\s*/i,
-        parse: function (s, data) {
-          var op = RegExp.$1 ? ((RegExp.$2 === 'odd') ? 'even' : 'even_not') : ((RegExp.$2 === 'odd') ? 'even_not' : 'even')
+        parse  : function (s, data)
+        {
+          var op   = RegExp.$1 ? ((RegExp.$2 === 'odd') ? 'even' : 'even_not') : ((RegExp.$2 === 'odd') ? 'even_not' : 'even')
           var tree = this.parseOperator(op, 'binary', 7)
-          if (!RegExp.$3) {
+          if (!RegExp.$3)
+          {
             return tree.concat(this.parseText('1', tree))
           }
           return tree
@@ -895,45 +1102,52 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for AND operator.
         'regex': /^\s*(&&)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 8)
         }
       },
       {
         // Regex for OR operator.
         'regex': /^\s*(\|\|)\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator(RegExp.$1, 'binary', 9)
         }
       },
       {
         // Regex for AND operator.
         'regex': /^\s+and\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('&&', 'binary', 11)
         }
       },
       {
         // Regex for XOR operator.
         'regex': /^\s+xor\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('xor', 'binary', 12)
         }
       },
       {
         // Regex for OR operator.
         'regex': /^\s+or\s+/i,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           return this.parseOperator('||', 'binary', 13)
         }
       },
       {
         // Regex for config variable.
         'regex': /^#(\w+)#/,
-        parse: function (s, data) {
-          var dataVar = this.parseVar('.config.' + RegExp.$1, 'smarty', '$smarty')
+        parse  : function (s, data)
+        {
+          var dataVar = this.parseVar('.config.' + RegExp.$1, 'latte', '$latte')
           var dataMod = this.parseModifiers(dataVar.s, dataVar.tree)
-          if (dataMod) {
+          if (dataMod)
+          {
             dataVar.value += dataMod.value
             return dataMod
           }
@@ -943,12 +1157,14 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for array.
         'regex': /^\s*\[\s*/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var params = this.parseParams(s, /^\s*,\s*/, /^('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"|\w+)\s*=>\s*/)
-          var tree = this.parsePluginFunc('__array', params)
-          var value = params.toString()
-          var paren = s.slice(params.toString().length).match(/\s*\]/)
-          if (paren) {
+          var tree   = this.parsePluginFunc('__array', params)
+          var value  = params.toString()
+          var paren  = s.slice(params.toString().length).match(/\s*\]/)
+          if (paren)
+          {
             value += paren[0]
           }
           return {tree: tree, value: value}
@@ -957,15 +1173,20 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for number.
         'regex': /^[\d.]+/,
-        parse: function (s, data) {
-          if (data.token.indexOf('.') > -1) {
+        parse  : function (s, data)
+        {
+          if (data.token.indexOf('.') > -1)
+          {
             data.token = parseFloat(data.token)
-          } else {
+          }
+          else
+          {
             data.token = parseInt(data.token, 10)
           }
           var textTree = this.parseText(data.token)
-          var dataMod = this.parseModifiers(s, textTree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s, textTree)
+          if (dataMod)
+          {
             return dataMod
           }
           return textTree
@@ -974,10 +1195,12 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       {
         // Regex for static.
         'regex': /^\w+/,
-        parse: function (s, data) {
+        parse  : function (s, data)
+        {
           var textTree = this.parseText(data.token)
-          var dataMod = this.parseModifiers(s, textTree)
-          if (dataMod) {
+          var dataMod  = this.parseModifiers(s, textTree)
+          if (dataMod)
+          {
             return dataMod
           }
           return textTree
@@ -986,7 +1209,8 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
     ],
     buildInFunctions: {
       expression: {
-        parse: function (s) {
+        parse: function (s)
+        {
           var data = this.parseExpression(s)
 
           return {
@@ -994,43 +1218,49 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
             name: 'expression',
             // Expression expanded inside this sub tree.
             expression: data.tree,
-            params: this.parseParams(s.slice(data.value.length).replace(/^\s+|\s+$/g, ''))
+            params    : this.parseParams(s.slice(data.value.length).replace(/^\s+|\s+$/g, ''))
           }
         }
       },
-      section: {
-        type: 'block',
-        parse: function (params, content) {
-          var subTree = []
+      section   : {
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTree     = []
           var subTreeElse = []
 
           var findElse = this.findElseTag('section [^}]+', '/section', 'sectionelse', content)
-          if (findElse) {
-            subTree = this.parse(content.slice(0, findElse.index))
+          if (findElse)
+          {
+            subTree     = this.parse(content.slice(0, findElse.index))
             subTreeElse = this.parse(content.slice(findElse.index + findElse[0].length).replace(/^[\r\n]/, ''))
-          } else {
+          }
+          else
+          {
             subTree = this.parse(content)
           }
           return {
-            type: 'build-in',
-            name: 'section',
-            params: params,
-            subTree: subTree,
+            type       : 'build-in',
+            name       : 'section',
+            params     : params,
+            subTree    : subTree,
             subTreeElse: subTreeElse
           }
         }
       },
 
       setfilter: {
-        type: 'block',
-        parseParams: function (paramStr) {
+        type       : 'block',
+        parseParams: function (paramStr)
+        {
           return [this.parseExpression('__t()|' + paramStr).tree]
         },
-        parse: function (params, content) {
+        parse      : function (params, content)
+        {
           return {
-            type: 'build-in',
-            name: 'setfilter',
-            params: params,
+            type   : 'build-in',
+            name   : 'setfilter',
+            params : params,
             subTree: this.parse(content)
           }
         }
@@ -1038,15 +1268,16 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       config_load: {
         'type': 'function',
-        parse: function (params) {
-          var file = trimAllQuotes(params.file ? params.file : params[0])
+        parse : function (params)
+        {
+          var file    = trimAllQuotes(params.file ? params.file : params[0])
           var content = this.getConfig(file)
           var section = trimAllQuotes(params.section ? params.section : (params[1] ? params[1] : ''))
 
           return {
-            type: 'build-in',
-            name: 'config_load',
-            params: params,
+            type   : 'build-in',
+            name   : 'config_load',
+            params : params,
             content: content,
             section: section
           }
@@ -1055,10 +1286,11 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       append: {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'append',
+            type  : 'build-in',
+            name  : 'append',
             params: params
           }
         }
@@ -1066,10 +1298,11 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       assign: {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'assign',
+            type  : 'build-in',
+            name  : 'assign',
             params: params
           }
         }
@@ -1077,10 +1310,11 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       'break': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'break',
+            type  : 'build-in',
+            name  : 'break',
             params: params
           }
         }
@@ -1088,10 +1322,11 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       'continue': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'continue',
+            type  : 'build-in',
+            name  : 'continue',
             params: params
           }
         }
@@ -1099,10 +1334,11 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       'call': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return {
-            type: 'build-in',
-            name: 'call',
+            type  : 'build-in',
+            name  : 'call',
             params: params
           }
         }
@@ -1110,12 +1346,13 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       capture: {
         'type': 'block',
-        parse: function (params, content) {
+        parse : function (params, content)
+        {
           var tree = this.parse(content)
           return {
-            type: 'build-in',
-            name: 'capture',
-            params: params,
+            type   : 'build-in',
+            name   : 'capture',
+            params : params,
             subTree: tree
           }
         }
@@ -1123,12 +1360,13 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       nocache: {
         'type': 'block',
-        parse: function (params, content) {
+        parse : function (params, content)
+        {
           var tree = this.parse(content)
           return {
-            type: 'build-in',
-            name: 'nocache',
-            params: params,
+            type   : 'build-in',
+            name   : 'nocache',
+            params : params,
             subTree: tree
           }
         }
@@ -1136,238 +1374,299 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
 
       'eval': {
         'type': 'function',
-        parse: function (params) {
+        parse : function (params)
+        {
           return this.parsePluginFunc('eval', params)
         }
       },
 
       include: {
         'type': 'function',
-        parse: function (params) {
-          var file = trimAllQuotes(params.file ? params.file : params[0])
+        parse : function (params)
+        {
+          var file    = trimAllQuotes(params.file ? params.file : params[0])
           var nocache = (findInArray(params, 'nocache') >= 0)
-          var tree = this.loadTemplate(file, nocache)
+          var tree    = this.loadTemplate(file, nocache)
 
           return {
-            type: 'build-in',
-            name: 'include',
-            params: params,
+            type   : 'build-in',
+            name   : 'include',
+            params : params,
             subTree: tree
           }
         }
       },
 
       'for': {
-        type: 'block',
-        parseParams: function (paramStr) {
+        type       : 'block',
+        parseParams: function (paramStr)
+        {
           var res = paramStr.match(/^\s*\$(\w+)\s*=\s*([^\s]+)\s*to\s*([^\s]+)\s*(?:step\s*([^\s]+))?\s*(.*)$/)
-          if (!res) {
+          if (!res)
+          {
             throw new Error('Invalid {for} parameters: ' + paramStr)
           }
           return this.parseParams("varName='" + res[1] + "' from=" + res[2] + ' to=' + res[3] + ' step=' + (res[4] ? res[4] : '1') + ' ' + res[5])
         },
-        parse: function (params, content) {
-          var subTree = []
+        parse      : function (params, content)
+        {
+          var subTree     = []
           var subTreeElse = []
 
           var findElse = this.findElseTag('for\\s[^}]+', '/for', 'forelse', content)
-          if (findElse) {
-            subTree = this.parse(content.slice(0, findElse.index))
+          if (findElse)
+          {
+            subTree     = this.parse(content.slice(0, findElse.index))
             subTreeElse = this.parse(content.slice(findElse.index + findElse[0].length))
-          } else {
+          }
+          else
+          {
             subTree = this.parse(content)
           }
           return {
-            type: 'build-in',
-            name: 'for',
-            params: params,
-            subTree: subTree,
+            type       : 'build-in',
+            name       : 'for',
+            params     : params,
+            subTree    : subTree,
             subTreeElse: subTreeElse
           }
         }
       },
 
       'if': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('if\\s+[^}]+', '/if', 'else[^}]*', content)
+          var findElse    = this.findElseTag('if\\s+[^}]+', '/if', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*if(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['if'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'if',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'if',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifempty': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifempty\\s+[^}]+', '/ifempty', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifempty\\s+[^}]+', '/ifempty', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifempty(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifempty',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifempty',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifnotempty': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifnotempty\\s+[^}]+', '/ifnotempty', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifnotempty\\s+[^}]+', '/ifnotempty', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifnotempty(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifnotempty'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifnotempty',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifnotempty',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifset': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifset\\s+[^}]+', '/ifset', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifset\\s+[^}]+', '/ifset', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifset(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifset',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifset',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'ifnotset': {
-        type: 'block',
-        parse: function (params, content) {
-          var subTreeIf = []
+        type : 'block',
+        parse: function (params, content)
+        {
+          var subTreeIf   = []
           var subTreeElse = []
-          var findElse = this.findElseTag('ifnotset\\s+[^}]+', '/ifnotset', 'else[^}]*', content)
+          var findElse    = this.findElseTag('ifnotset\\s+[^}]+', '/ifnotset', 'else[^}]*', content)
 
-          if (findElse) {
-            subTreeIf = this.parse(content.slice(0, findElse.index))
-            content = content.slice(findElse.index + findElse[0].length)
+          if (findElse)
+          {
+            subTreeIf      = this.parse(content.slice(0, findElse.index))
+            content        = content.slice(findElse.index + findElse[0].length)
             var findElseIf = findElse[1].match(/^else\s*ifnotset(.*)/)
-            if (findElseIf) {
+            if (findElseIf)
+            {
               subTreeElse = this.buildInFunctions['ifnotset'].parse.call(this, this.parseParams(findElseIf[1]), content.replace(/^\n/, ''))
-            } else {
+            }
+            else
+            {
               subTreeElse = this.parse(content.replace(/^\n/, ''))
             }
-          } else {
+          }
+          else
+          {
             subTreeIf = this.parse(content)
           }
-          return [{
-            type: 'build-in',
-            name: 'ifnotset',
-            params: params,
-            subTreeIf: subTreeIf,
-            subTreeElse: subTreeElse
-          }]
+          return [
+            {
+              type       : 'build-in',
+              name       : 'ifnotset',
+              params     : params,
+              subTreeIf  : subTreeIf,
+              subTreeElse: subTreeElse
+            }
+          ]
         }
       },
 
       'foreach': {
-        type: 'block',
-        parseParams: function (paramStr) {
+        type       : 'block',
+        parseParams: function (paramStr)
+        {
           var res = paramStr.match(/^\s*([$].+)\s*as\s*[$](\w+)\s*(=>\s*[$](\w+))?\s*$/i)
-          if (res) {
+          if (res)
+          {
             paramStr = 'from=' + res[1] + ' item=' + (res[4] || res[2])
-            if (res[4]) {
+            if (res[4])
+            {
               paramStr += ' key=' + res[2]
             }
           }
           return this.parseParams(paramStr)
         },
-        parse: function (params, content) {
-          var subTree = []
+        parse      : function (params, content)
+        {
+          var subTree     = []
           var subTreeElse = []
 
           var findElse = this.findElseTag('foreach\\s[^}]+', '/foreach', 'foreachelse', content)
-          if (findElse) {
-            subTree = this.parse(content.slice(0, findElse.index))
+          if (findElse)
+          {
+            subTree     = this.parse(content.slice(0, findElse.index))
             subTreeElse = this.parse(content.slice(findElse.index + findElse[0].length).replace(/^[\r\n]/, ''))
-          } else {
+          }
+          else
+          {
             subTree = this.parse(content)
           }
           return {
-            type: 'build-in',
-            name: 'foreach',
-            params: params,
-            subTree: subTree,
+            type       : 'build-in',
+            name       : 'foreach',
+            params     : params,
+            subTree    : subTree,
             subTreeElse: subTreeElse
           }
         }
       },
 
       'function': {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           /* It is the case where we generate tree and keep it aside
            to be used when called.
            Keep it as runtime plugin is a better choice.
@@ -1382,7 +1681,7 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
           // Let us store it as local plugin and end of parsing
           // we pass it to original Latte object.
           this.runTimePlugins[trimAllQuotes(params.name ? params.name : params[0])] = {
-            tree: tree,
+            tree         : tree,
             defaultParams: params
           }
           // Do not take this in tree. Skip it.
@@ -1391,89 +1690,101 @@ define(['../util/objectmerge', '../util/trimallquotes', '../util/evalstring', '.
       },
 
       'extends': {
-        type: 'function',
-        parse: function (params) {
+        type : 'function',
+        parse: function (params)
+        {
           return this.loadTemplate(trimAllQuotes(((params.file) ? params.file : params[0])), true)
         }
       },
 
       block: {
-        type: 'block',
-        parse: function (params, content) {
-          params.append = findInArray(params, 'append') >= 0
+        type : 'block',
+        parse: function (params, content)
+        {
+          params.append  = findInArray(params, 'append') >= 0
           params.prepend = findInArray(params, 'prepend') >= 0
-          params.hide = findInArray(params, 'hide') >= 0
+          params.hide    = findInArray(params, 'hide') >= 0
 
           var match
-          var tree = this.parse(content, [])
+          var tree      = this.parse(content, [])
           var blockName = trimAllQuotes(params.name ? params.name : params[0])
           var location
-          if (!(blockName in this.blocks)) {
+          if (!(blockName in this.blocks))
+          {
             // This is block inside extends as it gets call first
             // when the extends is processed?!
             this.blocks[blockName] = []
             this.blocks[blockName] = {tree: tree, params: params}
-            location = 'inner'
-            match = content.match(/smarty.block.child/)
-            params.needChild = false
-            if (match) {
+            location               = 'inner'
+            match                  = content.match(/latte.block.child/)
+            params.needChild       = false
+            if (match)
+            {
               params.needChild = true
             }
-          } else {
+          }
+          else
+          {
             // this.blocks has this block, means this outer block after extends
             this.outerBlocks[blockName] = []
             this.outerBlocks[blockName] = {tree: tree, params: params}
-            location = 'outer'
-            match = content.match(/smarty.block.parent/)
-            params.needParent = false
-            if (match) {
+            location                    = 'outer'
+            match                       = content.match(/latte.block.parent/)
+            params.needParent           = false
+            if (match)
+            {
               params.needParent = true
             }
           }
           return {
-            type: 'build-in',
-            name: 'block',
-            params: params,
+            type    : 'build-in',
+            name    : 'block',
+            params  : params,
             location: location
           }
         }
       },
 
       strip: {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           return this.parse(content.replace(/[ \t]*[\r\n]+[ \t]*/g, ''))
         }
       },
 
       literal: {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           return this.parseText(content)
         }
       },
 
       ldelim: {
-        type: 'function',
-        parse: function (params) {
+        type : 'function',
+        parse: function (params)
+        {
           return this.parseText(this.ldelim)
         }
       },
 
       rdelim: {
-        type: 'function',
-        parse: function (params) {
+        type : 'function',
+        parse: function (params)
+        {
           return this.parseText(this.rdelim)
         }
       },
 
       'while': {
-        type: 'block',
-        parse: function (params, content) {
+        type : 'block',
+        parse: function (params, content)
+        {
           return {
-            type: 'build-in',
-            name: 'while',
-            params: params,
+            type   : 'build-in',
+            name   : 'while',
+            params : params,
             subTree: this.parse(content)
           }
         }

@@ -17,7 +17,7 @@ define(['Latte'], function (Latte) {
     it('test index in section', function () {
       // index
       tpl = '{section name=person loop=$people}'
-      tpl += '{$smarty.section.person.index} => {$people[person]}\\n'
+      tpl += '{$latte.section.person.index} => {$people[person]}\\n'
       tpl += '{/section}'
       output = '0 => Uma\\n1 => Pallavi\\n2 => Lokesh\\n'
       t = new Latte(tpl)
@@ -26,7 +26,7 @@ define(['Latte'], function (Latte) {
 
     it('test without array section', function () {
       tpl = '{section name=fooNew start=10 loop=20 step=2}'
-      tpl += '{$smarty.section.fooNew.index}\\n'
+      tpl += '{$latte.section.fooNew.index}\\n'
       tpl += '{/section}'
       output = '10\\n12\\n14\\n16\\n18\\n'
       t = new Latte(tpl)
@@ -68,8 +68,8 @@ define(['Latte'], function (Latte) {
 
     it('test index_* property in section', function () {
       tpl = '{section name=person loop=$people}'
-      tpl += '{$smarty.section.person.index}=>{$people[person]}:'
-      tpl += '{$smarty.section.person.index_prev}=>{$smarty.section.person.index_next}\\n'
+      tpl += '{$latte.section.person.index}=>{$people[person]}:'
+      tpl += '{$latte.section.person.index_prev}=>{$latte.section.person.index_next}\\n'
       tpl += '{/section}'
       output = '0=>Uma:-1=>1\\n1=>Pallavi:0=>2\\n2=>Lokesh:1=>3\\n'
       t = new Latte(tpl)
@@ -78,8 +78,8 @@ define(['Latte'], function (Latte) {
 
     it('test simple iteration property in section', function () {
       tpl = '{section name=cu loop=$arr start=5 step=2}'
-      tpl += 'iteration={$smarty.section.cu.iteration}:'
-      tpl += 'index={$smarty.section.cu.index}:'
+      tpl += 'iteration={$latte.section.cu.iteration}:'
+      tpl += 'index={$latte.section.cu.index}:'
       tpl += 'id={$arr[cu]}/'
       tpl += '{/section}'
       output = 'iteration=1:index=5:id=205/'
@@ -92,7 +92,7 @@ define(['Latte'], function (Latte) {
 
     it('test first and last property in section', function () {
       tpl = '{section name=person loop=$people}'
-      tpl += '{if $smarty.section.person.first}List of names =>{/if}'
+      tpl += '{if $latte.section.person.first}List of names =>{/if}'
       tpl += '{$people[person]}:'
       tpl += '{/section}'
       output = 'List of names =>Uma:Pallavi:Lokesh:'
@@ -101,7 +101,7 @@ define(['Latte'], function (Latte) {
 
       tpl = '{section name=person loop=$people}'
       tpl += '{$people[person]}'
-      tpl += '{if !$smarty.section.person.last}:{/if}'
+      tpl += '{if !$latte.section.person.last}:{/if}'
       tpl += '{/section}'
       output = 'Uma:Pallavi:Lokesh'
       t = new Latte(tpl)
@@ -111,7 +111,7 @@ define(['Latte'], function (Latte) {
     it('test loop property section', function () {
       tpl = '{section name=person loop=$people}'
       tpl += '{$people[person]}\\n'
-      tpl += '{/section} Total: {$smarty.section.person.loop}.'
+      tpl += '{/section} Total: {$latte.section.person.loop}.'
       output = 'Uma\\nPallavi\\nLokesh\\n Total: 3.'
       t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)
@@ -122,7 +122,7 @@ define(['Latte'], function (Latte) {
       tpl += '{$people[person]}\\n'
       tpl += '{sectionelse}'
       tpl += 'yo\\n'
-      tpl += '{/section} {if $smarty.section.person.show}true{/if}'
+      tpl += '{/section} {if $latte.section.person.show}true{/if}'
       output = 'Uma\\nPallavi\\nLokesh\\n true'
       t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh'], toShow: true})).toBe(output)
@@ -131,7 +131,7 @@ define(['Latte'], function (Latte) {
       tpl += '{$people[person]}\\n'
       tpl += '{sectionelse}'
       tpl += 'yo\\n'
-      tpl += '{/section} {if !$smarty.section.person.show}true{/if}'
+      tpl += '{/section} {if !$latte.section.person.show}true{/if}'
       output = 'yo\\n true'
       t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh'], toShow: false})).toBe(output)
@@ -140,7 +140,7 @@ define(['Latte'], function (Latte) {
     it('test total property section', function () {
       tpl = '{section name=person loop=$people}'
       tpl += '{$people[person]}\\n'
-      tpl += '{/section} Total: {$smarty.section.person.total}.'
+      tpl += '{/section} Total: {$latte.section.person.total}.'
       output = 'Uma\\nPallavi\\nLokesh\\n Total: 3.'
       t = new Latte(tpl)
       expect(t.fetch({people: ['Uma', 'Pallavi', 'Lokesh']})).toBe(output)

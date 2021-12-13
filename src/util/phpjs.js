@@ -1,33 +1,40 @@
-define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
+define(['./gethtmltranslationtable'], function (getHtmlTranslationTable)
+{
   'use strict'
 
   var phpJs = {
     // Copied from http://locutus.io/php/strings/ord/
-    ord: function (string) {
-      var str = string + ''
+    ord: function (string)
+    {
+      var str  = string + ''
       var code = str.charCodeAt(0)
-      if (code >= 0xD800 && code <= 0xDBFF) {
+      if (code >= 0xD800 && code <= 0xDBFF)
+      {
         var hi = code
-        if (str.length === 1) {
+        if (str.length === 1)
+        {
           return code
         }
         var low = str.charCodeAt(1)
         return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000
       }
-      if (code >= 0xDC00 && code <= 0xDFFF) {
+      if (code >= 0xDC00 && code <= 0xDFFF)
+      {
         return code
       }
       return code
     },
 
     // Copied from http://locutus.io/php/strings/bin2hex/
-    bin2Hex: function (s) {
+    bin2Hex: function (s)
+    {
       var i
       var l
       var o = ''
       var n
       s += ''
-      for (i = 0, l = s.length; i < l; i++) {
+      for (i = 0, l = s.length; i < l; i++)
+      {
         n = s.charCodeAt(i).toString(16)
         o += n.length < 2 ? '0' + n : n
       }
@@ -35,17 +42,20 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
     },
 
     // Copied from http://locutus.io/php/strings/html_entity_decode/
-    htmlEntityDecode: function (string, quoteStyle) {
-      var tmpStr = string.toString()
-      var entity = ''
-      var symbol = ''
+    htmlEntityDecode: function (string, quoteStyle)
+    {
+      var tmpStr  = string.toString()
+      var entity  = ''
+      var symbol  = ''
       var hashMap = getHtmlTranslationTable('HTML_ENTITIES', quoteStyle)
-      if (hashMap === false) {
+      if (hashMap === false)
+      {
         return false
       }
       delete (hashMap['&'])
       hashMap['&'] = '&amp;'
-      for (symbol in hashMap) {
+      for (symbol in hashMap)
+      {
         entity = hashMap[symbol]
         tmpStr = tmpStr.split(entity).join(symbol)
       }
@@ -53,50 +63,61 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       return tmpStr
     },
 
-    objectKeys: function (o) {
+    objectKeys: function (o)
+    {
       var k = []
       var p
-      for (p in o) {
-        if (Object.prototype.hasOwnProperty.call(o, p)) {
+      for (p in o)
+      {
+        if (Object.prototype.hasOwnProperty.call(o, p))
+        {
           k.push(p)
         }
       }
       return k
     },
 
-    htmlEntities: function (string, quoteStyle, charset, doubleEncode) {
+    htmlEntities: function (string, quoteStyle, charset, doubleEncode)
+    {
       var hashMap = getHtmlTranslationTable('HTML_ENTITIES', quoteStyle)
       var keys
-      string = string === null ? '' : string + ''
-      if (!hashMap) {
+      string      = string === null ? '' : string + ''
+      if (!hashMap)
+      {
         return false
       }
 
-      if (quoteStyle && quoteStyle === 'ENT_QUOTES') {
+      if (quoteStyle && quoteStyle === 'ENT_QUOTES')
+      {
         hashMap["'"] = '&#039;'
       }
       doubleEncode = doubleEncode === null || !!doubleEncode
-      keys = Object.keys ? Object.keys(hashMap) : phpJs.objectKeys(hashMap)
-      var regex = new RegExp('&(?:#\\d+|#x[\\da-f]+|[a-zA-Z][\\da-z]*);|[' +
+      keys         = Object.keys ? Object.keys(hashMap) : phpJs.objectKeys(hashMap)
+      var regex    = new RegExp('&(?:#\\d+|#x[\\da-f]+|[a-zA-Z][\\da-z]*);|[' +
         keys.join('')
           .replace(/([()[\]{}\-.*+?^$|/\\])/g, '\\$1') + ']', 'g')
 
-      return string.replace(regex, function (ent) {
-        if (ent.length > 1) {
+      return string.replace(regex, function (ent)
+      {
+        if (ent.length > 1)
+        {
           return doubleEncode ? hashMap['&'] + ent.substr(1) : ent
         }
         return hashMap[ent]
       })
     },
 
-    rawUrlDecode: function (string) {
-      return decodeURIComponent((string + '').replace(/%(?![\da-f]{2})/gi, function () {
+    rawUrlDecode: function (string)
+    {
+      return decodeURIComponent((string + '').replace(/%(?![\da-f]{2})/gi, function ()
+      {
         // PHP tolerates poorly formed escape sequences
         return '%25'
       }))
     },
 
-    rawUrlEncode: function (string) {
+    rawUrlEncode: function (string)
+    {
       string = (string + '')
       return encodeURIComponent(string)
         .replace(/!/g, '%21')
@@ -106,26 +127,34 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         .replace(/\*/g, '%2A')
     },
 
-    sprintf: function () {
-      var regex = /%%|%(\d+\$)?([-+'#0 ]*)(\*\d+\$|\*|\d+)?(?:\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g
-      var a = arguments
-      var i = 0
+    sprintf: function ()
+    {
+      var regex  = /%%|%(\d+\$)?([-+'#0 ]*)(\*\d+\$|\*|\d+)?(?:\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g
+      var a      = arguments
+      var i      = 0
       var format = a[i++]
 
-      var _pad = function (str, len, chr, leftJustify) {
-        if (!chr) {
+      var _pad = function (str, len, chr, leftJustify)
+      {
+        if (!chr)
+        {
           chr = ' '
         }
         var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
         return leftJustify ? str + padding : padding + str
       }
 
-      var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+      var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar)
+      {
         var diff = minWidth - value.length
-        if (diff > 0) {
-          if (leftJustify || !zeroPad) {
+        if (diff > 0)
+        {
+          if (leftJustify || !zeroPad)
+          {
             value = _pad(value, minWidth, customPadChar, leftJustify)
-          } else {
+          }
+          else
+          {
             value = [
               value.slice(0, prefix.length),
               _pad('', diff, '0', true),
@@ -136,44 +165,55 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         return value
       }
 
-      var _formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
+      var _formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad)
+      {
         // Note: casts negative numbers to positive ones
         var number = value >>> 0
-        prefix = (prefix && number && {
-          '2': '0b',
-          '8': '0',
+        prefix     = (prefix && number && {
+          '2' : '0b',
+          '8' : '0',
           '16': '0x'
         }[base]) || ''
-        value = prefix + _pad(number.toString(base), precision || 0, '0', false)
+        value      = prefix + _pad(number.toString(base), precision || 0, '0', false)
         return justify(value, prefix, leftJustify, minWidth, zeroPad)
       }
 
       // _formatString()
-      var _formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
-        if (precision !== null && precision !== undefined) {
+      var _formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar)
+      {
+        if (precision !== null && precision !== undefined)
+        {
           value = value.slice(0, precision)
         }
         return justify(value, '', leftJustify, minWidth, zeroPad, customPadChar)
       }
 
       // doFormat()
-      var doFormat = function (substring, valueIndex, flags, minWidth, precision, type) {
-        var number, prefix, method, textTransform, value
+      var doFormat = function (substring, valueIndex, flags, minWidth, precision, type)
+      {
+        var number,
+            prefix,
+            method,
+            textTransform,
+            value
 
-        if (substring === '%%') {
+        if (substring === '%%')
+        {
           return '%'
         }
 
         // parse flags
-        var leftJustify = false
+        var leftJustify    = false
         var positivePrefix = ''
-        var zeroPad = false
-        var prefixBaseX = false
-        var customPadChar = ' '
-        var flagsl = flags.length
+        var zeroPad        = false
+        var prefixBaseX    = false
+        var customPadChar  = ' '
+        var flagsl         = flags.length
         var j
-        for (j = 0; j < flagsl; j++) {
-          switch (flags.charAt(j)) {
+        for (j = 0; j < flagsl; j++)
+        {
+          switch (flags.charAt(j))
+          {
             case ' ':
               positivePrefix = ' '
               break
@@ -187,7 +227,7 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
               customPadChar = flags.charAt(j + 1)
               break
             case '0':
-              zeroPad = true
+              zeroPad       = true
               customPadChar = '0'
               break
             case '#':
@@ -198,40 +238,57 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
 
         // parameters may be null, undefined, empty-string or real valued
         // we want to ignore null, undefined and empty-string values
-        if (!minWidth) {
+        if (!minWidth)
+        {
           minWidth = 0
-        } else if (minWidth === '*') {
+        }
+        else if (minWidth === '*')
+        {
           minWidth = +a[i++]
-        } else if (minWidth.charAt(0) === '*') {
+        }
+        else if (minWidth.charAt(0) === '*')
+        {
           minWidth = +a[minWidth.slice(1, -1)]
-        } else {
+        }
+        else
+        {
           minWidth = +minWidth
         }
 
         // Note: undocumented perl feature:
-        if (minWidth < 0) {
-          minWidth = -minWidth
+        if (minWidth < 0)
+        {
+          minWidth    = -minWidth
           leftJustify = true
         }
 
-        if (!isFinite(minWidth)) {
+        if (!isFinite(minWidth))
+        {
           throw new Error('sprintf: (minimum-)width must be finite')
         }
 
-        if (!precision) {
+        if (!precision)
+        {
           precision = 'fFeE'.indexOf(type) > -1 ? 6 : (type === 'd') ? 0 : undefined
-        } else if (precision === '*') {
+        }
+        else if (precision === '*')
+        {
           precision = +a[i++]
-        } else if (precision.charAt(0) === '*') {
+        }
+        else if (precision.charAt(0) === '*')
+        {
           precision = +a[precision.slice(1, -1)]
-        } else {
+        }
+        else
+        {
           precision = +precision
         }
 
         // grab value using valueIndex if required?
         value = valueIndex ? a[valueIndex.slice(0, -1)] : a[i++]
 
-        switch (type) {
+        switch (type)
+        {
           case 's':
             return _formatString(value + '', leftJustify, minWidth, precision, zeroPad, customPadChar)
           case 'c':
@@ -252,7 +309,7 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
             // Plain Math.round doesn't just truncate
             number = Math.round(number - number % 1)
             prefix = number < 0 ? '-' : positivePrefix
-            value = prefix + _pad(String(Math.abs(number)), precision, '0', false)
+            value  = prefix + _pad(String(Math.abs(number)), precision, '0', false)
             return justify(value, prefix, leftJustify, minWidth, zeroPad)
           case 'e':
           case 'E':
@@ -260,11 +317,11 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
           case 'F':
           case 'g':
           case 'G':
-            number = +value
-            prefix = number < 0 ? '-' : positivePrefix
-            method = ['toExponential', 'toFixed', 'toPrecision']['efg'.indexOf(type.toLowerCase())]
+            number        = +value
+            prefix        = number < 0 ? '-' : positivePrefix
+            method        = ['toExponential', 'toFixed', 'toPrecision']['efg'.indexOf(type.toLowerCase())]
             textTransform = ['toString', 'toUpperCase']['eEfFgG'.indexOf(type) % 2]
-            value = prefix + Math.abs(number)[method](precision)
+            value         = prefix + Math.abs(number)[method](precision)
             return phpJs.justify(value, prefix, leftJustify, minWidth, zeroPad)[textTransform]()
           default:
             return substring
@@ -274,39 +331,50 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       return format.replace(regex, doFormat)
     },
 
-    makeTimeStamp: function (s) {
-      if (!s) {
+    makeTimeStamp: function (s)
+    {
+      if (!s)
+      {
         return Math.floor(new Date().getTime() / 1000)
       }
-      if (isNaN(s)) {
+      if (isNaN(s))
+      {
         var tm = phpJs.strtotime(s)
-        if (tm === -1 || tm === false) {
+        if (tm === -1 || tm === false)
+        {
           return Math.floor(new Date().getTime() / 1000)
         }
         return tm
       }
       s = s + ''
-      if (s.length === 14 && s.search(/^[\d]+$/g) !== -1) {
+      if (s.length === 14 && s.search(/^[\d]+$/g) !== -1)
+      {
         // it is mysql timestamp format of YYYYMMDDHHMMSS?
         return phpJs.mktime(s.substr(8, 2), s.substr(10, 2), s.substr(12, 2), s.substr(4, 2), s.substr(6, 2), s.substr(0, 4))
       }
       return Number(s)
     },
 
-    mktime: function () {
+    mktime: function ()
+    {
       var d = new Date()
       var r = arguments
       var i = 0
       var e = ['Hours', 'Minutes', 'Seconds', 'Month', 'Date', 'FullYear']
 
-      for (i = 0; i < e.length; i++) {
-        if (typeof r[i] === 'undefined') {
+      for (i = 0; i < e.length; i++)
+      {
+        if (typeof r[i] === 'undefined')
+        {
           r[i] = d['get' + e[i]]()
           // +1 to fix JS months.
           r[i] += (i === 3)
-        } else {
+        }
+        else
+        {
           r[i] = parseInt(r[i], 10)
-          if (isNaN(r[i])) {
+          if (isNaN(r[i]))
+          {
             return false
           }
         }
@@ -319,20 +387,27 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       return (time / 1e3 >> 0) - (time < 0)
     },
 
-    _pad: function (str, len, chr, leftJustify) {
-      if (!chr) {
+    _pad: function (str, len, chr, leftJustify)
+    {
+      if (!chr)
+      {
         chr = ' '
       }
       var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
       return leftJustify ? str + padding : padding + str
     },
 
-    justify: function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+    justify: function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar)
+    {
       var diff = minWidth - value.length
-      if (diff > 0) {
-        if (leftJustify || !zeroPad) {
+      if (diff > 0)
+      {
+        if (leftJustify || !zeroPad)
+        {
           value = phpJs._pad(value, minWidth, customPadChar, leftJustify)
-        } else {
+        }
+        else
+        {
           value = [
             value.slice(0, prefix.length),
             phpJs._pad('', diff, '0', true),
@@ -343,7 +418,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       return value
     },
 
-    strtotime: function (text, now) {
+    strtotime: function (text, now)
+    {
       var parsed
       var match
       var today
@@ -357,7 +433,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       var i
       var fail = false
 
-      if (!text) {
+      if (!text)
+      {
         return fail
       }
 
@@ -375,14 +452,18 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         '(?:\\s(\\d{1,2}):(\\d{2})?:?(\\d{2})?)?',
         '(?:\\s([A-Z]+)?)?$'
       ].join(''))
-      match = text.match(pattern)
+      match       = text.match(pattern)
 
-      if (match && match[2] === match[4]) {
-        if (match[1] > 1901) {
-          switch (match[2]) {
+      if (match && match[2] === match[4])
+      {
+        if (match[1] > 1901)
+        {
+          switch (match[2])
+          {
             case '-':
               // YYYY-M-D
-              if (match[3] > 12 || match[5] > 31) {
+              if (match[3] > 12 || match[5] > 31)
+              {
                 return fail
               }
 
@@ -393,18 +474,23 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
               return fail
             case '/':
               // YYYY/M/D
-              if (match[3] > 12 || match[5] > 31) {
+              if (match[3] > 12 || match[5] > 31)
+              {
                 return fail
               }
 
               return new Date(match[1], parseInt(match[3], 10) - 1, match[5],
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
           }
-        } else if (match[5] > 1901) {
-          switch (match[2]) {
+        }
+        else if (match[5] > 1901)
+        {
+          switch (match[2])
+          {
             case '-':
               // D-M-YYYY
-              if (match[3] > 12 || match[1] > 31) {
+              if (match[3] > 12 || match[1] > 31)
+              {
                 return fail
               }
 
@@ -412,7 +498,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case '.':
               // D.M.YYYY
-              if (match[3] > 12 || match[1] > 31) {
+              if (match[3] > 12 || match[1] > 31)
+              {
                 return fail
               }
 
@@ -420,18 +507,23 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case '/':
               // M/D/YYYY
-              if (match[1] > 12 || match[3] > 31) {
+              if (match[1] > 12 || match[3] > 31)
+              {
                 return fail
               }
 
               return new Date(match[5], parseInt(match[1], 10) - 1, match[3],
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
           }
-        } else {
-          switch (match[2]) {
+        }
+        else
+        {
+          switch (match[2])
+          {
             case '-':
               // YY-M-D
-              if (match[3] > 12 || match[5] > 31 || (match[1] < 70 && match[1] > 38)) {
+              if (match[3] > 12 || match[5] > 31 || (match[1] < 70 && match[1] > 38))
+              {
                 return fail
               }
 
@@ -440,18 +532,22 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case '.':
               // D.M.YY or H.MM.SS
-              if (match[5] >= 70) {
+              if (match[5] >= 70)
+              {
                 // D.M.YY
-                if (match[3] > 12 || match[1] > 31) {
+                if (match[3] > 12 || match[1] > 31)
+                {
                   return fail
                 }
 
                 return new Date(match[5], parseInt(match[3], 10) - 1, match[1],
                   match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
               }
-              if (match[5] < 60 && !match[6]) {
+              if (match[5] < 60 && !match[6])
+              {
                 // H.MM.SS
-                if (match[1] > 23 || match[3] > 59) {
+                if (match[1] > 23 || match[3] > 59)
+                {
                   return fail
                 }
 
@@ -464,7 +560,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
               return fail
             case '/':
               // M/D/YY
-              if (match[1] > 12 || match[3] > 31 || (match[5] < 70 && match[5] > 38)) {
+              if (match[1] > 12 || match[3] > 31 || (match[5] < 70 && match[5] > 38))
+              {
                 return fail
               }
 
@@ -473,7 +570,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
                 match[6] || 0, match[7] || 0, match[8] || 0, match[9] || 0) / 1000
             case ':':
               // HH:MM:SS
-              if (match[1] > 23 || match[3] > 59 || match[5] > 59) {
+              if (match[1] > 23 || match[3] > 59 || match[5] > 59)
+              {
                 return fail
               }
 
@@ -484,13 +582,15 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         }
       }
 
-      if (text === 'now') {
+      if (text === 'now')
+      {
         return now === null || isNaN(now)
           ? new Date().getTime() / 1000 | 0
           : now | 0
       }
 
-      if (!isNaN(parsed = Date.parse(text))) {
+      if (!isNaN(parsed = Date.parse(text)))
+      {
         return parsed / 1000 | 0
       }
 
@@ -500,22 +600,27 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         '([0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?)',
         '([\\+-][0-9]{2}(:[0-9]{2})?|z)'
       ].join(''))
-      match = text.match(pattern)
-      if (match) {
+      match   = text.match(pattern)
+      if (match)
+      {
         // @todo: time zone information
-        if (match[4] === 'z') {
+        if (match[4] === 'z')
+        {
           match[4] = 'Z'
-        } else if (match[4].match(/^([+-][0-9]{2})$/)) {
+        }
+        else if (match[4].match(/^([+-][0-9]{2})$/))
+        {
           match[4] = match[4] + ':00'
         }
 
-        if (!isNaN(parsed = Date.parse(match[1] + 'T' + match[2] + match[4]))) {
+        if (!isNaN(parsed = Date.parse(match[1] + 'T' + match[2] + match[4])))
+        {
           return parsed / 1000 | 0
         }
       }
 
-      date = now ? new Date(now * 1000) : new Date()
-      days = {
+      date   = now ? new Date(now * 1000) : new Date()
+      days   = {
         'sun': 0,
         'mon': 1,
         'tue': 2,
@@ -533,18 +638,25 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         'sec': 'Seconds'
       }
 
-      function lastNext (type, range, modifier) {
+      function lastNext(type, range, modifier)
+      {
         var diff
         var day = days[range]
 
-        if (typeof day !== 'undefined') {
+        if (typeof day !== 'undefined')
+        {
           diff = day - date.getDay()
 
-          if (diff === 0) {
+          if (diff === 0)
+          {
             diff = 7 * modifier
-          } else if (diff > 0 && type === 'last') {
+          }
+          else if (diff > 0 && type === 'last')
+          {
             diff -= 7
-          } else if (diff < 0 && type === 'next') {
+          }
+          else if (diff < 0 && type === 'next')
+          {
             diff += 7
           }
 
@@ -552,29 +664,36 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         }
       }
 
-      function process (val) {
-        var splt = val.split(' ')
-        var type = splt[0]
-        var range = splt[1].substring(0, 3)
+      function process(val)
+      {
+        var splt         = val.split(' ')
+        var type         = splt[0]
+        var range        = splt[1].substring(0, 3)
         var typeIsNumber = /\d+/.test(type)
-        var ago = splt[2] === 'ago'
-        var num = (type === 'last' ? -1 : 1) * (ago ? -1 : 1)
+        var ago          = splt[2] === 'ago'
+        var num          = (type === 'last' ? -1 : 1) * (ago ? -1 : 1)
 
-        if (typeIsNumber) {
+        if (typeIsNumber)
+        {
           num *= parseInt(type, 10)
         }
 
-        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i)) {
+        if (ranges.hasOwnProperty(range) && !splt[1].match(/^mon(day|\.)?$/i))
+        {
           return date['set' + ranges[range]](date['get' + ranges[range]]() + num)
         }
 
-        if (range === 'wee') {
+        if (range === 'wee')
+        {
           return date.setDate(date.getDate() + (num * 7))
         }
 
-        if (type === 'next' || type === 'last') {
+        if (type === 'next' || type === 'last')
+        {
           lastNext(type, range, num)
-        } else if (!typeIsNumber) {
+        }
+        else if (!typeIsNumber)
+        {
           return false
         }
 
@@ -587,12 +706,15 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       regex = '([+-]?\\d+\\s' + times + '|' + '(last|next)\\s' + times + ')(\\sago)?'
 
       match = text.match(new RegExp(regex, 'gi'))
-      if (!match) {
+      if (!match)
+      {
         return fail
       }
 
-      for (i = 0, len = match.length; i < len; i++) {
-        if (!process(match[i])) {
+      for (i = 0, len = match.length; i < len; i++)
+      {
+        if (!process(match[i]))
+        {
           return fail
         }
       }
@@ -600,12 +722,16 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       return (date.getTime() / 1000)
     },
 
-    strftime: function (fmt, timestamp) {
-      var _xPad = function (x, pad, r) {
-        if (typeof r === 'undefined') {
+    strftime: function (fmt, timestamp)
+    {
+      var _xPad = function (x, pad, r)
+      {
+        if (typeof r === 'undefined')
+        {
           r = 10
         }
-        for (; parseInt(x, 10) < r && r > 1; r /= 10) {
+        for (; parseInt(x, 10) < r && r > 1; r /= 10)
+        {
           x = pad.toString() + x
         }
         return x.toString()
@@ -619,7 +745,8 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         // DAY_
         b: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         // ABMON_
-        B: ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+        B: [
+          'January', 'February', 'March', 'April', 'May', 'June', 'July',
           'August', 'September', 'October',
           'November', 'December'
         ],
@@ -639,53 +766,65 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         // Following are from nl_langinfo() or http://www.cptec.inpe.br/sx4/sx4man2/g1ab02e/strftime.4.html
         alt_digits: '',
         // e.g., ordinal
-        ERA: '',
-        ERA_YEAR: '',
+        ERA        : '',
+        ERA_YEAR   : '',
         ERA_D_T_FMT: '',
-        ERA_D_FMT: '',
-        ERA_T_FMT: ''
+        ERA_D_FMT  : '',
+        ERA_T_FMT  : ''
       }
 
       var _formats = {
-        a: function (d) {
+        a: function (d)
+        {
           return lcTime.a[d.getDay()]
         },
-        A: function (d) {
+        A: function (d)
+        {
           return lcTime.A[d.getDay()]
         },
-        b: function (d) {
+        b: function (d)
+        {
           return lcTime.b[d.getMonth()]
         },
-        B: function (d) {
+        B: function (d)
+        {
           return lcTime.B[d.getMonth()]
         },
-        C: function (d) {
+        C: function (d)
+        {
           return _xPad(parseInt(d.getFullYear() / 100, 10), 0)
         },
         d: ['getDate', '0'],
         e: ['getDate', ' '],
-        g: function (d) {
+        g: function (d)
+        {
           return _xPad(parseInt(this.G(d) / 100, 10), 0) // eslint-disable-line new-cap
         },
-        G: function (d) {
+        G: function (d)
+        {
           var y = d.getFullYear()
           var V = parseInt(_formats.V(d), 10) // eslint-disable-line new-cap
           var W = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
 
-          if (W > V) {
+          if (W > V)
+          {
             y++
-          } else if (W === 0 && V >= 52) {
+          }
+          else if (W === 0 && V >= 52)
+          {
             y--
           }
 
           return y
         },
         H: ['getHours', '0'],
-        I: function (d) {
+        I: function (d)
+        {
           var I = d.getHours() % 12
           return _xPad(I === 0 ? 12 : I, 0)
         },
-        j: function (d) {
+        j: function (d)
+        {
           var ms = d - new Date('' + d.getFullYear() + '/1/1 GMT')
           // Line differs from Yahoo implementation which would be
           // equivalent to replacing it here with:
@@ -695,37 +834,45 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
         },
         k: ['getHours', '0'],
         // not in PHP, but implemented here (as in Yahoo)
-        l: function (d) {
+        l  : function (d)
+        {
           var l = d.getHours() % 12
           return _xPad(l === 0 ? 12 : l, ' ')
         },
-        m: function (d) {
+        m  : function (d)
+        {
           return _xPad(d.getMonth() + 1, 0)
         },
-        M: ['getMinutes', '0'],
-        p: function (d) {
+        M  : ['getMinutes', '0'],
+        p  : function (d)
+        {
           return lcTime.p[d.getHours() >= 12 ? 1 : 0]
         },
-        P: function (d) {
+        P  : function (d)
+        {
           return lcTime.P[d.getHours() >= 12 ? 1 : 0]
         },
-        s: function (d) {
+        s  : function (d)
+        {
           // Yahoo uses return parseInt(d.getTime()/1000, 10);
           return Date.parse(d) / 1000
         },
-        S: ['getSeconds', '0'],
-        u: function (d) {
+        S  : ['getSeconds', '0'],
+        u  : function (d)
+        {
           var dow = d.getDay()
           return ((dow === 0) ? 7 : dow)
         },
-        U: function (d) {
-          var doy = parseInt(_formats.j(d), 10)
+        U  : function (d)
+        {
+          var doy  = parseInt(_formats.j(d), 10)
           var rdow = 6 - d.getDay()
-          var woy = parseInt((doy + rdow) / 7, 10)
+          var woy  = parseInt((doy + rdow) / 7, 10)
           return _xPad(woy, 0)
         },
-        V: function (d) {
-          var woy = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
+        V  : function (d)
+        {
+          var woy   = parseInt(_formats.W(d), 10) // eslint-disable-line new-cap
           var dow11 = (new Date('' + d.getFullYear() + '/1/1')).getDay()
           // First week is 01 and not 00 as in the case of %U and %W,
           // so we add 1 to the final result except if day 1 of the year
@@ -733,34 +880,42 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
           // We also need to subtract 1 if the day 1 of the year is
           // Friday-Sunday, so the resulting equation becomes:
           var idow = woy + (dow11 > 4 || dow11 <= 1 ? 0 : 1)
-          if (idow === 53 && (new Date('' + d.getFullYear() + '/12/31')).getDay() < 4) {
+          if (idow === 53 && (new Date('' + d.getFullYear() + '/12/31')).getDay() < 4)
+          {
             idow = 1
-          } else if (idow === 0) {
+          }
+          else if (idow === 0)
+          {
             idow = _formats.V(new Date('' + (d.getFullYear() - 1) + '/12/31')) // eslint-disable-line new-cap
           }
           return _xPad(idow, 0)
         },
-        w: 'getDay',
-        W: function (d) {
-          var doy = parseInt(_formats.j(d), 10)
+        w  : 'getDay',
+        W  : function (d)
+        {
+          var doy  = parseInt(_formats.j(d), 10)
           var rdow = 7 - _formats.u(d)
-          var woy = parseInt((doy + rdow) / 7, 10)
+          var woy  = parseInt((doy + rdow) / 7, 10)
           return _xPad(woy, 0, 10)
         },
-        y: function (d) {
+        y  : function (d)
+        {
           return _xPad(d.getFullYear() % 100, 0)
         },
-        Y: 'getFullYear',
-        z: function (d) {
+        Y  : 'getFullYear',
+        z  : function (d)
+        {
           var o = d.getTimezoneOffset()
           var H = _xPad(parseInt(Math.abs(o / 60), 10), 0)
           var M = _xPad(o % 60, 0)
           return (o > 0 ? '-' : '+') + H + M
         },
-        Z: function (d) {
+        Z  : function (d)
+        {
           return d.toString().replace(/^.*\(([^)]+)\)$/, '$1')
         },
-        '%': function (d) {
+        '%': function (d)
+        {
           return '%'
         }
       }
@@ -786,23 +941,33 @@ define(['./gethtmltranslationtable'], function (getHtmlTranslationTable) {
       }
 
       // First replace aggregates (run in a loop because an agg may be made up of other aggs)
-      while (fmt.match(/%[cDFhnrRtTxX]/)) {
-        fmt = fmt.replace(/%([cDFhnrRtTxX])/g, function (m0, m1) {
+      while (fmt.match(/%[cDFhnrRtTxX]/))
+      {
+        fmt = fmt.replace(/%([cDFhnrRtTxX])/g, function (m0, m1)
+        {
           var f = _aggregates[m1]
           return (f === 'locale' ? lcTime[m1] : f)
         })
       }
 
       // Now replace formats - we need a closure so that the date object gets passed through
-      var str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, function (m0, m1) {
+      var str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, function (m0, m1)
+      {
         var f = _formats[m1]
-        if (typeof f === 'string') {
+        if (typeof f === 'string')
+        {
           return _date[f]()
-        } else if (typeof f === 'function') {
+        }
+        else if (typeof f === 'function')
+        {
           return f(_date)
-        } else if (typeof f === 'object' && typeof f[0] === 'string') {
+        }
+        else if (typeof f === 'object' && typeof f[0] === 'string')
+        {
           return _xPad(_date[f[0]](), f[1])
-        } else {
+        }
+        else
+        {
           // Shouldn't reach here
           return m1
         }

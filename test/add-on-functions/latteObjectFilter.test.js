@@ -1,4 +1,4 @@
-const smartyObjectFilter = require('./../../src/helpers/smartyObjectFilter');
+const latteObjectFilter = require('./../../src/helpers/latteObjectFilter');
 
 const associativeArray = [];
 associativeArray['a'] = 1;
@@ -45,8 +45,8 @@ const table = [
 ];
 
 test.each(table)(
-  '%s: smartyObjectFilter(%j)',
+  '%s: latteObjectFilter(%j)',
   (message, input, expected) => {
-    expect(smartyObjectFilter(input)).toStrictEqual(expected);
+    expect(latteObjectFilter(input)).toStrictEqual(expected);
   },
 );

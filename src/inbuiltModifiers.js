@@ -1,8 +1,10 @@
-define(['./core'], function (Latte) {
+define(['./core'], function (Latte)
+{
   Latte.prototype.registerPlugin(
     'function',
     '__quoted',
-    function (params, data) {
+    function (params, data)
+    {
       return params.join('')
     }
   )
@@ -11,10 +13,13 @@ define(['./core'], function (Latte) {
   Latte.prototype.registerPlugin(
     'function',
     '__array',
-    function (params, data) {
+    function (params, data)
+    {
       var a = []
-      for (var name in params) {
-        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function') {
+      for (var name in params)
+      {
+        if (params.hasOwnProperty(name) && params[name] && typeof params[name] !== 'function')
+        {
           a[name] = params[name]
         }
       }
@@ -26,42 +31,61 @@ define(['./core'], function (Latte) {
   Latte.prototype.registerPlugin(
     'function',
     '__func',
-    function (params, data) {
+    function (params, data)
+    {
       var paramData = []
       var i
       var fname
 
-      for (i = 0; i < params.length; ++i) {
+      for (i = 0; i < params.length; ++i)
+      {
         paramData.push(params[i])
       }
 
-      if (('__owner' in data && params.name in data.__owner)) {
+      if (('__owner' in data && params.name in data.__owner))
+      {
         fname = data['__owner']
-        if (params.length) {
+        if (params.length)
+        {
           return fname[params.name].apply(fname, params)
-        } else {
+        }
+        else
+        {
           // When function doesn't has arguments.
           return fname[params.name].apply(fname)
         }
-      } else if (Latte.prototype.modifiers.hasOwnProperty(params.name)) {
+      }
+      else if (Latte.prototype.modifiers.hasOwnProperty(params.name))
+      {
         fname = Latte.prototype.modifiers[params.name]
         return fname.apply(fname, paramData)
-      } else {
+      }
+      else
+      {
         fname = params.name
         var func
-        if (typeof module === 'object' && module && typeof module.exports === 'object') {
+        if (typeof module === 'object' && module && typeof module.exports === 'object')
+        {
           func = global[fname]
-        } else {
-          if (typeof window === 'object' && window.document) {
+        }
+        else
+        {
+          if (typeof window === 'object' && window.document)
+          {
             func = window[fname]
-          } else if (global) {
+          }
+          else if (global)
+          {
             func = global[fname]
           }
         }
 
-        if (data[fname]) {
+        if (data[fname])
+        {
           return data[fname].apply(data[fname], paramData)
-        } else if (func) {
+        }
+        else if (func)
+        {
           return func.apply(func, paramData)
         }
         // something went wrong.

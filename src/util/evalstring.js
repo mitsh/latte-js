@@ -1,7 +1,9 @@
-define(function () {
+define(function ()
+{
   'use strict'
 
-  function evalString (s) {
+  function evalString(s)
+  {
     return s.replace(/\\t/, '\t').replace(/\\n/, '\n').replace(/\\(['"\\])/g, '$1')
   }
 

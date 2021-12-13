@@ -1,9 +1,10 @@
 var str_pad = require('locutus/php/strings/str_pad');
 
 Latte.prototype.registerPlugin(
-	'modifier',
-	'padRight',
-	function (s, length, pad) {
-		return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_RIGHT');
-	}
+  'modifier',
+  'padRight',
+  function (s, length, pad)
+  {
+    return str_pad(String(s), length, pad != null ? pad : ' ', 'STR_PAD_RIGHT');
+  }
 );
