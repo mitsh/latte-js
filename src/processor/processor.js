@@ -128,7 +128,7 @@ define([
 
       return {
         output: output.tpl,
-        latte: output.latte
+        latte : output.latte
       }
     },
 
@@ -266,7 +266,7 @@ define([
             if (triple)
             {
               data.latte.config[f[2]] = s.slice(0, triple.index)
-              s                        = s.slice(triple.index + triple[0].length)
+              s                       = s.slice(triple.index + triple[0].length)
             }
           }
           else
@@ -534,7 +534,7 @@ define([
             data    = content.data
             content = content.tpl
           }
-          content                                                 = content.replace(/^\n/, '')
+          content                                                = content.replace(/^\n/, '')
           data.latte.capture[params.__get('name', 'default', 0)] = content
           if ('assign' in params)
           {
@@ -754,7 +754,7 @@ define([
           var show   = params.__get('show', true)
 
           data.latte.section[params.__get('name', null, 0)] = props
-          props.show                                         = show
+          props.show                                        = show
 
           if (!show)
           {
@@ -1113,7 +1113,7 @@ define([
                 outerBlockContent = outerBlockContent.tpl
               }
               data.latte.block.child = outerBlockContent
-              innerBlockContent       = this.process(innerBlock.tree, data)
+              innerBlockContent      = this.process(innerBlock.tree, data)
               if (typeof innerBlockContent.tpl !== 'undefined')
               {
                 innerBlockContent = innerBlockContent.tpl
@@ -1128,7 +1128,7 @@ define([
                 innerBlockContent = innerBlockContent.tpl
               }
               data.latte.block.parent = innerBlockContent
-              outerBlockContent        = this.process(outerBlock.tree, data)
+              outerBlockContent       = this.process(outerBlock.tree, data)
               if (typeof outerBlockContent.tpl !== 'undefined')
               {
                 outerBlockContent = outerBlockContent.tpl
@@ -1198,9 +1198,9 @@ define([
           var params = this.getActualParamValues(node.params, data)
           var file   = params.__get('file', null, 0)
           this.includedTemplates.push(file)
-          var incData             = objectMerge({}, data, params)
+          var incData            = objectMerge({}, data, params)
           incData.latte.template = file
-          var content             = this.process(node.subTree, incData)
+          var content            = this.process(node.subTree, incData)
           if (typeof content !== 'undefined')
           {
             // We do not copy data from child template, to the parent. Child

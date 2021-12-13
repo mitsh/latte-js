@@ -4,7 +4,7 @@ function varFilter(s, ldelim, rdelim)
   rdelim = rdelim != null ? rdelim : '}';
 
   var prev = '',
-      re = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
+      re   = new RegExp('(' + ldelim + '{1})(var{1})(\\s)(.*)(' + rdelim + '{1})', 'img');
 
   while (prev !== s)
   {

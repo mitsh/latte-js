@@ -14,7 +14,7 @@ Latte.postProcess = function (htmlString)
 
   $dom.find('[n\\:tag-if]').each(function (index, el)
   {
-    var $el = $(el),
+    var $el  = $(el),
         attr = 'n:tag-if';
 
     isSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.replaceWith($el.html());
@@ -22,7 +22,7 @@ Latte.postProcess = function (htmlString)
 
   $dom.find('[n\\:ifcontent]').each(function (index, el)
   {
-    var $el = $(el),
+    var $el  = $(el),
         attr = 'n:ifcontent';
 
     isSetTag($el.html().trim()) ? $el.removeAttr(attr) : $el.remove();
@@ -30,7 +30,7 @@ Latte.postProcess = function (htmlString)
 
   $dom.find('[n\\:ifset]').each(function (index, el)
   {
-    var $el = $(el),
+    var $el  = $(el),
         attr = 'n:ifset';
 
     isSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
@@ -38,7 +38,7 @@ Latte.postProcess = function (htmlString)
 
   $dom.find('[n\\:ifnotset]').each(function (index, el)
   {
-    var $el = $(el),
+    var $el  = $(el),
         attr = 'n:ifnotset';
 
     isNotSetTag($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
@@ -46,7 +46,7 @@ Latte.postProcess = function (htmlString)
 
   $dom.find('[n\\:ifempty]').each(function (index, el)
   {
-    var $el = $(el),
+    var $el  = $(el),
         attr = 'n:ifempty';
 
     isEmptyLoose($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();
@@ -54,7 +54,7 @@ Latte.postProcess = function (htmlString)
 
   $dom.find('[n\\:ifnotempty]').each(function (index, el)
   {
-    var $el = $(el),
+    var $el  = $(el),
         attr = 'n:ifnotempty';
 
     isNotEmptyLoose($el.attr(attr).trim()) ? $el.removeAttr(attr) : $el.remove();

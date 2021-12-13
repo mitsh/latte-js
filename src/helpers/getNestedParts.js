@@ -12,11 +12,11 @@ function getNestedParts(str, open, close)
     return str[0] === open && str[1] === close ? [str] : [];
   }
 
-  var parts = [],
+  var parts        = [],
       nestedLevels = {},
-      tags = [open, "'", '"', '`'],
+      tags         = [open, "'", '"', '`'],
       tagsPos,
-      level = 0,
+      level        = 0,
       escaped,
       currentChar;
 

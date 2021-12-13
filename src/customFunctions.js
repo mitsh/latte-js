@@ -28,9 +28,9 @@ define(['./core', './util/phpjs'], function (Latte, phpJs)
             counter.value += counter.skip
           }
         }
-        counter.skip              = params.__get('skip', counter.skip)
-        counter.direction         = params.__get('direction', counter.direction)
-        counter.assign            = params.__get('assign', counter.assign)
+        counter.skip             = params.__get('skip', counter.skip)
+        counter.direction        = params.__get('direction', counter.direction)
+        counter.assign           = params.__get('assign', counter.assign)
         data.latte.counter[name] = counter
       }
       else
@@ -66,7 +66,7 @@ define(['./core', './util/phpjs'], function (Latte, phpJs)
       if (!(name in data.latte.cycle))
       {
         data.latte.cycle[name] = {arr: [''], delimiter: params.__get('delimiter', ','), index: 0}
-        reset                   = true
+        reset                  = true
       }
 
       if (params.__get('delimiter', false))
@@ -93,7 +93,7 @@ define(['./core', './util/phpjs'], function (Latte, phpJs)
         {
           data.latte.cycle[name].arr   = arr
           data.latte.cycle[name].index = 0
-          reset                         = true
+          reset                        = true
         }
       }
 
